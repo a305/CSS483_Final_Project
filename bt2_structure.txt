@@ -1,0 +1,107 @@
+bowtie2.pl (wrapper script for aligner):
+	Entry point: bowtie_main.cpp
+		Includes: tokenize.h, ds.h
+		Function:
+			int main()
+	Extra starting point: bt2_search.cpp
+		Includes: See file. Too many to list.
+		Inner classes:
+			ThreadCounter:
+				ThreadCounter()
+				~THreadCounter()
+		Functions:
+			bowtie()
+			resetOptions()
+			printArgDesc(ostream& out)
+			printUsage(ostream& out)
+			parseInt(int lower, int upper, const char *errmsg, const char *arg)
+			parseInt(int lower, const char *errmsg, const char *arg)
+			parse(const char *s)
+			parsePair(const char *str, char delim)
+			parseTuple(const char *str, char delim, EList<T>& ret)
+			applyPreset(const string& sorig, Presets& presets)
+			parseOption(int next_option, const char *arg)
+			parseOptions(int argc, const char **argv)
+			createPatsrcFactory(PatternComposer& patcomp,const PatternParams& pp,int tid)
+			reset()
+			merge(
+				const OuterLoopMetrics *ol,
+				const SeedSearchMetrics *sd,
+				const WalkMetrics *wl,
+				const SwMetrics *swSeed,
+				const SwMetrics *swMate,
+				const ReportingMetrics *rm,
+				const SSEMetrics *dpSse8Ex,
+				const SSEMetrics *dpSse8Ma,
+				const SSEMetrics *dpSse16Ex,
+				const SSEMetrics *dpSse16Ma,
+				uint64_t nbtfiltst_,
+				uint64_t nbtfiltsc_,
+				uint64_t nbtfiltdo_)
+			reportInterval(
+				OutFileBuf* o,
+				bool metricsStderr,
+				bool total,
+				const BTString *name)
+			mergeIncrementals()
+			printMmsSkipMsg(const PatternSourcePerThread& ps,bool paired,bool mate1,int seedmms)
+			printLenSkipMsg(const PatternSourcePerThread& ps,bool paired,bool mate1)
+			printLocalScoreMsg(const PatternSourcePerThread& ps,bool paired,bool mate1)
+			printEEScoreMsg(const PatternSourcePerThread& ps,bool paired,bool mate1)
+			setupMinScores(
+				const PatternSourcePerThread& ps,
+				bool paired,
+				bool localAlign,
+				const Scoring& sc,
+				const size_t *rdlens,
+				TAlScore *minsc,
+				TAlScore *maxpen)
+			get_cpu_and_node(int& cpu, int& node)
+			errno_message()
+			del_pid(const char* dirname,int pid)
+			write_pid(const char* dirname,int pid)
+			read_dir(const char* dirname, int* num_pids)
+			steal_threads(int pid, int orig_nthreads, EList<int>& tids, EList<T*>& threads)
+			thread_monitor(int pid, int orig_threads, EList<int>& tids, EList<T*>& threads)
+			multiseedSearch(
+				Scoring& sc,
+				const PatternParams& pp,
+				PatternComposer& patsrc,
+				AlnSink& msink,
+				Ebwt& ebwtFw,
+				Ebwt& ebwtBw,
+				OutFileBuf *metricsOfb)
+			driver(const char * type,const string& bt2indexBase,const string& outfile)
+bowtie2-build.py (wrapper script for indexer):
+	Entry point: bowtie_build.cpp
+		Includes: tokenize.h, ds.h, mem_ids.h
+		Function:
+			int main()
+	Extra starting point: bt2_build.cpp
+		Includes: assert_helpers.h, endian_swap.h, bt2_idx.h, formats.h, sequence_io.h, tokenize.h, timer.h, ref_read.h, filebuf.h, reference.h, ds.h
+		Functions:
+			bowtie_build()
+			resetOptions()
+			printUsage(ostream& out)
+			parseNumber(T lower, const char *errmsg)
+			parseOptions(int argc, const char **argv)
+			deleteIdxFiles(const string& outfile,bool doRef,bool justRef)
+			driver(const string& infile,EList<string>& infiles,const string& outfile,bool packed,int reverse)
+			
+			
+bowtie2-inspect.py (wrapper script for inspector):
+	Entry point: bt2_inspect.cpp
+		Includes: getopt.h, assert_helpers.h, endian_swap.h, bt2_idx.h, reference.h, ds.h
+		Functions:
+			int main()
+			printUsage(ostream &out)
+			parseInt(int lower, const char *errmsg)
+			parseOptions(int argc, char **argv)
+			print_fasta_record(ostream& fout,const string& defline,const string& seq)
+			print_ref_sequence(ostream& fout,BitPairReference& ref,const string& name,size_t refi,size_t len)
+			print_ref_sequences(ostream& fout,bool color,const EList<string>& refnames,const TIndexOffU* plen,const string& adjustedEbwtFileBase)
+			print_index_sequences(ostream& fout, Ebwt& ebwt)
+			print_index_sequence_names(const string& fname, ostream& fout)
+			print_index_summary(const string& fname,ostream& fout)
+			driver(const string& ebwtFileBase,const string& query)
+			
