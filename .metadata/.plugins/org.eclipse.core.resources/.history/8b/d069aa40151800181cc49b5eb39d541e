@@ -1,0 +1,7 @@
+package com.uwb.bt2j.util.strings;
+
+public class StringUtils<S, T> {
+	public static double len(S s){
+		
+	}
+}

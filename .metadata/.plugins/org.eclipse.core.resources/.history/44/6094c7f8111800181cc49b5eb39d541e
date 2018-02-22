@@ -1,0 +1,23 @@
+package com.uwb.bt2j.util.pattern;
+
+public class Pat {
+	public static double genRandSeed() {
+		
+	}	
+	
+	public void wrongQualityFormat(BTString read_name) {
+		System.err.println("Error: Encountered one or more spaces while parsing the quality "
+				 + "string for read " + read_name + ".  If this is a FASTQ file "
+				 + "with integer (non-ASCII-encoded) qualities, try re-running with "
+				 + "the --integer-quals option.");
+	}
+	
+	public void tooFewQualities(BTString read_name) {
+		System.err.println("Error: Read " + read_name + " has more read characters than "
+				 + "quality values.");
+	}
+	
+	public void tooManyQualities(BTString read_name) {
+		
+	}
+}

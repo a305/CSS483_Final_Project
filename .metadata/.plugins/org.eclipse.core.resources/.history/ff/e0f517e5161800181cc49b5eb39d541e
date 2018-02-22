@@ -1,0 +1,26 @@
+package com.uwb.bt2j.aligner;
+
+public class PairedEndPolicy {
+	
+	public PairedEndPolicy() {
+		reset();
+	}
+	
+	public int classifyPair() {
+		
+	}
+	
+	public void reset() {
+		
+	}
+	
+	public void init() {
+		
+	}
+	
+	public final Boolean otherMate() {
+		
+	}
+	
+	
+}

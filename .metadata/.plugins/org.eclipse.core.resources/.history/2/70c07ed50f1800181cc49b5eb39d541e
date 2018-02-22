@@ -1,0 +1,13 @@
+package com.uwb.bt2j.util;
+
+public class Pat {
+	public static double genRandSeed() {
+		
+	}
+	
+	PatternSource patsrcFromStrings() {
+		
+	}
+	
+	
+}

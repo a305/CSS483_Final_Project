@@ -1,0 +1,36 @@
+package com.uwb.bt2j.aligner;
+
+public class PairedEndPolicy {
+	
+	public PairedEndPolicy() {
+		reset();
+	}
+	
+	public void reset() {
+		
+	}
+	
+	public void init() {
+		
+	}
+	
+	public final Boolean otherMate() {
+		
+	}
+	
+	public int classifyPair() {
+		
+	}
+	
+	public final int policy() {
+		return pol_;
+	}
+	
+	public final double maxFragLen() {
+		returnmaxfrag_;
+	}
+	
+	public final minFragLen() {
+		return minfrag_;
+	}
+}

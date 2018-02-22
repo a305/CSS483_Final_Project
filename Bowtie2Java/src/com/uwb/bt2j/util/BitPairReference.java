@@ -1,5 +1,5 @@
 package com.uwb.bt2j.util;
-class BitPairReference {
+public class BitPairReference {
   protected double byteToU32_[256];
   protected EList<RefRecord> recs_;
   protected EList<double> cumUnambig_;

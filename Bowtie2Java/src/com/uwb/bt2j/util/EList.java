@@ -1,10 +1,11 @@
 package com.uwb.bt2j.util;
-class EList {
-  public EList() {
+
+class EList<T> {
+  public EList<T>() {
   
   }
   
-  public EList(c) {
+  public EList<T>(c) {
   
   }
   

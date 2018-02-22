@@ -1,0 +1,21 @@
+package com.uwb.bt2j.inspector;
+
+import javafx.util.Pair;
+
+public class EBWT {
+	public EBWT() {
+		
+	}
+	
+	public static Pair<EBWT, EBWT> fromString() {
+		
+	}
+	
+	public static Pair<EBWT, EBWT> fromStrings() {
+		
+	}
+	
+	public Boolea isPacked() {
+		return packed_;
+	}
+}

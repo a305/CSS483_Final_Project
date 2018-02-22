@@ -1,0 +1,11 @@
+package com.uwb.bt2j.util.strings;
+
+public class StringUtils<S, T> {
+	public double len(S s){
+		
+	}
+	
+	public Boolean equ(S s, T t) {
+		
+	}
+}

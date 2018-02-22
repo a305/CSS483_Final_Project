@@ -1,0 +1,51 @@
+package com.uwb.bt2j.aligner;
+
+public class PairedEndPolicy {
+	protected Boolean local_;
+	protected int pol_;
+	protected Boolean flippingOk_;
+	protected Boolean dovetailOk_;
+	protected Boolean containOk_;
+	protected Boolean olapOk_;
+	protected Boolean expandToFit_;
+	protected double maxfrag_;
+	protected double minfrag_;
+	
+	enum PEPolicy {
+		PE_POLICY(1), PE_POLICY_RR(2), PE_POLICY_FR(3), PE_POLICY_RF(4)
+		private int x;
+		public PEPolicy(int y){x = y;}
+	}
+	
+	public PairedEndPolicy() {
+		reset();
+	}
+	
+	public void reset() {
+		
+	}
+	
+	public void init() {
+		
+	}
+	
+	public final Boolean otherMate() {
+		
+	}
+	
+	public int classifyPair() {
+		
+	}
+	
+	public final int policy() {
+		return pol_;
+	}
+	
+	public final double maxFragLen() {
+		return maxfrag_;
+	}
+	
+	public final double minFragLen() {
+		return minfrag_;
+	}
+}

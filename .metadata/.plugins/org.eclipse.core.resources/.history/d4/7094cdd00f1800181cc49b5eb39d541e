@@ -1,0 +1,15 @@
+package com.uwb.bt2j.util.pattern;
+
+public class PatternSourcePerThread {
+	public void finalize() {
+		
+	}
+	
+	public void finalizePair() {
+		
+	}
+	
+	public Pair<Boolean,Boolean> nextReadPair() {
+		
+	}
+}
