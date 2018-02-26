@@ -405,3 +405,17 @@ java.nio.file.DirectoryNotEmptyException: C:\Users\Skylar Onstot\Documents\GitHu
 	at org.eclipse.jface.operation.ModalContext$ModalContextThread.run(ModalContext.java:119)
 !SUBENTRY 5 org.eclipse.core.filesystem 4 273 2018-02-22 11:09:29.124
 !MESSAGE Could not delete: C:\Users\Skylar Onstot\Documents\GitHub\CSS483_Final_Project\Bowtie2Java\com.
+!SESSION 2018-02-25 20:55:37.482 -----------------------------------------------
+eclipse.buildId=4.6.1.M20160907-1200
+java.version=1.8.0_92
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.java.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.java.product
+
+!ENTRY org.eclipse.egit.ui 2 0 2018-02-25 20:55:46.888
+!MESSAGE Warning: The environment variable HOME is not set. The following directory will be used to store the Git
+user global configuration and to define the default location to store repositories: 'C:\Users\Skylar Onstot'. If this is
+not correct please set the HOME environment variable and restart Eclipse. Otherwise Git for Windows and
+EGit might behave differently since they see different configuration options.
+This warning can be switched off on the Team > Git > Confirmations and Warnings preference page.
