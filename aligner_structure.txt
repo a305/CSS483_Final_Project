@@ -33,47 +33,47 @@ bt2_search.cpp
 	Includes:
 		*bt2_idx
 		*aligner_sw
-		alphabet
-		assert_helpers
-		endian_swap
-		formats
-		sequence_io
-		filebuf
-		sstring
-		random_source
-		tokenize
-		aln_sink
-		read
-		unique
-		aligner_result
-		mem_ids
-		ref_coord
-		edit
-		limit
-		scoring
-		qual
-		search_globals
-		pat
-		threading
-		ds
-		btypes
+		*ds
+		aligner_cache
+		aligner_driver
 		aligner_metrics
-		timer
-		sam
+		aligner_result
 		aligner_seed
 		aligner_seed_policy
-		aligner_driver
+		aligner_seed2
 		aligner_sw_driver
-		reference
+		alphabet
+		aln_sink
+		assert_helpers
+		bt2_search
+		btypes
+		edit
+		endian_swap
+		filebuf
+		formats
 		group_walk
 		ival_list
-		random_util
-		aligner_cache
-		util
-		pe
-		simple_func
-		presets
+		limit
+		mem_ids
 		opts
 		outq
-		aligner_seed2
-		bt2_search
+		pat
+		pe
+		presets
+		qual
+		random_source
+		random_util
+		read
+		reference
+		ref_coord
+		sam
+		scoring
+		search_globals
+		sequence_io
+		simple_func
+		sstring
+		threading
+		timer
+		tokenize
+		unique
+		util
