@@ -1,0 +1,144 @@
+package com.uwb.bt2j.aligner.sink;
+
+public class ReportingState {
+	const ReportingParams& p_;  // reporting parameters
+	int state_;          // state we're currently in
+	bool paired_;        // true iff read we're currently handling is paired
+	uint64_t nconcord_;  // # concordants found so far
+	uint64_t ndiscord_;  // # discordants found so far
+	uint64_t nunpair1_;  // # unpaired alignments found so far for mate 1
+	uint64_t nunpair2_;  // # unpaired alignments found so far for mate 2
+	bool doneConcord_;   // true iff we're no longner interested in concordants
+	bool doneDiscord_;   // true iff we're no longner interested in discordants
+	bool doneUnpair_;    // no longner interested in unpaired alns
+	bool doneUnpair1_;   // no longner interested in unpaired alns for mate 1
+	bool doneUnpair2_;   // no longner interested in unpaired alns for mate 2
+	int exitConcord_;    // flag indicating how we exited concordant state
+	int exitDiscord_;    // flag indicating how we exited discordant state
+	int exitUnpair1_;    // flag indicating how we exited unpaired 1 state
+	int exitUnpair2_;    // flag indicating how we exited unpaired 2 state
+	public Boolean done_;          // done with all alignments
+	
+	public ReportingState(final ReportingParams p) {
+		reset();
+	}
+	
+	public void reset() {
+		state_ = 1;
+		paired_ = false;
+		nconcord_ = 0;
+		ndiscord_ = 0;
+		nunpair1_ = 0;
+		nunpair2_ = 0;
+		doneConcord_ = false;
+		doneDiscord_ = false;
+		doneUnpair_  = false;
+		doneUnpair1_ = false;
+		doneUnpair2_ = false;
+		exitConcord_ = 1;
+		exitDiscord_ = 1;
+		exitUnpair1_ = 1;
+		exitUnpair2_ = 1;
+		done_ = false;
+	}
+	
+	public final Boolean inited() {
+		return state_ != 1;
+	}
+	
+	public void nextRead(Boolean paired) {
+		
+	}
+	
+	public Boolean foundConcordant() {
+		
+	}
+	
+	public Boolean foundUnpaired() {
+		
+	}
+	
+	public void finish() {
+		
+	}
+	
+	public final void getReport(
+			long nconcordAln,
+			long ndiscordAln, 
+			long nunpair1Aln, 
+			long nunpair2Aln, 
+			Boolean pairMax, 
+			Boolean unpair1Max,
+			Boolean unpair2Max) {
+		
+	}
+	
+	public int state() {
+		return state_;
+	}
+	
+	public Boolean doneConcordant() {
+		return doneConcord_;
+	}
+	
+	public Boolean doneUnpaired(Boolean mate1) {
+		return mate1 ? doneUnpair1_ : doneUnpair2_;
+	}
+	
+	public Boolean doneWithMate(Boolean mate1) {
+		Boolean doneUnpair = mate1 ? doneUnpair1_ : doneUnpair2_;
+		long nun = mate1 ? nunpair1_ : nunpair2_;
+		if(!doneUnpair || !doneConcord_) {
+			return false;
+		}
+		if(!doneDiscord_ && nun == 0) {
+			return false;
+		}
+		return true;
+	}
+	
+	public Boolean doneUnpaired() {
+		return doneUnpair_;
+	}
+	
+	public Boolean done() {
+		return done_;
+	}
+	
+	public long numConcordant() {
+		return nconcord_;
+	}
+	
+	public long numDiscordant() {
+		return ndiscord_;
+	}
+
+	public long numUnpaired1() {
+		return nunpair1_;
+	}
+	
+	public long numUnpaired2() {
+		return nunpair2_;
+	}
+	
+	public final ReportingParams params() {
+		return p_;
+	}
+	
+	protected void convertUnpairedToDiscordant() {
+		exitUnpair1_ = 6;
+		exitUnpair2_ = 6;
+		nunpair1_ = 0;
+		nunpair2_ = 0;
+		ndiscord_ = 1;
+	}
+	
+	protected final Boolean areDone(long cnt, Boolean done, int exit) {
+		
+	}
+	
+	protected void updateDone() {
+		doneUnpair_ = doneUnpair1_ && doneUnpair2_;
+		done_ = doneUnpair_ && doneDiscord_ && doneConcord_;
+	}
+}

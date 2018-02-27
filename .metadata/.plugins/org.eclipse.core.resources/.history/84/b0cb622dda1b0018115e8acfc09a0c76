@@ -1,0 +1,20 @@
+package com.uwb.bt2j.aligner.sink;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+
+public class ALNSink {
+	public ALNSink(){
+		
+	}
+	
+	public static DataOutputStream printPct(DataOutputStream os, long num, long denom) throws IOException {
+		double pct= 0f;
+		if(denom != 0)	{
+			pct = 100.0 * (double)num / (double)denom;
+		}
+		
+		os.writeDouble(pct);
+		return os;
+	}
+}

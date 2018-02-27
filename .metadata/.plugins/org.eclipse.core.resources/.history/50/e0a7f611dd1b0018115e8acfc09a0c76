@@ -1,0 +1,35 @@
+package com.uwb.bt2j.aligner.sink;
+
+public class AlnSinkWrap {
+	public int nextRead() {
+		
+	}
+	
+	public void finishRead() {
+		
+	}
+	
+	public Boolean report() {
+		
+	}
+	
+	public final Boolean empty() {
+		return rs1_.empty() && rs1u_.empty() && rs2u_.empty();
+	}
+	
+	public final Boolean maxed() {
+		return maxedOverall_;
+	}
+	
+	public final Boolean readIsPair() {
+		return rd1_ != null && rd2_ != null;
+	}
+	
+	public final Boolean inited() {
+		return init_;
+	}
+	
+	public final ReportingState state() {
+		return st_;
+	}
+}

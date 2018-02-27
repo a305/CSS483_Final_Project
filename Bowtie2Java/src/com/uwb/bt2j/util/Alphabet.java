@@ -1,4 +1,5 @@
 package com.uwb.bt2j.util;
+
 class Alphabet {
   public static byte asc2dnacat[] = {
 	/*   0 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -119,7 +120,7 @@ class Alphabet {
 	/* 240 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   };
   
-  public static byte dinuc2color[5][5] = {
+  public static byte dinuc2color[][] = {
 	/* A */ {0, 1, 2, 3, 4},
 	/* C */ {1, 0, 3, 2, 4},
 	/* G */ {2, 3, 0, 1, 4},
@@ -127,8 +128,7 @@ class Alphabet {
 	/* N */ {4, 4, 4, 4, 4}
   };
   
-  public static char mask2iupac[16] = {
-	-1,
+  public static char mask2iupac[] = {
 	'A', // 0001
 	'C', // 0010
 	'M', // 0011
@@ -146,7 +146,7 @@ class Alphabet {
 	'N', // 1111
   };
   
-  public static int maskcomp[16] = {
+  public static int maskcomp[] = {
 	0,  // 0000 (!) -> 0000 (!)
 	8,  // 0001 (A) -> 1000 (T)
 	4,  // 0010 (C) -> 0100 (G)
@@ -165,26 +165,67 @@ class Alphabet {
 	15, // 1111 (N) -> 1111 (N)
   };
   
-  public static int dnacomp[5] = {3, 2, 1, 0, 4};
+  public static int dnacomp[] = {3, 2, 1, 0, 4};
   public static final String iupacs = "!ACMGRSVTWYHKDBN!acmgrsvtwyhkdbn";
   
-  public static Boolean isUnambigNuc() {
-    
+  public static Boolean isUnambigNuc(char c) {
+	  return asc2dnacat[(int) c] == 1;
   }
   
-  public static char comp() {
-    
+  public static char comp(char c) {
+	  switch(c) {
+		case 'a': return 't';
+		case 'A': return 'T';
+		case 'c': return 'g';
+		case 'C': return 'G';
+		case 'g': return 'c';
+		case 'G': return 'C';
+		case 't': return 'a';
+		case 'T': return 'A';
+		default: return c;
+	  }
   }
   
-  public static int compDna() {
-    
+  public static int compDna(int c) {
+		return dnacomp[c];
   }
   
-  public static void decodeNuc() {
-    
+  public static void decodeNuc(char c , int num, int[] alts) {
+	  switch(c) {
+		case 'A': alts[0] = 0; num = 1; break;
+		case 'C': alts[0] = 1; num = 1; break;
+		case 'G': alts[0] = 2; num = 1; break;
+		case 'T': alts[0] = 3; num = 1; break;
+		case 'M': alts[0] = 0; alts[1] = 1; num = 2; break;
+		case 'R': alts[0] = 0; alts[1] = 2; num = 2; break;
+		case 'W': alts[0] = 0; alts[1] = 3; num = 2; break;
+		case 'S': alts[0] = 1; alts[1] = 2; num = 2; break;
+		case 'Y': alts[0] = 1; alts[1] = 3; num = 2; break;
+		case 'K': alts[0] = 2; alts[1] = 3; num = 2; break;
+		case 'V': alts[0] = 0; alts[1] = 1; alts[2] = 2; num = 3; break;
+		case 'H': alts[0] = 0; alts[1] = 1; alts[2] = 3; num = 3; break;
+		case 'D': alts[0] = 0; alts[1] = 2; alts[2] = 3; num = 3; break;
+		case 'B': alts[0] = 1; alts[1] = 2; alts[2] = 3; num = 3; break;
+		case 'N': alts[0] = 0; alts[1] = 1; alts[2] = 2; alts[3] = 3; num = 4; break;
+		default: {
+			System.err.println("Bad IUPAC code: " + c + ", (int: " + (int)c + ")");
+			//throw runtime_error("");
+		}
+		}
   }
   
-  public static void setIupacsCat() {
-    
+  public static void setIupacsCat(byte cat) {
+		asc2dnacat[(int)'B'] = asc2dnacat[(int)'b'] =
+		asc2dnacat[(int)'D'] = asc2dnacat[(int)'d'] =
+		asc2dnacat[(int)'H'] = asc2dnacat[(int)'h'] =
+		asc2dnacat[(int)'K'] = asc2dnacat[(int)'k'] =
+		asc2dnacat[(int)'M'] = asc2dnacat[(int)'m'] =
+		asc2dnacat[(int)'N'] = asc2dnacat[(int)'n'] =
+		asc2dnacat[(int)'R'] = asc2dnacat[(int)'r'] =
+		asc2dnacat[(int)'S'] = asc2dnacat[(int)'s'] =
+		asc2dnacat[(int)'V'] = asc2dnacat[(int)'v'] =
+		asc2dnacat[(int)'W'] = asc2dnacat[(int)'w'] =
+		asc2dnacat[(int)'X'] = asc2dnacat[(int)'x'] =
+		asc2dnacat[(int)'Y'] = asc2dnacat[(int)'y'] = cat;
   }
 }
