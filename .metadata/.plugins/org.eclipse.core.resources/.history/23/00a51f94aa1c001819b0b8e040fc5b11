@@ -1,0 +1,21 @@
+package com.uwb.bt2j.aligner;
+
+public class Coord {
+	protected double ref_;
+	protected double off_;
+	protected int orient_;
+	
+	public Coord() {
+		reset();
+	}
+	
+	public Coord(Coord c) {
+		init(c);
+	}
+	
+	public Coord(double rf, double of, Boolean fw) {
+		ref_ = rf;
+		off_ = of;
+		orient_ = (fw ? 1 : 0);
+	}
+}

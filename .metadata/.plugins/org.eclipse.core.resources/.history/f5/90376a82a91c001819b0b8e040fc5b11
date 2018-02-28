@@ -1,0 +1,10 @@
+package com.uwb.bt2j.util;
+
+public class EIValMergeListBinned {
+	public static final double NBIN = 7;
+	protected EList<EIValMergeList> bins_;
+	
+	public EIValMergeListBinned(int cat) {
+		bins_.resize(1d << NBIN);
+	}
+}

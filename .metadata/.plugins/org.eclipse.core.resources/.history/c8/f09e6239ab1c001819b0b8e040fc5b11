@@ -1,0 +1,10 @@
+package com.uwb.bt2j.aligner;
+
+public class Interval {
+	protected Coord upstream_;
+	protected double len_;
+	
+	public Interval() {
+		
+	}
+}

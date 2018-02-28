@@ -1,0 +1,50 @@
+package com.uwb.bt2j.aligner;
+
+public class Coord {
+	protected double ref_;
+	protected double off_;
+	protected int orient_;
+	
+	public Coord() {
+		reset();
+	}
+	
+	public Coord(Coord c) {
+		init(c);
+	}
+	
+	public Coord(double rf, double of, Boolean fw) {
+		ref_ = rf;
+		off_ = of;
+		orient_ = (fw ? 1 : 0);
+	}
+	
+	public void init(Coord c) {
+		ref_ = c.ref_;
+		off_ = c.off_;
+		orient_ = c.orient_;
+	}
+	
+	public void reset() {
+		ref_ = Double.MAX_VALUE;
+		off_ = Double.MAX_VALUE;
+		orient_ = -1;
+	}
+	
+	public Boolean inited() {
+		if(ref_ != Double.MAX_VALUE &&
+				   off_ != Double.MAX_VALUE)
+				{
+					return true;
+				}
+				return false;
+	}
+	
+	public Boolean fw() {
+		return orient_ == 1;
+	}
+	
+	public Boolean within(long len, long inbegin, long inend) {
+		return off_ >= inbegin && off_ + len <= inend;
+	}
+}
