@@ -17,7 +17,4 @@ class IndexTypes {
   public static final double OFF_LEN_MASK = 0xc0000000;
   public static final double LS_SIZE      = 0x10000000;
   public static final byte OFF_SIZE       = 4;
-
-  public static double TIndexOffU;
-  public static doube TIndexOff;
 }

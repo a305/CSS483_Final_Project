@@ -1,0 +1,66 @@
+package com.uwb.bt2j.util;
+
+public class OutputQueue {
+	public void beginReadImpl(long rdid, double threadId) {
+		if(reorder_) {
+			if(rdid - cur_ >= lines_.size()) {
+				// Make sure there's enough room in lines_, started_ and finished_
+				size_t oldsz = lines_.size();
+				lines_.resize(rdid - cur_ + 1);
+				started_.resize(rdid - cur_ + 1);
+				finished_.resize(rdid - cur_ + 1);
+				for(size_t i = oldsz; i < lines_.size(); i++) {
+					started_[i] = finished_[i] = false;
+				}
+			}
+			started_[rdid - cur_] = true;
+			finished_[rdid - cur_] = false;
+	}
+		
+	public void beginRead(long rdid, double threadId) {
+		if(reorder_ && threadSafe_) {
+			ThreadSafe ts(mutex_m);
+			beginReadImpl(rdid, threadId);
+		} else {
+			beginReadImpl(rdid, threadId);
+		}
+	}
+	
+	public void finishReadImpl(BTString rec, long rdid, double threadId) {
+		if(reorder_) {
+			lines_[rdid - cur_] = rec;
+			nfinished_++;
+			finished_[rdid - cur_] = true;
+			flush(false, false); // don't force; already have lock
+		} else {
+			// obuf_ is the OutFileBuf for the output file
+			int i = 0;
+			for(i=0; i < perThreadBufSize_; i++)
+			{
+				obuf_.writeString(perThreadBuf[threadId][i]);
+				//TODO: turn these into atomics
+				nfinished_++;
+				nflushed_++;
+			}
+			perThreadCounter[threadId] = 0;
+		}
+	}
+	
+	public void finishRead(BTString rec, long rdid, double threadId) {
+		if(reorder_ || perThreadCounter[threadId] >= perThreadBufSize_) {
+			if(threadSafe_) {
+				ThreadSafe ts(mutex_m);
+				finishReadImpl(rec, rdid, threadId);
+			} else {
+				finishReadImpl(rec, rdid, threadId);
+			}
+		}
+		if(!reorder_) {
+			perThreadBuf[threadId][perThreadCounter[threadId]++] = rec;
+		}
+	}
+	
+	public void flushImpl(Boolean force) {
+		
+	}
+}

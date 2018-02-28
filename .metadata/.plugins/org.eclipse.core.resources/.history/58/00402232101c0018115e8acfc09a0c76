@@ -1,0 +1,8 @@
+package com.uwb.bt2j.util;
+
+public class RandomUtil {
+	public static double SWAPLIST_THRESH;
+	public static double CONVERSION_THRESH;
+	public static float CONVERSION_FRAC;
+	
+}

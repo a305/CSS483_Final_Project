@@ -1,6 +1,7 @@
 package com.uwb.bt2j.aligner;
 
 class Aligner {
+	public static int FNAME_SIZE;
 	public static EList<String> mates1;
 	public static EList<String> mates2;
 	public static EList<String> mates12;

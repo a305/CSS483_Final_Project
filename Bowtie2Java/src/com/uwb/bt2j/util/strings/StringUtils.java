@@ -2,7 +2,7 @@ package com.uwb.bt2j.util.strings;
 
 public class StringUtils<S, T> {
 	public double len(S s){
-		
+		return 
 	}
 	
 	public Boolean equals(S s, T t) {

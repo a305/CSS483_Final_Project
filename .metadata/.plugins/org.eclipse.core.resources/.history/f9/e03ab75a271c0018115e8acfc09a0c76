@@ -1,0 +1,15 @@
+package com.uwb.bt2j.util.strings;
+
+public class SString<T> {
+	public SString() {
+		
+	}
+	
+	public SString(double sz) {
+		resize(sz);
+	}
+	
+	public SString(SString<T> o) {
+		*this = o;
+	}
+}
