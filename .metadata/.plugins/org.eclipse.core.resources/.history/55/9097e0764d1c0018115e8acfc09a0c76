@@ -4,9 +4,7 @@ import org.omg.CORBA_2_3.portable.OutputStream;
 
 import com.uwb.bt2j.util.EList;
 
-import javafx.util.Pair;
-
-class Aligner<T> {
+class Aligner {
 	public static int FNAME_SIZE;
 	public static int thread_counter;
 	public static EList<String> mates1;
@@ -16,7 +14,6 @@ class Aligner<T> {
 	public static EList<String> qualities1;
 	public static EList<String> qualities2;
 	public static EList<String> queries;
-	public static EList<String> presetList;
 	public static EList<Pair<int, String>> extraOpts;
 	
 	public static String short_options = "fF:qbzhcu:rv:s:aP:t3:5:w:p:k:M:1:2:I:X:CQ:N:i:L:U:x:S:g:O:D:R:";
@@ -148,9 +145,6 @@ class Aligner<T> {
 	public static Boolean reorder;
 	public static Boolean arbitraryRandom;
 	public static Boolean bowtie2p5;
-	public static Boolean saw_M;
-	public static Boolean saw_a;
-	public static Boolean saw_k;
 	
 	public Boolean gMate1fw;
 	public Boolean gMate2fw;
@@ -812,92 +806,60 @@ class Aligner<T> {
 			+ "  --no-overlap       not concordant when mates overlap at all" + "\n"
 			+ "\n"
 		    + " Output:");
-
-		out.write("  -t/--time          print wall-clock time taken by search phases" + "\n");
+		//if(wrapper == "basic-0") {
+		//	out << "  --bam              output directly to BAM (by piping through 'samtools view')" << endl;
+		//}
+		out << "  -t/--time          print wall-clock time taken by search phases" << endl;
 		if(wrapper == "basic-0") {
-		out.write("  --un <path>        write unpaired reads that didn't align to <path>" + "\n"
-		    + "  --al <path>        write unpaired reads that aligned at least once to <path>" + "\n"
-		    + "  --un-conc <path>   write pairs that didn't align concordantly to <path>" + "\n"
-		    + "  --al-conc <path>   write pairs that aligned concordantly at least once to <path>" + "\n"
-		    + "    (Note: for --un, --al, --un-conc, or --al-conc, add '-gz' to the option name, e.g." + "\n"
-		    + "    --un-gz <path>, to gzip compress output, or add '-bz2' to bzip2 compress output.)" + "\n");
+		out << "  --un <path>        write unpaired reads that didn't align to <path>" << endl
+		    << "  --al <path>        write unpaired reads that aligned at least once to <path>" << endl
+		    << "  --un-conc <path>   write pairs that didn't align concordantly to <path>" << endl
+		    << "  --al-conc <path>   write pairs that aligned concordantly at least once to <path>" << endl
+		    << "    (Note: for --un, --al, --un-conc, or --al-conc, add '-gz' to the option name, e.g." << endl
+		    << "    --un-gz <path>, to gzip compress output, or add '-bz2' to bzip2 compress output.)" << endl;
 		}
-		out.write("  --quiet            print nothing to stderr except serious errors" + "\n"
-			+ "  --met-file <path>  send metrics to file at <path> (off)" + "\n"
-			+ "  --met-stderr       send metrics to stderr (off)" + "\n"
-			+ "  --met <int>        report internal counters & metrics every <int> secs (1)" + "\n"
+		out << "  --quiet            print nothing to stderr except serious errors" << endl
+		//  << "  --refidx           refer to ref. seqs by 0-based index rather than name" << endl
+			<< "  --met-file <path>  send metrics to file at <path> (off)" << endl
+			<< "  --met-stderr       send metrics to stderr (off)" << endl
+			<< "  --met <int>        report internal counters & metrics every <int> secs (1)" << endl
 		// Following is supported in the wrapper instead
-		    + "  --no-unal          suppress SAM records for unaligned reads" + "\n"
-		    + "  --no-head          suppress header lines, i.e. lines starting with @" + "\n"
-		    + "  --no-sq            suppress @SQ header lines" + "\n"
-		    + "  --rg-id <text>     set read group id, reflected in @RG line and RG:Z: opt field" + "\n"
-		    + "  --rg <text>        add <text> (\"lab:value\") to @RG line of SAM header." + "\n"
-		    + "                     Note: @RG line only printed when --rg-id is set." + "\n"
-		    + "  --omit-sec-seq     put '*' in SEQ and QUAL fields for secondary alignments." + "\n"
-		    + "  --sam-no-qname-trunc Suppress standard behavior of truncating readname at first whitespace " + "\n"
-		    + "                      at the expense of generating non-standard SAM." + "\n"
-		    + "  --xeq              Use '='/'X', instead of 'M,' to specify matches/mismatches in SAM record." + "\n"
-		    + "  --soft-clipped-unmapped-tlen Exclude soft-clipped bases when reporting TLEN" + "\n"
-		    + "\n"
-		    + " Performance:" + "\n"
-		    + "  -p/--threads <int> number of alignment threads to launch (1)" + "\n"
-		    + "  --reorder          force SAM output order to match order of input reads"+ "\n"
-		    + "\n"
-		    + " Other:" + "\n"
-			+ "  --qc-filter        filter out reads that are bad according to QSEQ filter" + "\n"
-		    + "  --seed <int>       seed for random number generator (0)" + "\n"
-		    + "  --non-deterministic seed rand. gen. arbitrarily instead of using read attributes" + "\n"
-		    + "  --version          print version information and quit" + "\n"
-		    + "  -h/--help          print this usage message" + "\n");
+		    << "  --no-unal          suppress SAM records for unaligned reads" << endl
+		    << "  --no-head          suppress header lines, i.e. lines starting with @" << endl
+		    << "  --no-sq            suppress @SQ header lines" << endl
+		    << "  --rg-id <text>     set read group id, reflected in @RG line and RG:Z: opt field" << endl
+		    << "  --rg <text>        add <text> (\"lab:value\") to @RG line of SAM header." << endl
+		    << "                     Note: @RG line only printed when --rg-id is set." << endl
+		    << "  --omit-sec-seq     put '*' in SEQ and QUAL fields for secondary alignments." << endl
+		    << "  --sam-no-qname-trunc Suppress standard behavior of truncating readname at first whitespace " << endl
+		    << "                      at the expense of generating non-standard SAM." << endl
+		    << "  --xeq              Use '='/'X', instead of 'M,' to specify matches/mismatches in SAM record." << endl
+		    << "  --soft-clipped-unmapped-tlen Exclude soft-clipped bases when reporting TLEN" << endl
+			<< endl
+		    << " Performance:" << endl
+		//    << "  -o/--offrate <int> override offrate of index; must be >= index's offrate" << endl
+		    << "  -p/--threads <int> number of alignment threads to launch (1)" << endl
+		    << "  --reorder          force SAM output order to match order of input reads" << endl
+	#ifdef BOWTIE_MM
+		    << "  --mm               use memory-mapped I/O for index; many 'bowtie's can share" << endl
+	#endif
+	#ifdef BOWTIE_SHARED_MEM
+			//<< "  --shmem            use shared mem for index; many 'bowtie's can share" << endl
+	#endif
+			<< endl
+		    << " Other:" << endl
+			<< "  --qc-filter        filter out reads that are bad according to QSEQ filter" << endl
+		    << "  --seed <int>       seed for random number generator (0)" << endl
+		    << "  --non-deterministic seed rand. gen. arbitrarily instead of using read attributes" << endl
+		//  << "  --verbose          verbose output for debugging" << endl
+		    << "  --version          print version information and quit" << endl
+		    << "  -h/--help          print this usage message" << endl
+		    ;
 		if(wrapper.empty()) {
-			System.err.println("*** Warning ***" + "\n" + "'bowtie2-align' was run directly.  It is recommended that you run the wrapper script 'bowtie2' instead.");
+			cerr << endl
+			     << "*** Warning ***" << endl
+				 << "'bowtie2-align' was run directly.  It is recommended that you run the wrapper script 'bowtie2' instead." << endl
+				 << endl;
 		}
-	}
-	
-	public static int parseInt(int lower, int upper, String errmsg, String arg) {
-		long l = Long.parseLong(arg);
-		
-			if (l < lower || l > upper) {
-				System.err.println(errmsg);
-				//printUsage();
-			}
-			return (int)l;
-		System.err.println(errmsg);
-		//printUsage();
-		return -1;
-	}
-	
-	public static int parseInt(int lower, String errmsg, String arg) {
-		return parseInt(lower, Integer.MAX_VALUE, errmsg, arg);
-	}
-	
-	public Pair<T, T> parsePair(String s, char delim) {
-		EList<String> ss = tokenize(s, delim);
-		Pair<T, T> ret;
-		ret.first = parse<T>(ss[0]);
-		ret.second = parse<T>(ss[1]);
-		return ret;
-	}
-	
-	public void parseTuple(String s, char delim, EList<T> ret) {
-		EList<String> ss = tokenize(s, delim);
-		for(double i = 0; i < ss.size(); i++) {
-			ret.push_back(parse<T>(ss[i]));
-		}
-	}
-	
-	public static String applyPreset(String sorig, Presets presets) {
-		String s = sorig;
-		double found = s.find("%LOCAL%");
-		if(found != string::npos) {
-			s.replace(found, strlen("%LOCAL%"), localAlign ? "-local" : "");
-		}
-		if(gVerbose) {
-			System.err.println("Applying preset: '" + s + "' using preset menu '"
-				 + presets.name() + "'" + "\n");
-		}
-		String pol;
-		presets.apply(s, pol, extra_opts);
-		return pol;
 	}
 }

@@ -4,9 +4,7 @@ import org.omg.CORBA_2_3.portable.OutputStream;
 
 import com.uwb.bt2j.util.EList;
 
-import javafx.util.Pair;
-
-class Aligner<T> {
+class Aligner {
 	public static int FNAME_SIZE;
 	public static int thread_counter;
 	public static EList<String> mates1;
@@ -16,7 +14,6 @@ class Aligner<T> {
 	public static EList<String> qualities1;
 	public static EList<String> qualities2;
 	public static EList<String> queries;
-	public static EList<String> presetList;
 	public static EList<Pair<int, String>> extraOpts;
 	
 	public static String short_options = "fF:qbzhcu:rv:s:aP:t3:5:w:p:k:M:1:2:I:X:CQ:N:i:L:U:x:S:g:O:D:R:";
@@ -148,9 +145,6 @@ class Aligner<T> {
 	public static Boolean reorder;
 	public static Boolean arbitraryRandom;
 	public static Boolean bowtie2p5;
-	public static Boolean saw_M;
-	public static Boolean saw_a;
-	public static Boolean saw_k;
 	
 	public Boolean gMate1fw;
 	public Boolean gMate2fw;
@@ -855,49 +849,20 @@ class Aligner<T> {
 	}
 	
 	public static int parseInt(int lower, int upper, String errmsg, String arg) {
-		long l = Long.parseLong(arg);
-		
+		long l;
+		String endPtr= null;
+		l = Long.parseLong(arg);
+		if (endPtr != NULL) {
 			if (l < lower || l > upper) {
-				System.err.println(errmsg);
-				//printUsage();
+				cerr << errmsg << endl;
+				printUsage(cerr);
+				throw 1;
 			}
 			return (int)l;
+		}
 		System.err.println(errmsg);
-		//printUsage();
+		printUsage(cerr);
+		throw 1;
 		return -1;
-	}
-	
-	public static int parseInt(int lower, String errmsg, String arg) {
-		return parseInt(lower, Integer.MAX_VALUE, errmsg, arg);
-	}
-	
-	public Pair<T, T> parsePair(String s, char delim) {
-		EList<String> ss = tokenize(s, delim);
-		Pair<T, T> ret;
-		ret.first = parse<T>(ss[0]);
-		ret.second = parse<T>(ss[1]);
-		return ret;
-	}
-	
-	public void parseTuple(String s, char delim, EList<T> ret) {
-		EList<String> ss = tokenize(s, delim);
-		for(double i = 0; i < ss.size(); i++) {
-			ret.push_back(parse<T>(ss[i]));
-		}
-	}
-	
-	public static String applyPreset(String sorig, Presets presets) {
-		String s = sorig;
-		double found = s.find("%LOCAL%");
-		if(found != string::npos) {
-			s.replace(found, strlen("%LOCAL%"), localAlign ? "-local" : "");
-		}
-		if(gVerbose) {
-			System.err.println("Applying preset: '" + s + "' using preset menu '"
-				 + presets.name() + "'" + "\n");
-		}
-		String pol;
-		presets.apply(s, pol, extra_opts);
-		return pol;
 	}
 }

@@ -2,7 +2,7 @@ package com.uwb.bt2j.util;
 
 import java.util.Arrays;
 
-public class EList<T> {
+class EList<T> {
   public EList() {
 	  cat_ = 0;
 	  allocCat_ = -1;
