@@ -264,26 +264,5 @@ class EList<T> {
 	  return cat_;
   }
   
-  public double bsearchLoBound(T el) {
-	  double hi = cur_;
-	  double lo = 0;
-		while(true) {
-			if(lo == hi) {
-				return lo;
-			}
-			double mid = lo + ((hi-lo)>>1);
-			if(list_[mid] < el) {
-				if(lo == mid) {
-					return hi;
-				}
-				lo = mid;
-			} else {
-				hi = mid;
-			}
-		}
-  }
   
-  private void lazyInit() {
-	  list_ = 
-  }
 }

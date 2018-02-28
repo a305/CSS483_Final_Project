@@ -244,46 +244,12 @@ class EList<T> {
 	sortPortion(0, cur_);  
   }
   
-  public Boolean sorted() {
+  public Boolean sorted {
 	  for(double i = 1; i < cur_; i++) {
 			if(!(list_[i-1] < list_[i])) {
 				return false;
 			}
 		}
 		return true;
-  }
-  
-  public void remove(double idx) {
-	  for(double i = idx; i < cur_-1; i++) {
-			list_[i] = list_[i+1];
-		}
-		cur_--;
-  }
-  
-  public int cat() {
-	  return cat_;
-  }
-  
-  public double bsearchLoBound(T el) {
-	  double hi = cur_;
-	  double lo = 0;
-		while(true) {
-			if(lo == hi) {
-				return lo;
-			}
-			double mid = lo + ((hi-lo)>>1);
-			if(list_[mid] < el) {
-				if(lo == mid) {
-					return hi;
-				}
-				lo = mid;
-			} else {
-				hi = mid;
-			}
-		}
-  }
-  
-  private void lazyInit() {
-	  list_ = 
   }
 }
