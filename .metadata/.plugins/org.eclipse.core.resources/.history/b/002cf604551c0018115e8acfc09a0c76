@@ -1,0 +1,20 @@
+package com.uwb.bt2j.aligner;
+
+public class SimpleFunc {
+	public int parseType(String otype) {
+		String type = otype;
+		if(type == "C" || type == "Constant") {
+			return SIMPLE_FUNC_CONST;
+		} else if(type == "L" || type == "Linear") {
+			return SIMPLE_FUNC_LINEAR;
+		} else if(type == "S" || type == "Sqrt") {
+			return SIMPLE_FUNC_SQRT;
+		} else if(type == "G" || type == "Log") {
+			return SIMPLE_FUNC_LOG;
+		}
+		System.err.println("Error: Bad function type '" + otype
+				  + "'.  Should be C (constant), L (linear), "
+				  + "S (square root) or G (natural log)." + "\n");
+		throw 1;
+	}
+}
