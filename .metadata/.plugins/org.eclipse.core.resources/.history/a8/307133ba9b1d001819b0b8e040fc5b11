@@ -1,0 +1,13 @@
+package com.uwb.bt2j.util.strings;
+
+public class SStringExpandable<T,int,int,int> {
+	public SStringExpandable() {
+		cs_ = null;
+		printcs_ = null;
+		len_ = 0;
+		sz_ = 0;
+		if(I > 0) {
+			expandNoCopy(I);
+		}
+	}
+}

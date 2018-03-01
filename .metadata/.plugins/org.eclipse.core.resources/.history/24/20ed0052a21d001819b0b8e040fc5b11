@@ -1,0 +1,38 @@
+package com.uwb.bt2j.util.strings;
+
+public class SDnaStringExpandable extends SStringExpandable<Character>{
+	public SDnaStringExpandable() {
+		super(1024, 2);
+	}
+	
+	public SDnaStringExpandable(String str, boolean chars, boolean colors) {
+		super(1024,2);
+		if(chars) {
+			if(colors) {
+				installColors(str);
+			} else {
+				installChars(str);
+			}
+		} else {
+			install(str);
+		}
+	}
+	
+	public SDnaStringExpandable(String b, double sz, boolean chars, boolean colors) {
+		super(1024,2);
+		if(chars) {
+			if(colors) {
+				installColors(b, sz);
+			} else {
+				installChars(b, sz);
+			}
+		} else {
+			install(b, sz);
+		}
+	}
+	
+	public SDnaStringExpandable(String b, boolean chars, boolean colors) {
+		super(1024,2);
+		install(b, chars, colors);
+	}
+}

@@ -1,0 +1,25 @@
+package com.uwb.bt2j.aligner;
+
+public class RandomSource {
+	public static final int DEFUALT_A = 1664525;
+	public static final int DEFUALT_C = 1013904223;
+	
+	public RandomSource() {
+		a = DEFUALT_A;
+		c = DEFUALT_C;
+		inited_ = false;
+	}
+	
+	public RandomSource(int _last) {
+		a = DEFUALT_A;
+		c = DEFUALT_C;
+		last = _last;
+		inited = true;
+	}
+	
+	public RandomSource(int _a, int _c) {
+		a = _a;
+		c = _c;
+		inited = false;
+	}
+}

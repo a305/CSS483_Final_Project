@@ -1,0 +1,39 @@
+package com.uwb.bt2j.util.strings;
+
+public class SStringExpandable<T> {
+	
+	public SStringExpandable(int s, int m, int i) {
+		cs_ = null;
+		printcs_ = null;
+		len_ = 0;
+		sz_ = 0;
+		if(i > 0) {
+			expandNoCopy(i);
+		}
+	}
+	
+	public SStringExpandable(int s, int m, int i, double sz) {
+		cs_ = null;
+		printcs_ = null;
+		len_ = 0;
+		sz_ = 0;
+		expandNoCopy(sz);
+	}
+	
+	public SStringExpandable(int s, int m, int i, String str) {
+		cs_ = null;
+		printcs_ = null;
+		len_ = 0;
+		sz_ = 0;
+		
+		install(str, str.length());
+	}
+	
+	public T windowGet(double i,
+			boolean   fw,
+			int depth,
+			double len) {
+		if(len == 0) len = len_;
+		return fw ? cs_[depth+i] : cs_[depth+len-i-1];
+	}
+}

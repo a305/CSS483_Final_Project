@@ -1,0 +1,7 @@
+package com.uwb.bt2j.util.strings;
+
+public class BTString{
+	public SString() {
+		return new SStringExpandable<char>(1024,2);
+	}
+}

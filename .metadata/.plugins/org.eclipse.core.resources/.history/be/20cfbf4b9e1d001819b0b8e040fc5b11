@@ -1,0 +1,148 @@
+package com.uwb.bt2j.util.strings;
+
+public class SStringExpandable<T> {
+	private int S, M, I;
+	public SStringExpandable(int s, int m, int i) {
+		S = s; M = m; I = i;
+		cs_ = null;
+		printcs_ = null;
+		len_ = 0;
+		sz_ = 0;
+		if(i > 0) {
+			expandNoCopy(i);
+		}
+	}
+	
+	public SStringExpandable(int s, int m, int i, double sz) {
+		S = s; M = m; I = i;
+		cs_ = null;
+		printcs_ = null;
+		len_ = 0;
+		sz_ = 0;
+		expandNoCopy(sz);
+	}
+	
+	public SStringExpandable(int s, int m, int i, String str) {
+		S = s; M = m; I = i;
+		cs_ = null;
+		printcs_ = null;
+		len_ = 0;
+		sz_ = 0;
+		
+		install(str, str.length());
+	}
+	
+	public T windowGet(int i,
+			boolean   fw,
+			int depth,
+			int len) {
+		if(len == 0) len = len_;
+		return fw ? cs_[depth+i] : cs_[depth+len-i-1];
+	}
+	
+	public void windowGet(
+			T ret,
+			boolean   fw,
+			int depth,
+			int len) {
+		if(len == 0) len = len_;
+		for(int i = 0; i < len; i++) {
+			ret.append(fw ? cs_[depth+i] : cs_[depth+len-i-1]);
+		}
+	}
+	
+	public void insert(T c, int idx) {
+		if(sz_ < len_ + 1) expandCopy((len_ + 1 + S) * M);
+		len_++;
+		// Move everyone down by 1
+		// len_ is the *new* length
+		for(int i = len_; i > idx+1; i--) {
+			cs_[i-1] = cs_[i-2];
+		}
+		cs_[idx] = c;
+	}
+	
+	public void set(int c, int idx) {
+		cs_[idx] = c;
+	}
+	
+	public void append(T c) {
+		if(sz_ < len_ + 1) expandCopy((len_ + 1 + S) * M);
+		cs_[len_++] = c;
+	}
+	
+	public void remove(int idx) {
+		for(int i = idx; i < len_-1; i++) {
+			cs_[i] = cs_[i+1];
+		}
+		len_--;
+	}
+	
+	public T get(int i) {
+		return cs_[i];
+	}
+	
+	public void install(T b, int sz) {
+		if(sz_ < sz) expandNoCopy((sz + S) * M);
+		cs_ = b;
+		len_ = sz;
+	}
+	
+	public void install(T b) {
+		install(b, b.toString().length());
+	}
+	
+	public void installReverse(String b, int sz) {
+		if(sz_ < sz) expandNoCopy((sz + S) * M);
+		for(int i = 0; i < sz; i++) {
+			cs_[i] = b.charAt(sz-i-1);
+		}
+		len_ = sz;
+	}
+	
+	public void reverse() {
+		for(int i = 0; i < (len_ >> 1); i++) {
+			T tmp = get(i);
+			set(get(len_-i-1), i);
+			set(tmp, len_-i-1);
+		}
+	}
+	
+	public void reverseWindow(int off, int len) {
+		int mid = len >> 1;
+		for(int i = 0; i < mid; i++) {
+			T tmp = get(off+i);
+			set(get(off+len-i-1), off+i);
+			set(tmp, off+len-i-1);
+		}
+	}
+	
+	public void resize(int len) {
+		if(sz_ < len) expandCopy((len + S) * M);
+		len_ = len;
+	}
+	
+	public void resize(int len, T el) {
+		if(sz_ < len) expandCopy((len + S) * M);
+		if(len > len_) {
+			for(int i = len_; i < len; i++) {
+				cs_[i] = el;
+			}
+		}
+		len_ = len;
+	}
+	
+	public void fill(T el) {
+		fill(len_, el);
+	}
+	
+	public void trimBegin(int len) {
+		if(len == len_) {
+			len_ = 0; return;
+		}
+		for(int i = 0; i < len_-len; i++) {
+			cs_[i] = cs_[i+len];
+		}
+		len_ -= len;
+	}
+}
