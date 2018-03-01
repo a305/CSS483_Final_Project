@@ -3,19 +3,6 @@ package com.uwb.bt2j.aligner.seed;
 import com.uwb.bt2j.aligner.SimpleFunc;
 
 public class Constraint {
-	public int edits;      // # edits permitted
-	public int mms;        // # mismatches permitted
-	public int ins;        // # insertions permitted
-	public int dels;       // # deletions permitted
-	public int penalty;    // penalty total permitted
-	public int editsCeil;  // <= this many edits can be left at the end
-	public int mmsCeil;    // <= this many mismatches can be left at the end
-	public int insCeil;    // <= this many inserts can be left at the end
-	public int delsCeil;   // <= this many deletions can be left at the end
-	public int penaltyCeil;// <= this much leftover penalty can be left at the end
-	public SimpleFunc penFunc;// penalty function; function of read len
-	public boolean instantiated; // whether constraint is instantiated w/r/t read len
-	
 	public Constraint() {
 		init();
 	}

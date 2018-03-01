@@ -13,8 +13,8 @@ public class Constraint {
 	public int insCeil;    // <= this many inserts can be left at the end
 	public int delsCeil;   // <= this many deletions can be left at the end
 	public int penaltyCeil;// <= this much leftover penalty can be left at the end
-	public SimpleFunc penFunc;// penalty function; function of read len
-	public boolean instantiated; // whether constraint is instantiated w/r/t read len
+	SimpleFunc penFunc;// penalty function; function of read len
+	bool instantiated; // whether constraint is instantiated w/r/t read len
 	
 	public Constraint() {
 		init();

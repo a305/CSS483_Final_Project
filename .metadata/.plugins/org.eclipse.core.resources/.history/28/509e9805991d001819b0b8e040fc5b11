@@ -10,18 +10,6 @@ public class SeedAligner {
 	public Ebwt ebwtBw_;
 	public Scoring sc_;
 	public InstantiatedSeed s_;
-	public Read read_;
-	public BTDnaString seq_;
-	public BTString qual_;
-	public double off_;
-	public boolean fw_;
-	public EList<Edit> edits_;
-	public AlignmentCacheIface ca_;
-	public EList<double> offIdx2off_;
-	public long bwops_;
-	public long bwedits_;
-	public BTDnaString tmprfdnastr_;
-	public BTDnaString tmpdnastr_;
 	
 	public enum SeedAlignerActions {
 		SA_ACTION_TYPE_RESET(1),

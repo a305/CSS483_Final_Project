@@ -1,25 +1,6 @@
 package com.uwb.bt2j.aligner.seed;
 
 public class Seed {
-	public int len;
-	public int type;
-	public Constraint overall;
-	public Constraint zones[];
-	
-	public Seed() {
-		init(0,0,null);
-	}
-	
-	public Seed(int ln, int ty, Constraint oc) {
-		init(ln, ty, oc);
-	}
-	
-	public void init(int ln, int ty, Constraint oc) {
-		len = ln;
-		type = ty;
-		overall = oc;
-	}
-	
 	public Boolean instantiate(
 			Read read,
 			BTDnaString seq,
@@ -208,25 +189,5 @@ public class Seed {
 		pols.back().zones[2] = Constraint.mmBased(1);
 		pols.back().zones[2].mmsCeil = 0; // Must have used at least 1 mismatch
 		pols.back().overall = oall;
-	}
-	
-	public boolean acceptable() {
-		return zones[0].acceptable() &&
-			       zones[1].acceptable() &&
-			       zones[2].acceptable() &&
-			       overall.acceptable();
-	}
-	
-	public static void mmSeeds(int mms,
-			int ln,
-			EList<Seed> pols,
-			Constraint oall) {
-		if(mms == 0) {
-			zeroMmSeeds(ln, pols, oall);
-		} else if(mms == 1) {
-			oneMmSeeds(ln, pols, oall);
-		} else if(mms == 2) {
-			twoMmSeeds(ln, pols, oall);
-		}
 	}
 }

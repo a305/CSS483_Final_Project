@@ -1,0 +1,12 @@
+package com.uwb.bt2j.aligner.seed;
+
+public class SeedResults {
+	public SeedResults() {
+		seqFw_ = seqRc_ = qualFw_ = qualRc_ = hitsFw_ = hitsRc_ = isFw_ = isRc_ = sortedFw_ = sortedRc_ = offIdx2off_ = rankOffs_ = rankFws_ = mm1Hit_ = 5;
+		clear();
+	}
+	
+	public void nextRead(Read read) {
+		read_ = read;
+	}
+}

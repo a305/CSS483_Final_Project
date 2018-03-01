@@ -216,17 +216,4 @@ public class Seed {
 			       zones[2].acceptable() &&
 			       overall.acceptable();
 	}
-	
-	public static void mmSeeds(int mms,
-			int ln,
-			EList<Seed> pols,
-			Constraint oall) {
-		if(mms == 0) {
-			zeroMmSeeds(ln, pols, oall);
-		} else if(mms == 1) {
-			oneMmSeeds(ln, pols, oall);
-		} else if(mms == 2) {
-			twoMmSeeds(ln, pols, oall);
-		}
-	}
 }

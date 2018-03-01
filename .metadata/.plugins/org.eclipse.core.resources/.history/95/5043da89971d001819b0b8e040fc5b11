@@ -25,21 +25,8 @@ public class SeedResults {
 	protected EList<QVal>         hitsRc_;      // hits for revcomp read
 	protected EList<EList<InstantiatedSeed> > isFw_; // hits for forward read
 	protected EList<EList<InstantiatedSeed> > isRc_; // hits for revcomp read
-	protected EList<boolean>         sortedFw_;    // true iff fw QVal was sorted/ranked
-	protected EList<boolean>         sortedRc_;    // true iff rc QVal was sorted/ranked
-	protected EList<double> offIdx2off_;
-	protected EList<double> rankOffs_;
-	protected EList<boolean> rankFws_;
-	protected boolean sorted_;
-	protected double numOffs_;
-	protected Read read_;
-	protected EEHit exactFwHit_;
-	protected EEHit exactRcHit_;
-	protected EList<EEHit> mm1Hit_;
-	protected double mm1Elt_;
-	protected boolean mm1Sorted_;
-	protected EList<double> tmpMedian_;
-	
+	protected EList<bool>         sortedFw_;    // true iff fw QVal was sorted/ranked
+	protected EList<bool>         sortedRc_;    // true iff rc QVal was sorted/ranked
 	public SeedResults() {
 		seqFw_ = seqRc_ = qualFw_ = qualRc_ = hitsFw_ = hitsRc_ = isFw_ = isRc_ = sortedFw_ = sortedRc_ = offIdx2off_ = rankOffs_ = rankFws_ = mm1Hit_ = 5;
 		clear();

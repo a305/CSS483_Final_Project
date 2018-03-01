@@ -39,7 +39,6 @@ public class SeedResults {
 	protected double mm1Elt_;
 	protected boolean mm1Sorted_;
 	protected EList<double> tmpMedian_;
-	
 	public SeedResults() {
 		seqFw_ = seqRc_ = qualFw_ = qualRc_ = hitsFw_ = hitsRc_ = isFw_ = isRc_ = sortedFw_ = sortedRc_ = offIdx2off_ = rankOffs_ = rankFws_ = mm1Hit_ = 5;
 		clear();

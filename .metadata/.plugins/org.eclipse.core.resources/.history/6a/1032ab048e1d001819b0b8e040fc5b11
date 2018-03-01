@@ -7,12 +7,6 @@ public class InstantiatedSeed {
 	public BTString qual;
 	public Constraint cons[];
 	public Constraint overall;
-	public int maxjump;
-	public int seedoff;
-	public int seedoffidx;
-	public boolean fw;
-	public boolean nfiltered;
-	public Seed s;
 	
 	public InstantiatedSeed() {
 		steps, zones = 5;

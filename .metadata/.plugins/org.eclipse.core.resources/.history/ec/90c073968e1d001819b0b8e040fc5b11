@@ -9,7 +9,6 @@ public class EEHit {
 	public Edit     e2;
 	boolean     fw;
 	long  score;
-	
 	public EEHit() {
 		reset();
 	}
@@ -36,7 +35,7 @@ public class EEHit {
 			e1.reset();
 		}
 		if(e2_ != null) {
-			e2 = e2_;
+			e2 = *e2_;
 		} else {
 			e2.reset();
 		}
@@ -61,7 +60,7 @@ public class EEHit {
 		return ns;
 	}
 	
-	public int refns() {
+	public refns() {
 		int ns = 0;
 		if(e1.inited() && e1.chr == 'N') {
 			ns++;

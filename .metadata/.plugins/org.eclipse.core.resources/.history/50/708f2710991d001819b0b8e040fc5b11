@@ -21,7 +21,6 @@ public class SeedAligner {
 	public long bwops_;
 	public long bwedits_;
 	public BTDnaString tmprfdnastr_;
-	public BTDnaString tmpdnastr_;
 	
 	public enum SeedAlignerActions {
 		SA_ACTION_TYPE_RESET(1),

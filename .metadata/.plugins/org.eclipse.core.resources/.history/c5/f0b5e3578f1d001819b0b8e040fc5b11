@@ -1,0 +1,94 @@
+package com.uwb.bt2j.aligner.seed;
+
+public class SeedResults {
+	public SeedResults() {
+		seqFw_ = seqRc_ = qualFw_ = qualRc_ = hitsFw_ = hitsRc_ = isFw_ = isRc_ = sortedFw_ = sortedRc_ = offIdx2off_ = rankOffs_ = rankFws_ = mm1Hit_ = 5;
+		clear();
+	}
+	
+	public void nextRead(Read read) {
+		read_ = read;
+	}
+	
+	public void add(
+			QVal qv,           // range of ranges in cache
+			AlignmentCache ac, // cache
+			double seedIdx,         // seed index (from 5' end)
+			boolean     seedFw) {
+		if(qv.empty()) return;
+		if(seedFw) {
+			hitsFw_[seedIdx] = qv;
+			numEltsFw_ += qv.numElts();
+			numRangesFw_ += qv.numRanges();
+			if(qv.numRanges() > 0) nonzFw_++;
+		} else {
+			hitsRc_[seedIdx] = qv;
+			numEltsRc_ += qv.numElts();
+			numRangesRc_ += qv.numRanges();
+			if(qv.numRanges() > 0) nonzRc_++;
+		}
+		numElts_ += qv.numElts();
+		numRanges_ += qv.numRanges();
+		if(qv.numRanges() > 0) {
+			nonzTot_++;
+			if(qv.numRanges() == 1 && qv.numElts() == 1) {
+				uniTot_++;
+				uniTotS_[seedFw ? 0 : 1]++;
+			} else {
+				repTot_++;
+				repTotS_[seedFw ? 0 : 1]++;
+			}
+		}
+	}
+	
+	public void reset(Read read, EList<double> offIdx2off, double numOffs) {
+		clearSeeds();
+		numOffs_ = numOffs;
+		seqFw_.resize(numOffs_);
+		seqRc_.resize(numOffs_);
+		qualFw_.resize(numOffs_);
+		qualRc_.resize(numOffs_);
+		hitsFw_.resize(numOffs_);
+		hitsRc_.resize(numOffs_);
+		isFw_.resize(numOffs_);
+		isRc_.resize(numOffs_);
+		sortedFw_.resize(numOffs_);
+		sortedRc_.resize(numOffs_);
+		offIdx2off_ = offIdx2off;
+		for(double i = 0; i < numOffs_; i++) {
+			sortedFw_[i] = sortedRc_[i] = false;
+			hitsFw_[i].reset();
+			hitsRc_[i].reset();
+			isFw_[i].clear();
+			isRc_[i].clear();
+		}
+		read_ = read;
+		sorted_ = false;
+	}
+	
+	public void clearSeeds() {
+		sortedFw_.clear();
+		sortedRc_.clear();
+		rankOffs_.clear();
+		rankFws_.clear();
+		offIdx2off_.clear();
+		hitsFw_.clear();
+		hitsRc_.clear();
+		isFw_.clear();
+		isRc_.clear();
+		seqFw_.clear();
+		seqRc_.clear();
+		nonzTot_ = 0;
+		uniTot_ = uniTotS_[0] = uniTotS_[1] = 0;
+		repTot_ = repTotS_[0] = repTotS_[1] = 0;
+		nonzFw_ = 0;
+		nonzRc_ = 0;
+		numOffs_ = 0;
+		numRanges_ = 0;
+		numElts_ = 0;
+		numRangesFw_ = 0;
+		numEltsFw_ = 0;
+		numRangesRc_ = 0;
+		numEltsRc_ = 0;
+	}
+}
