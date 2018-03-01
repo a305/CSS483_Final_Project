@@ -1,6 +1,346 @@
 package com.uwb.bt2j/aligner;
 
 public class AlignerResult {
+	protected Boolean shapeSet_;
+	protected Boolean fraglenSet_;
+	protected Boolean pretrimSoft_;
+	protected Boolean trimSoft_;
+	protected double pretrim5p_;
+	protected double pretrim3p_;
+	protected double trim5p_;
+	protected double trim3p_;
+	protected double rdlen_;
+	protected double rdrows_;
+	protected double rdextent_;
+	protected double rdexrows_;
+	protected double rfextent_;
+	protected double refns_;
+	protected int seedmms_;
+	protected int seedlen_;
+	protected int seedival_;
+	protected int nuc5p_;
+	protected int nuc3p_;
+	protected int type_;
+	protected AlignmentScore score_;
+	protected AlignmentScore oscore_;
+	protected EList<Edit> ned_;
+	protected EList<Edit> aed_;
+	protected Coord refcoord_;
+	protected long reflen_;
+	protected Interval refival_;
+	protected long minsc_;
+	protected long fraglen_;
+	
+public enum ResultType {
+	ALN_RES_TYPE_UNPAIRED(1),   // unpaired alignment
+	ALN_RES_TYPE_UNPAIRED_MATE1(2), // mate #1 in pair, aligned unpaired
+	ALN_RES_TYPE_UNPAIRED_MATE2(3), // mate #2 in pair, aligned unpaired
+	ALN_RES_TYPE_MATE1(4),          // mate #1 in paired-end alignment
+	ALN_RES_TYPE_MATE2(5);           // mate #2 in paired-end alignment
+	private int x;
+	ResultType(int y) {x = y;}
+}
+
+	public AlignerResult() {
+		ned_ = 7;
+		aed_ = 7;
+		reset();	
+	}
+	
+	public void reverseEdits() {
+		ned_.reverse();
+		aed_.reverse();
+	}
+	
+	public void invertEdits() {
+		Edit.invertPoss(ned_, rdexrows_, false);
+		Edit.invertPoss(aed_, rdexrows_, false);
+	}
+	
+	public Boolean empty() {
+		if(!VALID_AL_SCORE(score_)) {
+			return true;
+		} else {
+			return false;
+		}	
+	}
+	
+	public long refid() {
+		return refcoord_.ref();	
+	}
+	
+	public int orient() {
+		return refcoord_.orient();	
+	}
+	
+	public long refoff() {
+		return refcoord_.off();	
+	}
+	
+	public void getCoords(Coord st, Coord en) {
+		st.init(refcoord_);
+		en.init(refcoord_);
+		en.adjustOff(refExtent() - 1);
+	}
+	
+	public void getExtendedCoords(Coord st, Coord en, AlignerFlags flags) {
+		getCoords(st, en);
+		// Take trimming into account
+		if (!flags.scUnMapped()) {
+			long trim_st  = (fw() ? trim5p_ : trim3p_);
+			long trim_en  = (fw() ? trim3p_ : trim5p_);
+			trim_st += (fw() ? pretrim5p_ : pretrim3p_);
+			trim_en += (fw() ? pretrim3p_ : pretrim5p_);
+			st.adjustOff(-trim_st);
+			en.adjustOff( trim_en);
+		}	
+	}
+	
+	public Boolean within(long id, long off, Boolean fw, double extent) {
+		if(refcoord_.ref() == id &&
+		   refcoord_.off() >= off &&
+		   refcoord_.off() + refExtent() <= off + extent &&
+		   refcoord_.fw() == fw)
+		{
+			return true;
+		}
+		return false;
+	}
+	
+	public void setScore(AlignmentScore score) {
+		score_ = score;
+	}
+	
+	public void setNucs(Boolean fw, int nup, int ndn) {
+		nuc5p_ = fw ? nup : ndn;
+		nuc3p_ = fw ? ndn : nup;
+	}
+	
+	public Coord refcoords() {
+		return refcoord_;	
+	}
+	
+	public Interval refival() {
+		return refival_;	
+	}
+	
+	public Boolean fw() {
+		return refcoord_.fw();	
+	}
+	
+	public AlignmentScore score() {
+		return score_;	
+	}
+	
+	public AlignmentScore oscore() {
+		return oscore_;	
+	}
+	
+	public EList<Edit> ned() {
+		return ned_;	
+	}
+	
+	public EList<Edit> aed() {
+		return aed_;	
+	}
+	
+	public double readExtent() {
+		return rdextent_;	
+	}
+	
+	public double readExtentRow() {
+		return rdextrows_;	
+	}
+	
+	public double readLength() {
+		return rdlen_;	
+	}
+	
+	public double refExtent() {
+		return rfextent_;	
+	}
+	
+	public long reflen() {
+		return reflen_;
+	}
+	
+	public double refNucExtent() {
+		return rfextent_;	
+	}
+	
+	public void printStacked(Read rd, OutputStream o) {
+		printStacked(refcoord_.fw() ? rd.patFw : rd.patRc, o);
+	}
+	
+	public void printStacked(BTDnaString seq, OutputStream o) {
+		Edit.printQAlign(o, seq, ned_);
+		// Print reference offset below reference string
+		o.write("^" + "\n");
+		o.write("(" + refcoord_.ref() + "," + refcoord_.off() + ")" + "\n");
+	}
+	
+	public void setParams(int seedmms, int seedlen, int seedival) {
+		seedmms_ = seedmms;
+		seedlen_ = seedlen;
+		seedival_ = seedival;
+		minsc_ = minsc;
+	}
+	
+	public int seedmms() {
+		return seedmms_;	
+	}
+	
+	public int seedlen() {
+		return seedlen_;	
+	}
+	
+	public int seedival() {
+		return seedival;	
+	}
+	
+	public long minScore() {
+		return minsc_;	
+	}
+	
+	public Boolean trimmedRow5p(double i) {
+		return i < trim5p_ || rdrows_ - i - 1 < trim3p_;
+	}
+	
+	public Boolean trimmedPos5p(double i) {
+		return i < trim5p_ || rdlen_ - i - 1 < trim3p_;
+	}
+	
+	public Boolean alignedRow5p(double i) {
+		return !trimmedRow5p(i);
+	}
+	
+	public Boolean alignedPos5p(double i) {
+		return !trimmedPos5p(i);
+	}
+	
+	public Boolean readUnpaired() {
+		return type_ == ALN_RES_TYPE_UNPAIRED;
+	}
+	
+	public Boolean alignedPaired() {
+		return type_ == ALN_RES_TYPE_MATE1 ||
+		       type_ == ALN_RES_TYPE_MATE2;	
+	}
+	
+	public Boolean readMate1() {
+		return type_ == ALN_RES_TYPE_MATE1 ||
+		       type_ == ALN_RES_TYPE_UNPAIRED_MATE1;
+	}
+	
+	public Boolean alignedMate1() {
+		return type_ == ALN_RES_TYPE_MATE1;	
+	}
+	
+	public Boolean readMate2() {
+		return type_ == ALN_RES_TYPE_MATE2 ||
+		       type_ == ALN_RES_TYPE_UNPAIRED_MATE2;
+	}
+	
+	public Boolean alignedMate2() {
+		return type_ == ALN_RES_TYPE_MATE2;	
+	}
+	
+	public void setMateParams(int type, AlignmentResult omate, AlignerFlags flags) {
+		type_ = type;
+		fraglen_ = 0;
+		if(omate != null) {
+			oscore_ = omate.score_;
+			// When should we calculate a fragment length here?  There are a
+			// couple reasonable ideas:
+			// 1. When mates align concordantly
+			// 2. When both mates align to the same reference string
+			// BWA seems to do 2., so that's what we'll do here.
+			Boolean sameChr = true;
+			if((sameChr && refcoord_.ref() == omate.refcoord_.ref()) ||
+			   flags.alignedConcordant())
+			{
+				setFragmentLength(omate, flags);
+			}
+		}
+	}
+	
+	public long setFragmentLength(AlignmentResult omate, AlignerFlags flags) {
+		Coord st, en;
+		Coord ost, oen;
+		getExtendedCoords(st, en, flags);
+		omate.getExtendedCoords(ost, oen, flags);
+		Boolean imUpstream = st.off() < ost.off();
+		long up = Math.min(st.off(), ost.off());
+		long dn = Math.max(en.off(), oen.off());
+		fraglen_ = 1 + dn - up;
+		if(!imUpstream) {
+			fraglen_ = -fraglen_;
+		}
+		fraglenSet_ = true;
+		return fraglen_;
+	}
+	
+	public long fragmentLength() {
+		return fraglen_;	
+	}
+	
+	public double trimmed5p(Boolean soft) {
+		double trim = 0;
+		if(pretrimSoft_ == soft) trim += pretrim5p_;
+		if(trimSoft_ == soft) trim += trim5p_;
+		return trim;
+	}
+	
+	public double trimmed3p(Boolean soft) {
+		double trim = 0;
+		if(pretrimSoft_ == soft) trim += pretrim3p_;
+		if(trimSoft_ == soft) trim += trim3p_;
+		return trim;
+	}
+	
+	public double trimmedLeft(Boolean soft) {
+		return fw() ? trimmed5p(soft) : trimmed3p(soft);	
+	}
+	
+	public double trimmedRight(Boolean soft) {
+		return fw() ? trimmed3p(soft) : trimmed3p(soft);	
+	}
+	
+	public void setRefNs(double refns) {
+		refns_ = refns;
+	}
+	
+	public double refNs() {
+		return refns_;	
+	}
+	
+	public void initStacked(Read rd, StackedAln st) {
+		double trimLS = trimmed5p(true);
+		double trimLH = trimmed5p(false);
+		double trimRS = trimmed3p(true);
+		double trimRH = trimmed3p(false);
+		double len_trimmed = rd.length() - trimLS - trimRS;
+		if(!fw()) {
+			Edit.invertPoss(const_cast<EList<Edit>&>(ned_), len_trimmed, false);
+			swap(trimLS, trimRS);
+			swap(trimLH, trimRH);
+		}
+		st.init(
+			fw() ? rd.patFw : rd.patRc,
+			ned_, trimLS, trimLH, trimRS, trimRH);
+		if(!fw()) {
+			Edit.invertPoss(const_cast<EList<Edit>&>(ned_), len_trimmed, false);
+		}
+	}
+	
+	protected void calcRefExtent() {
+		rfextent_ = rdextent_;
+		for(double i = 0; i < ned_.size(); i++) {
+			if(ned_[i].isRefGap()) rfextent_--;
+			if(ned_[i].isReadGap()) rfextent_++;
+		}	
+	}
+	
   public void reset() {
     ned_.clear();
 	  aed_.clear();
