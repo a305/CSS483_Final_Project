@@ -1,0 +1,33 @@
+package com.uwb.bt2j.aligner;
+
+public class AlignmentSetSumm {
+	public AlignmentSetSumm() {
+		reset();
+	}
+	
+	public AlignmentSetSumm(Read rd1, Read rd2,
+			EList<AlignmentResult> rs1,
+			EList<AlignmentResult> rs2,
+			EList<AlignmentResult> rs1u,
+			EList<AlignmentResult> rs2u,
+			Boolean exhausted1, Boolean exhausted2,
+			long orefid,
+			long orefoff) {
+		init(rd1, rd2, rs1, rs2, rs1u, rs2u, exhausted1, exhausted2, 
+			     orefid, orefoff);
+	}
+	
+	public AlignmentSetSumm(long other1, long other2,
+			Boolean paired, Boolean exhausted1,
+			Boolean exhausted2, long orefid,
+			long orefoff) {
+		init(
+				other1,
+				other2,
+				paired,
+				exhausted1,
+				exhausted2,
+				orefid,
+				orefoff);
+	}
+}

@@ -1,6 +1,8 @@
-package com.uwb.bt2j/aligner;
+package com.uwb.bt2j.aligner;
 
 public class AlignerResult {
+	public static Boolean VALID_AL_SCORE(AlignmentScore x) {return x.score_ > Long.MIN_VALUE;}
+	
 	protected Boolean shapeSet_;
 	protected Boolean fraglenSet_;
 	protected Boolean pretrimSoft_;

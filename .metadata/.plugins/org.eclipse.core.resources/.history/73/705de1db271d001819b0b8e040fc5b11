@@ -1,0 +1,22 @@
+package com.uwb.bt2j.util.pattern;
+
+public class PatternParams {
+	public PatternParams(
+			int format_,
+			Boolean fileParallel_,
+			double seed_,
+			double max_buf_,
+			Boolean solexa64_,
+			Boolean phred64_,
+			Boolean intQuals_,
+			int trim5_,
+			int trim3_,
+			int sampleLen_,
+			int sampleFreq_,
+			double skip_,
+			int nthreads_,
+			Boolean fixName_) {
+		format = format_;
+		
+	}
+}

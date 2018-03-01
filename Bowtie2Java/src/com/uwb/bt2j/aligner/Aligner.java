@@ -17,9 +17,10 @@ class Aligner<T> {
 	public static EList<String> qualities2;
 	public static EList<String> queries;
 	public static EList<String> presetList;
-	public static EList<Pair<int, String>> extraOpts;
+	public static EList<Pair<Integer, String>> extraOpts;
 	
 	public static String short_options = "fF:qbzhcu:rv:s:aP:t3:5:w:p:k:M:1:2:I:X:CQ:N:i:L:U:x:S:g:O:D:R:";
+	public static 
 	public static String argstr;
 	public static String arg0;
 	public static String adjIdxBase;
@@ -165,6 +166,16 @@ class Aligner<T> {
 	public Boolean gNorc;
 	public Boolean gReportOverhangs;
 	
+	public static PatternComposer   multiseed_patsrc;
+	public static PatternParams            multiseed_pp;
+	public static Ebwt                    multiseed_ebwtFw;
+	public static Ebwt                    multiseed_ebwtBw;
+	public static Scoring             multiseed_sc;
+	public static BitPairReference        multiseed_refs;
+	public static AlignmentCache          multiseed_ca; // seed cache
+	public static AlnSink                 multiseed_msink;
+	public static OutFileBuf              multiseed_metricsOfb;
+	
 	public static void main(String[] args) {
 		try {
 			
@@ -185,130 +196,102 @@ class Aligner<T> {
 			parseOptions(args);
 			arg0 = args[0];
 			if(showVersion) {
-				cout << argv0 << " version " << BOWTIE2_VERSION << endl;
-				if(sizeof(void*) == 4) {
-					cout << "32-bit" << endl;
-				} else if(sizeof(void*) == 8) {
-					cout << "64-bit" << endl;
-				} else {
-					cout << "Neither 32- nor 64-bit: sizeof(void*) = " << sizeof(void*) << endl;
-				}
+				System.out.println( arg0 + " version " + BOWTIE2_VERSION);
 				
-				cout << "Built on " << BUILD_HOST << endl;
-				cout << BUILD_TIME << endl;
-				cout << "Compiler: " << COMPILER_VERSION << endl;
-				cout << "Options: " << COMPILER_OPTIONS << endl;
-				cout << "Sizeof {int, long, long long, void*, size_t, off_t}: {"
-						 << sizeof(int)
-						 << ", " << sizeof(long) << ", " << sizeof(long long)
-						 << ", " << sizeof(void *) << ", " << sizeof(size_t)
-						 << ", " << sizeof(off_t) << "}" << endl;
-				return 0;
+				System.out.println( "Built on " + BUILD_HOST);
+				System.out.println( BUILD_TIME );
+				System.out.println( "Compiler: " + COMPILER_VERSION);
+				System.out.println( "Options: " + COMPILER_OPTIONS);
 			}
 			{
 				Timer _t(cerr, "Overall time: ", timing);
 				if(startVerbose) {
-					cerr << "Parsing index and read arguments: "; logTime(cerr, true);
+					System.err.println( "Parsing index and read arguments: "); logTime(cerr, true);
 				}
 
 				// Get index basename (but only if it wasn't specified via --index)
 				if(bt2index.empty()) {
-					cerr << "No index, query, or output file specified!" << endl;
+					System.err.println( "No index, query, or output file specified!");
 					printUsage(cerr);
-					return 1;
 				}
 		
 				if(thread_stealing && thread_stealing_dir.empty()) {
-					cerr << "When --thread-ceiling is specified, must also specify --thread-piddir" << endl;
+					System.err.println( "When --thread-ceiling is specified, must also specify --thread-piddir");
 					printUsage(cerr);
-					return 1;
 				}
 
 				// Get query filename
-				bool got_reads = !queries.empty() || !mates1.empty() || !mates12.empty();
+				Boolean got_reads = !queries.empty() || !mates1.empty() || !mates12.empty();
 				
-				if(optind >= argc) {
+				if(optind >= args.length) {
 					if(!got_reads) {
 						printUsage(cerr);
-						cerr << "***" << endl
-						     << "Error: Must specify at least one read input with -U/-1/-2" << endl;
-						return 1;
+						System.err.println( "***");
+						System.err.println(  "Error: Must specify at least one read input with -U/-1/-2");
 					}
 				} else if(!got_reads) {
 					// Tokenize the list of query files
-					tokenize(argv[optind++], ",", queries);
+					tokenize(args[optind++], ",", queries);
 					if(queries.empty()) {
-						cerr << "Tokenized query file list was empty!" << endl;
+						System.err.println( "Tokenized query file list was empty!");
 						printUsage(cerr);
-						return 1;
 					}
 				}
 
 				// Get output filename
-				if(optind < argc && outfile.empty()) {
-					outfile = argv[optind++];
-					cerr << "Warning: Output file '" << outfile.c_str()
-					     << "' was specified without -S.  This will not work in "
-						 << "future Bowtie 2 versions.  Please use -S instead."
-						 << endl;
+				if(optind < args.length && outfile.empty()) {
+					outfile = args[optind++];
+					System.err.println( "Warning: Output file '" + outfile.c_str()
+					     + "' was specified without -S.  This will not work in "
+						 + "future Bowtie 2 versions.  Please use -S instead."
+						 );
 				}
 
 				// Extra parametesr?
-				if(optind < argc) {
-					cerr << "Extra parameter(s) specified: ";
-					for(int i = optind; i < argc; i++) {
-						cerr << "\"" << argv[i] << "\"";
-						if(i < argc-1) cerr << ", ";
+				if(optind < args.length) {
+					System.err.println( "Extra parameter(s) specified: ");
+					for(int i = optind; i < args.length; i++) {
+						System.err.println( "\"" + args[i] + "\"");
+						if(i < args.length-1)
+							System.err.println( ", ");
 					}
-					cerr << endl;
+					System.err.println( );
 					if(mates1.size() > 0) {
-						cerr << "Note that if <mates> files are specified using -1/-2, a <singles> file cannot" << endl
-							 << "also be specified.  Please run bowtie separately for mates and singles." << endl;
+						System.err.println( "Note that if <mates> files are specified using -1/-2, a <singles> file cannot"
+							 + "also be specified.  Please run bowtie separately for mates and singles." );
 					}
-					throw 1;
 				}
 
 				// Optionally summarize
 				if(gVerbose) {
-					cout << "Input " + gEbwt_ext +" file: \"" << bt2index.c_str() << "\"" << endl;
-					cout << "Query inputs (DNA, " << file_format_names[format].c_str() << "):" << endl;
-					for(size_t i = 0; i < queries.size(); i++) {
-						cout << "  " << queries[i].c_str() << endl;
+					System.out.println( "Input " + gEbwt_ext +" file: \"" << bt2index.c_str() << "\"" );
+					System.out.println( "Query inputs (DNA, " << file_format_names[format].c_str() << "):" );
+					for(double i = 0; i < queries.size(); i++) {
+						System.out.println( "  " << queries[i].c_str() );
 					}
-					cout << "Quality inputs:" << endl;
-					for(size_t i = 0; i < qualities.size(); i++) {
-						cout << "  " << qualities[i].c_str() << endl;
+					System.out.println( "Quality inputs:" );
+					for(double i = 0; i < qualities.size(); i++) {
+						System.out.println( "  " << qualities[i].c_str() );
 					}
-					cout << "Output file: \"" << outfile.c_str() << "\"" << endl;
-					cout << "Local endianness: " << (currentlyBigEndian()? "big":"little") << endl;
-					cout << "Sanity checking: " << (sanityCheck? "enabled":"disabled") << endl;
-				#ifdef NDEBUG
-					cout << "Assertions: disabled" << endl;
-				#else
-					cout << "Assertions: enabled" << endl;
-				#endif
+					System.out.println( "Output file: \"" << outfile.c_str() << "\"" );
+					System.out.println( "Local endianness: " << (currentlyBigEndian()? "big":"little") );
+					System.out.println( "Sanity checking: " << (sanityCheck? "enabled":"disabled") );
 				}
-				if(ipause) {
-					cout << "Press key to continue..." << endl;
-					getchar();
-				}
+
 				driver<SString<char> >("DNA", bt2index, outfile);
 			}
-			return 0;
 		} catch(Exception e) {
 			System.err.println("Error: Encountered exception: '" + e + "'");
 			System.err.println("Command: ");
-			for(int i = 0; i < argc; i++)
-				System.err.println(argv[i] + " ");
-			return 1;
+			for(int i = 0; i < args.length; i++)
+				System.err.println(args[i] + " ");
 		} catch(int e) {
 			if(e != 0) {
 				System.err.println("Error: Encountered internal Bowtie 2 exception (#" + e + ")");
 				System.err.println("Command: ");
-				for(int i = 0; i < argc; i++)
-					System.err.println(argv[i] + " ");
+				for(int i = 0; i < args.length; i++)
+					System.err.println(args[i] + " ");
 			}
-			return e;
 	}
 	}
 	public static void resetOptions() {
@@ -508,12 +491,12 @@ class Aligner<T> {
 		saw_a = false;
 		saw_k = false;
 		presetList.clear();
-		if(startVerbose) { cerr << "Parsing options: "; logTime(cerr, true); }
+		if(startVerbose) { System.err.println( "Parsing options: "); logTime(cerr, true); }
 		while(true) {
 			next_option = getopt_long(
-				argc, const_cast<char**>(argv),
+				argc, const_cast<char>(argv),
 				short_options, long_options, &option_index);
-			const char * arg = optarg;
+			String arg = optarg;
 			if(next_option == EOF) {
 				if(extra_opts_cur < extra_opts.size()) {
 					next_option = extra_opts[extra_opts_cur].first;
@@ -533,10 +516,10 @@ class Aligner<T> {
 			polstr = applyPreset(defaultPreset, *presets.get()) + polstr;
 		}
 		// Apply specified presets
-		for(size_t i = 0; i < presetList.size(); i++) {
+		for(double i = 0; i < presetList.size(); i++) {
 			polstr += applyPreset(presetList[i], *presets.get());
 		}
-		for(size_t i = 0; i < extra_opts.size(); i++) {
+		for(double i = 0; i < extra_opts.size(); i++) {
 			next_option = extra_opts[extra_opts_cur].first;
 			const char *arg = extra_opts[extra_opts_cur].second.c_str();
 			parseOption(next_option, arg);
@@ -546,10 +529,10 @@ class Aligner<T> {
 			polstr = polstr.substr(1);
 		}
 		if(gVerbose) {
-			cerr << "Final policy string: '" << polstr.c_str() << "'" << endl;
+			System.err.println( "Final policy string: '" + polstr.c_str() + "'" );
 		}
-		size_t failStreakTmp = 0;
-		SeedAlignmentPolicy::parseString(
+		double failStreakTmp = 0;
+		SeedAlignmentPolicy.parseString(
 			polstr,
 			localAlign,
 			noisyHpolymer,
@@ -586,49 +569,43 @@ class Aligner<T> {
 			msample = true;
 		}
 		if(mates1.size() != mates2.size()) {
-			cerr << "Error: " << mates1.size() << " mate files/sequences were specified with -1, but " << mates2.size() << endl
-			     << "mate files/sequences were specified with -2.  The same number of mate files/" << endl
-			     << "sequences must be specified with -1 and -2." << endl;
-			throw 1;
+			System.err.println( "Error: " + mates1.size() + " mate files/sequences were specified with -1, but " + mates2.size() + "\n"
+			     + "mate files/sequences were specified with -2.  The same number of mate files/" + "\n"
+			     + "sequences must be specified with -1 and -2." );
 		}
 		if(qualities.size() && format != FASTA) {
-			cerr << "Error: one or more quality files were specified with -Q but -f was not" << endl
-			     << "enabled.  -Q works only in combination with -f and -C." << endl;
-			throw 1;
+			System.err.println( "Error: one or more quality files were specified with -Q but -f was not" + "\n"
+			     + "enabled.  -Q works only in combination with -f and -C." );
 		}
 		if(qualities1.size() && format != FASTA) {
-			cerr << "Error: one or more quality files were specified with --Q1 but -f was not" << endl
-			     << "enabled.  --Q1 works only in combination with -f and -C." << endl;
-			throw 1;
+			System.err.println( "Error: one or more quality files were specified with --Q1 but -f was not" + "\n"
+			     + "enabled.  --Q1 works only in combination with -f and -C." );
 		}
 		if(qualities2.size() && format != FASTA) {
-			cerr << "Error: one or more quality files were specified with --Q2 but -f was not" << endl
-			     << "enabled.  --Q2 works only in combination with -f and -C." << endl;
-			throw 1;
+			System.err.println( "Error: one or more quality files were specified with --Q2 but -f was not" + "\n"
+			     + "enabled.  --Q2 works only in combination with -f and -C." );
 		}
 		if(qualities1.size() > 0 && mates1.size() != qualities1.size()) {
-			cerr << "Error: " << mates1.size() << " mate files/sequences were specified with -1, but " << qualities1.size() << endl
-			     << "quality files were specified with --Q1.  The same number of mate and quality" << endl
-			     << "files must sequences must be specified with -1 and --Q1." << endl;
-			throw 1;
+			System.err.println( "Error: " + mates1.size() + " mate files/sequences were specified with -1, but " + qualities1.size() + "\n"
+			     + "quality files were specified with --Q1.  The same number of mate and quality" + "\n"
+			     + "files must sequences must be specified with -1 and --Q1." );
 		}
 		if(qualities2.size() > 0 && mates2.size() != qualities2.size()) {
-			cerr << "Error: " << mates2.size() << " mate files/sequences were specified with -2, but " << qualities2.size() << endl
-			     << "quality files were specified with --Q2.  The same number of mate and quality" << endl
-			     << "files must sequences must be specified with -2 and --Q2." << endl;
-			throw 1;
+			System.err.println( "Error: " + mates2.size() + " mate files/sequences were specified with -2, but " + qualities2.size() + "\n"
+			     + "quality files were specified with --Q2.  The same number of mate and quality" + "\n"
+			     + "files must sequences must be specified with -2 and --Q2." );
 		}
 		if(!rgs.empty() && rgid.empty()) {
-			cerr << "Warning: --rg was specified without --rg-id also "
-			     << "being specified.  @RG line is not printed unless --rg-id "
-				 << "is specified." << endl;
+			System.err.println( "Warning: --rg was specified without --rg-id also "
+			     + "being specified.  @RG line is not printed unless --rg-id "
+				 + "is specified." );
 		}
 		// Check for duplicate mate input files
 		if(format != CMDLINE) {
-			for(size_t i = 0; i < mates1.size(); i++) {
-				for(size_t j = 0; j < mates2.size(); j++) {
+			for(double i = 0; i < mates1.size(); i++) {
+				for(double j = 0; j < mates2.size(); j++) {
 					if(mates1[i] == mates2[j] && !gQuiet) {
-						cerr << "Warning: Same mate file \"" << mates1[i].c_str() << "\" appears as argument to both -1 and -2" << endl;
+						System.err.println( "Warning: Same mate file \"" + mates1[i].c_str() + "\" appears as argument to both -1 and -2" );
 					}
 				}
 			}
@@ -640,35 +617,33 @@ class Aligner<T> {
 			qUpto += skipReads;
 		}
 		if(useShmem && useMm && !gQuiet) {
-			cerr << "Warning: --shmem overrides --mm..." << endl;
+			System.err.println( "Warning: --shmem overrides --mm..." );
 			useMm = false;
 		}
 		if(gGapBarrier < 1) {
-			cerr << "Warning: --gbar was set less than 1 (=" << gGapBarrier
-			     << "); setting to 1 instead" << endl;
+			System.err.println( "Warning: --gbar was set less than 1 (=" + gGapBarrier
+			     + "); setting to 1 instead" );
 			gGapBarrier = 1;
 		}
 		if(bonusMatch > 0 && !scoreMin.alwaysPositive()) {
-			cerr << "Error: the match penalty is greater than 0 (" << bonusMatch
-			     << ") but the --score-min function can be less than or equal to "
-				 << "zero.  Either let the match penalty be 0 or make --score-min "
-				 << "always positive." << endl;
-			throw 1;
+			System.err.println( "Error: the match penalty is greater than 0 (" + bonusMatch
+			     + ") but the --score-min function can be less than or equal to "
+				 + "zero.  Either let the match penalty be 0 or make --score-min "
+				 + "always positive." );
 		}
 		if(multiseedMms >= multiseedLen) {
-			assert_gt(multiseedLen, 0);
-			cerr << "Warning: seed mismatches (" << multiseedMms
-			     << ") is less than seed length (" << multiseedLen
-				 << "); setting mismatches to " << (multiseedMms-1)
-				 << " instead" << endl;
+			System.err.println( "Warning: seed mismatches (" + multiseedMms
+			     + ") is less than seed length (" + multiseedLen
+				 + "); setting mismatches to " + (multiseedMms-1)
+				 + " instead" );
 			multiseedMms = multiseedLen-1;
 		}
 		sam_print_zm = sam_print_zm && bowtie2p5;
-	#ifndef NDEBUG
+
 		if(!gQuiet) {
-			cerr << "Warning: Running in debug mode.  Please use debug mode only "
-				 << "for diagnosing errors, and not for typical use of Bowtie 2."
-				 << endl;
+			System.err.println( "Warning: Running in debug mode.  Please use debug mode only "
+				 + "for diagnosing errors, and not for typical use of Bowtie 2."
+				 );
 		}
 	}
 	
@@ -859,16 +834,21 @@ class Aligner<T> {
 		
 			if (l < lower || l > upper) {
 				System.err.println(errmsg);
-				//printUsage();
+				printUsage(cerr);
 			}
 			return (int)l;
 		System.err.println(errmsg);
-		//printUsage();
+		printUsage(cerr);
 		return -1;
 	}
 	
 	public static int parseInt(int lower, String errmsg, String arg) {
 		return parseInt(lower, Integer.MAX_VALUE, errmsg, arg);
+	}
+	
+	public T parse(String s) {
+		T tmp;
+		
 	}
 	
 	public Pair<T, T> parsePair(String s, char delim) {
@@ -889,8 +869,8 @@ class Aligner<T> {
 	public static String applyPreset(String sorig, Presets presets) {
 		String s = sorig;
 		double found = s.find("%LOCAL%");
-		if(found != string::npos) {
-			s.replace(found, strlen("%LOCAL%"), localAlign ? "-local" : "");
+		if(found != null) {
+			s.replace(found, "%LOCAL%".length(), localAlign ? "-local" : "");
 		}
 		if(gVerbose) {
 			System.err.println("Applying preset: '" + s + "' using preset menu '"
@@ -899,5 +879,540 @@ class Aligner<T> {
 		String pol;
 		presets.apply(s, pol, extra_opts);
 		return pol;
+	}
+	
+	public static void parseOption(int next_option, String arg) {
+	switch (next_option) {
+		case ARG_TEST_25: bowtie2p5 = true; break;
+		case ARG_DESC_KB: descentTotSz = SimpleFunc.parse(arg, 0.0, 1024.0, 1024.0, DMAX); break;
+		case ARG_DESC_FMOPS: descentTotFmops = SimpleFunc.parse(arg, 0.0, 10.0, 100.0, DMAX); break;
+		case ARG_LOG_DP: logDps = arg; break;
+		case ARG_LOG_DP_OPP: logDpsOpp = arg; break;
+		case ARG_DESC_LANDING: {
+			descLanding = parse<Integer>(arg);
+			if(descLanding < 1) {
+				System.err.println( "Error: --desc-landing must be greater than or equal to 1");
+			}
+			break;
+		}
+		case ARG_DESC_EXP: {
+			descConsExp = parse<double>(arg);
+			if(descConsExp < 0.0) {
+				System.err.println( "Error: --desc-exp must be greater than or equal to 0");
+			}
+			break;
+		}
+		case ARG_DESC_PRIORITIZE: descPrioritizeRoots = true; break;
+		case '1': tokenize(arg, ",", mates1); break;
+		case '2': tokenize(arg, ",", mates2); break;
+		case ARG_ONETWO: tokenize(arg, ",", mates12); format = TAB_MATE5; break;
+		case ARG_TAB5:   tokenize(arg, ",", mates12); format = TAB_MATE5; break;
+		case ARG_TAB6:   tokenize(arg, ",", mates12); format = TAB_MATE6; break;
+		case ARG_INTERLEAVED_FASTQ: tokenize(arg, ",", mates12); format = INTERLEAVED; break;
+		case 'f': format = FASTA; break;
+		case 'F': {
+			format = FASTA_CONT;
+			Pair<double, double> p = parsePair<double>(arg, ',');
+			fastaContLen = p.first;
+			fastaContFreq = p.second;
+			break;
+		}
+		case ARG_BWA_SW_LIKE: {
+			bwaSwLikeC = 5.5f;
+			bwaSwLikeT = 30;
+			bwaSwLike = true;
+			localAlign = true;
+			// -a INT   Score of a match [1]
+			// -b INT   Mismatch penalty [3]
+			// -q INT   Gap open penalty [5]
+			// -r INT   Gap extension penalty. The penalty for a contiguous
+			//          gap of size k is q+k*r. [2] 
+			polstr += ";MA=1;MMP=C3;RDG=5,2;RFG=5,2";
+			break;
+		}
+		case 'q': format = FASTQ; break;
+		case 'r': format = RAW; break;
+		case 'c': format = CMDLINE; break;
+		case ARG_QSEQ: format = QSEQ; break;
+		case 'I':
+			gMinInsert = parseInt(0, "-I arg must be positive", arg);
+			break;
+		case 'X':
+			gMaxInsert = parseInt(1, "-X arg must be at least 1", arg);
+			break;
+		case ARG_NO_DISCORDANT: gReportDiscordant = false; break;
+		case ARG_NO_MIXED: gReportMixed = false; break;
+		case 's':
+			skipReads = (double)parseInt(0, "-s arg must be positive", arg);
+			break;
+		case ARG_FF: gMate1fw = true;  gMate2fw = true;  break;
+		case ARG_RF: gMate1fw = false; gMate2fw = true;  break;
+		case ARG_FR: gMate1fw = true;  gMate2fw = false; break;
+		case ARG_SHMEM: useShmem = true; break;
+		case ARG_SEED_SUMM: seedSumm = true; break;
+		case ARG_SC_UNMAPPED: scUnMapped = true; break;
+		case ARG_XEQ: xeq = true; break;
+		case ARG_MM: {
+			System.err.println( "Memory-mapped I/O mode is disabled because bowtie was not compiled with" + "\n"
+				 + "BOWTIE_MM defined.  Memory-mapped I/O is not supported under Windows.  If you" + "\n"
+				 + "would like to use memory-mapped I/O on a platform that supports it, please" + "\n"
+				 + "refrain from specifying BOWTIE_MM=0 when compiling Bowtie.");
+		}
+		case ARG_MMSWEEP: mmSweep = true; break;
+		case ARG_HADOOPOUT: hadoopOut = true; break;
+		case ARG_SOLEXA_QUALS: solexaQuals = true; break;
+		case ARG_INTEGER_QUALS: integerQuals = true; break;
+		case ARG_PHRED64: phred64Quals = true; break;
+		case ARG_PHRED33: solexaQuals = false; phred64Quals = false; break;
+		case ARG_OVERHANG: gReportOverhangs = true; break;
+		case ARG_NO_CACHE: msNoCache = true; break;
+		case ARG_USE_CACHE: msNoCache = false; break;
+		case ARG_LOCAL_SEED_CACHE_SZ:
+			seedCacheLocalMB = (double)parseInt(1, "--local-seed-cache-sz arg must be at least 1", arg);
+			break;
+		case ARG_CURRENT_SEED_CACHE_SZ:
+			seedCacheCurrentMB = (double)parseInt(1, "--seed-cache-sz arg must be at least 1", arg);
+			break;
+		case ARG_REFIDX: noRefNames = true; break;
+		case ARG_FULLREF: fullRef = true; break;
+		case ARG_GAP_BAR:
+			gGapBarrier = parseInt(1, "--gbar must be no less than 1", arg);
+			break;
+		case ARG_SEED:
+			seed = parseInt(0, "--seed arg must be at least 0", arg);
+			break;
+		case ARG_NON_DETERMINISTIC:
+			arbitraryRandom = true;
+			break;
+		case 'u':
+			qUpto = (double)parseInt(1, "-u/--qupto arg must be at least 1", arg);
+			break;
+		case 'Q':
+			tokenize(arg, ",", qualities);
+			integerQuals = true;
+			break;
+		case ARG_QUALS1:
+			tokenize(arg, ",", qualities1);
+			integerQuals = true;
+			break;
+		case ARG_QUALS2:
+			tokenize(arg, ",", qualities2);
+			integerQuals = true;
+			break;
+		case ARG_CACHE_LIM:
+			cacheLimit = (double)parseInt(1, "--cachelim arg must be at least 1", arg);
+			break;
+		case ARG_CACHE_SZ:
+			cacheSize = (double)parseInt(1, "--cachesz arg must be at least 1", arg);
+			cacheSize *= (1024 * 1024); // convert from MB to B
+			break;
+		case ARG_WRAPPER: wrapper = arg; break;
+		case 'p':
+			nthreads = parseInt(1, "-p/--threads arg must be at least 1", arg);
+			break;
+		case ARG_THREAD_CEILING:
+			thread_ceiling = parseInt(0, "--thread-ceiling must be at least 0", arg);
+			break;
+		case ARG_THREAD_PIDDIR:
+			thread_stealing_dir = arg;
+			break;
+		case ARG_FILEPAR:
+			fileParallel = true;
+			break;
+		case '3': gTrim3 = parseInt(0, "-3/--trim3 arg must be at least 0", arg); break;
+		case '5': gTrim5 = parseInt(0, "-5/--trim5 arg must be at least 0", arg); break;
+		case 'h': printUsage(cout); throw 0; break;
+		case ARG_USAGE: printUsage(cout); throw 0; break;
+		//
+		// NOTE that unlike in Bowtie 1, -M, -a and -k are mutually
+		// exclusive here.
+		//
+		case 'M': {
+			msample = true;
+			mhits = parse<double>(arg);
+			if(saw_a || saw_k) {
+				System.err.println( "Warning: -M, -k and -a are mutually exclusive. "
+					 + "-M will override");
+				khits = 1;
+			}
+			saw_M = true;
+			System.err.println( "Warning: -M is deprecated.  Use -D and -R to adjust " +
+			        "effort instead.");
+			break;
+		}
+		case ARG_EXTEND_ITERS: {
+			maxIters = parse<double>(arg);
+			break;
+		}
+		case ARG_NO_EXTEND: {
+			doExtend = false;
+			break;
+		}
+		case 'R': { polstr += ";ROUNDS="; polstr += arg; break; }
+		case 'D': { polstr += ";DPS=";    polstr += arg; break; }
+		case ARG_DP_MATE_STREAK_THRESH: {
+			maxMateStreak = parse<double>(arg);
+			break;
+		}
+		case ARG_DP_FAIL_STREAK_THRESH: {
+			maxDpStreak = parse<double>(arg);
+			break;
+		}
+		case ARG_EE_FAIL_STREAK_THRESH: {
+			maxEeStreak = parse<double>(arg);
+			break;
+		}
+		case ARG_UG_FAIL_STREAK_THRESH: {
+			maxUgStreak = parse<double>(arg);
+			break;
+		}
+		case ARG_DP_FAIL_THRESH: {
+			maxDp = parse<double>(arg);
+			break;
+		}
+		case ARG_UG_FAIL_THRESH: {
+			maxUg = parse<double>(arg);
+			break;
+		}
+		case ARG_SEED_BOOST_THRESH: {
+			seedBoostThresh = parse<int>(arg);
+			break;
+		}
+		case 'a': {
+			msample = false;
+			allHits = true;
+			mhits = 0; // disable -M
+			if(saw_M || saw_k) {
+				System.err.println( "Warning: -M, -k and -a are mutually exclusive. "
+					 + "-a will override");
+			}
+			saw_a = true;
+			break;
+		}
+		case 'k': {
+			msample = false;
+			khits = (double)parseInt(1, "-k arg must be at least 1", arg);
+			mhits = 0; // disable -M
+			if(saw_M || saw_a) {
+				System.err.println( "Warning: -M, -k and -a are mutually exclusive. "
+					 + "-k will override");
+			}
+			saw_k = true;
+			break;
+		}
+		case ARG_VERBOSE: gVerbose = 1; break;
+		case ARG_STARTVERBOSE: startVerbose = true; break;
+		case ARG_QUIET: gQuiet = true; break;
+		case ARG_SANITY: sanityCheck = true; break;
+		case 't': timing = true; break;
+		case ARG_METRIC_IVAL: {
+			metricsIval = parseInt(1, "--metrics arg must be at least 1", arg);
+			break;
+		}
+		case ARG_METRIC_FILE: metricsFile = arg; break;
+		case ARG_METRIC_STDERR: metricsStderr = true; break;
+		case ARG_METRIC_PER_READ: metricsPerRead = true; break;
+		case ARG_NO_FW: gNofw = true; break;
+		case ARG_NO_RC: gNorc = true; break;
+		case ARG_SAM_NO_QNAME_TRUNC: samTruncQname = false; break;
+		case ARG_SAM_OMIT_SEC_SEQ: samOmitSecSeqQual = true; break;
+		case ARG_SAM_NO_UNAL: samNoUnal = true; break;
+		case ARG_SAM_NOHEAD: samNoHead = true; break;
+		case ARG_SAM_NOSQ: samNoSQ = true; break;
+		case ARG_SAM_PRINT_YI: sam_print_yi = true; break;
+		case ARG_REORDER: reorder = true; break;
+		case ARG_MAPQ_EX: {
+			sam_print_zt = true;
+			break;
+		}
+		case ARG_SHOW_RAND_SEED: {
+			sam_print_zs = true;
+			break;
+		}
+		case ARG_SAMPLE:
+			sampleFrac = parse<float>(arg);
+			break;
+		case ARG_CP_MIN:
+			cminlen = parse<double>(arg);
+			break;
+		case ARG_CP_IVAL:
+			cpow2 = parse<double>(arg);
+			break;
+		case ARG_TRI:
+			doTri = true;
+			break;
+		case ARG_READ_PASSTHRU: {
+			sam_print_xr = true;
+			break;
+		}
+		case ARG_READ_TIMES: {
+			sam_print_xt = true;
+			sam_print_xd = true;
+			sam_print_xu = true;
+			sam_print_yl = true;
+			sam_print_ye = true;
+			sam_print_yu = true;
+			sam_print_yr = true;
+			sam_print_zb = true;
+			sam_print_zr = true;
+			sam_print_zf = true;
+			sam_print_zm = true;
+			sam_print_zi = true;
+			break;
+		}
+		case ARG_SAM_RG: {
+			String argstr = arg;
+			if(argstr.substr(0, 3) == "ID:") {
+				rgid = "\t";
+				rgid += argstr;
+				rgs_optflag = "RG:Z:" + argstr.substr(3);
+			} else {
+				rgs += '\t';
+				rgs += argstr;
+			}
+			break;
+		}
+		case ARG_SAM_RGID: {
+			String argstr = arg;
+			rgid = "\t";
+			rgid = "\tID:" + argstr;
+			rgs_optflag = "RG:Z:" + argstr;
+			break;
+		}
+		case ARG_PARTITION: partitionSz = parse<int>(arg); break;
+		case ARG_READS_PER_BATCH:
+			readsPerBatch = parseInt(1, "--reads-per-batch arg must be at least 1", arg);
+			break;
+		case ARG_DPAD:
+			maxhalf = parseInt(0, "--dpad must be no less than 0", arg);
+			break;
+		case ARG_ORIG:
+			if(arg == null || arg.length() == 0) {
+				System.err.println( "--orig arg must be followed by a string");
+				printUsage(cerr);
+			}
+			origString = arg;
+			break;
+		case ARG_LOCAL: {
+			localAlign = true;
+			gDefaultSeedLen = DEFAULT_LOCAL_SEEDLEN;
+			break;
+		}
+		case ARG_END_TO_END: localAlign = false; break;
+		case ARG_SSE8: enable8 = true; break;
+		case ARG_SSE8_NO: enable8 = false; break;
+		case ARG_UNGAPPED: doUngapped = true; break;
+		case ARG_UNGAPPED_NO: doUngapped = false; break;
+		case ARG_NO_DOVETAIL: gDovetailMatesOK = false; break;
+		case ARG_NO_CONTAIN:  gContainMatesOK  = false; break;
+		case ARG_NO_OVERLAP:  gOlapMatesOK     = false; break;
+		case ARG_DOVETAIL:    gDovetailMatesOK = true;  break;
+		case ARG_CONTAIN:     gContainMatesOK  = true;  break;
+		case ARG_OVERLAP:     gOlapMatesOK     = true;  break;
+		case ARG_QC_FILTER: qcFilter = true; break;
+		case ARG_IGNORE_QUALS: ignoreQuals = true; break;
+		case ARG_MAPQ_V: mapqv = parse<int>(arg); break;
+		case ARG_TIGHTEN: tighten = parse<int>(arg); break;
+		case ARG_EXACT_UPFRONT:    doExactUpFront = true; break;
+		case ARG_1MM_UPFRONT:      do1mmUpFront   = true; break;
+		case ARG_EXACT_UPFRONT_NO: doExactUpFront = false; break;
+		case ARG_1MM_UPFRONT_NO:   do1mmUpFront   = false; break;
+		case ARG_1MM_MINLEN:       do1mmMinLen = parse<double>(arg); break;
+		case ARG_NOISY_HPOLY: noisyHpolymer = true; break;
+		case 'x': bt2index = arg; break;
+		case ARG_PRESET_VERY_FAST_LOCAL: localAlign = true;
+		case ARG_PRESET_VERY_FAST: {
+			presetList.push_back("very-fast%LOCAL%"); break;
+		}
+		case ARG_PRESET_FAST_LOCAL: localAlign = true;
+		case ARG_PRESET_FAST: {
+			presetList.push_back("fast%LOCAL%"); break;
+		}
+		case ARG_PRESET_SENSITIVE_LOCAL: localAlign = true;
+		case ARG_PRESET_SENSITIVE: {
+			presetList.push_back("sensitive%LOCAL%"); break;
+		}
+		case ARG_PRESET_VERY_SENSITIVE_LOCAL: localAlign = true;
+		case ARG_PRESET_VERY_SENSITIVE: {
+			presetList.push_back("very-sensitive%LOCAL%"); break;
+		}
+		case 'P': { presetList.push_back(arg); break; }
+		case ARG_ALIGN_POLICY: {
+			if(arg.length() > 0) {
+				polstr += ";"; polstr += arg;
+			}
+			break;
+		}
+		case 'N': {
+			long len = parse<double>(arg);
+			if (len < 0 || len > 1) {
+				System.err.println( "Error: -N argument must be within the interval [0,1]; was " + arg );
+			}
+			polstr += ";SEED=";
+			polstr += arg;
+			break;
+		}
+		case 'L': {
+			long len = parse<double>(arg);
+			if(len < 1 || len > 32) {
+				System.err.println( "Error: -L argument must be within the interval [1,32]; was " + arg);
+			}
+			polstr += ";SEEDLEN=";
+			polstr += arg;
+			break;
+		}
+		case 'O':
+			multiseedOff = parse<double>(arg);
+			break;
+		case 'i': {
+			EList<String> args;
+			tokenize(arg, ",", args);
+			if(args.size() > 3 || args.size() == 0) {
+				System.err.println( "Error: expected 3 or fewer comma-separated "
+					 + "arguments to -i option, got "
+					 + args.size());
+			}
+			// Interval-settings arguments
+			polstr += (";IVAL=" + args[0]); // Function type
+			if(args.size() > 1) {
+				polstr += ("," + args[1]);  // Constant term
+			}
+			if(args.size() > 2) {
+				polstr += ("," + args[2]);  // Coefficient
+			}
+			break;
+		}
+		case ARG_MULTISEED_IVAL: {
+			polstr += ";";
+			// Split argument by comma
+			EList<String> args;
+			tokenize(arg, ",", args);
+			if(args.size() > 5 || args.size() == 0) {
+				System.err.println( "Error: expected 5 or fewer comma-separated "
+					 + "arguments to --multiseed option, got "
+					 + args.size());
+			}
+			// Seed mm and length arguments
+			polstr += "SEED=";
+			polstr += (args[0]); // # mismatches
+			if(args.size() >  1) polstr += (";SEEDLEN=" + args[1]); // length
+			if(args.size() >  2) polstr += (";IVAL=" + args[2]); // Func type
+			if(args.size() >  3) polstr += ("," + args[ 3]); // Constant term
+			if(args.size() >  4) polstr += ("," + args[ 4]); // Coefficient
+			break;
+		}
+		case ARG_N_CEIL: {
+			// Split argument by comma
+			EList<String> args;
+			tokenize(arg, ",", args);
+			if(args.size() > 3) {
+				System.err.println( "Error: expected 3 or fewer comma-separated "
+					 + "arguments to --n-ceil option, got "
+					 + args.size());
+			}
+			if(args.size() == 0) {
+				System.err.println( "Error: expected at least one argument to --n-ceil option");
+			}
+			polstr += ";NCEIL=";
+			if(args.size() == 3) {
+				polstr += (args[0] + "," + args[1] + "," + args[2]);
+			} else {
+				polstr += ("L," + args[0]);
+				if(args.size() > 1) {
+					polstr += ("," + (args[1]));
+				}
+			}
+			break;
+		}
+		case ARG_SCORE_MA:  polstr += ";MA=";    polstr += arg; break;
+		case ARG_SCORE_MMP: {
+			EList<String> args;
+			tokenize(arg, ",", args);
+			if(args.size() > 2 || args.size() == 0) {
+				System.err.println( "Error: expected 1 or 2 comma-separated "
+					 + "arguments to --mmp option, got " + args.size());
+			}
+			if(args.size() >= 1) {
+				polstr += ";MMP=Q,";
+				polstr += args[0];
+				if(args.size() >= 2) {
+					polstr += ",";
+					polstr += args[1];
+				}
+			}
+			break;
+		}
+		case ARG_SCORE_NP:  polstr += ";NP=C";   polstr += arg; break;
+		case ARG_SCORE_RDG: polstr += ";RDG=";   polstr += arg; break;
+		case ARG_SCORE_RFG: polstr += ";RFG=";   polstr += arg; break;
+		case ARG_SCORE_MIN: {
+			polstr += ";";
+			EList<String> args;
+			tokenize(arg, ",", args);
+			if(args.size() > 3 || args.size() == 0) {
+				System.err.println( "Error: expected 3 or fewer comma-separated "
+					 + "arguments to --n-ceil option, got "
+					 + args.size() );
+			}
+			polstr += ("MIN=" + args[0]);
+			if(args.size() > 1) {
+				polstr += ("," + args[1]);
+			}
+			if(args.size() > 2) {
+				polstr += ("," + args[2]);
+			}
+			break;
+		}
+		case ARG_DESC: printArgDesc(cout);
+		case 'S': outfile = arg; break;
+		case 'U': {
+			EList<String> args;
+			tokenize(arg, ",", args);
+			for(double i = 0; i < args.size(); i++) {
+				queries.push_back(args[i]);
+			}
+			break;
+		}
+		case ARG_VERSION: showVersion = 1; break;
+		default:
+			printUsage(cerr);
+			throw 1;
+	}
+	if (!localAlign && scUnMapped) {
+		scUnMapped = false;
+		System.err.println( "WARNING: --soft-clipped-unmapped-tlen can only be set for "
+		     + "local alignment... ignoring");
+	}
+	}
+	
+	class OuterLoopMetrics {
+		long reads;   // total reads
+		long bases;   // total bases
+		long srreads; // same-read reads
+		long srbases; // same-read bases
+		long freads;  // filtered reads
+		long fbases;  // filtered bases
+		long ureads;  // unfiltered reads
+		long ubases;  // unfiltered bases
+		
+		public OuterLoopMetrics() {
+			reset();
+		}
+		
+		public void reset() {
+			reads = bases = srreads = srbases =
+					freads = fbases = ureads = ubases = 0;
+		}
+		
+		public void merge(OuterLoopMetrics m) {
+			reads += m.reads;
+			bases += m.bases;
+			srreads += m.srreads;
+			srbases += m.srbases;
+			freads += m.freads;
+			fbases += m.fbases;
+			ureads += m.ureads;
+			ubases += m.ubases;
+		}
 	}
 }

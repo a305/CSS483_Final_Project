@@ -42,41 +42,21 @@ public class AlignerMetrics {
 	protected Timer timer_;
 	
 	public AlignerMetrics() {
-		curBacktracks_(0),
-		curBwtOps_(0),
-		first_(true),
-		curIsLowEntropy_(false),
-		curIsHomoPoly_(false),
-		curHadRanges_(false),
-		curNumNs_(0),
-		reads_(0),
-		homoReads_(0),
-		lowEntReads_(0),
-		hiEntReads_(0),
-		alignedReads_(0),
-		unalignedReads_(0),
-		threeOrMoreNReads_(0),
-		lessThanThreeNRreads_(0),
-		bwtOpsPerRead_(),
-		backtracksPerRead_(),
-		bwtOpsPerHomoRead_(),
-		backtracksPerHomoRead_(),
-		bwtOpsPerLoEntRead_(),
-		backtracksPerLoEntRead_(),
-		bwtOpsPerHiEntRead_(),
-		backtracksPerHiEntRead_(),
-		bwtOpsPerAlignedRead_(),
-		backtracksPerAlignedRead_(),
-		bwtOpsPerUnalignedRead_(),
-		backtracksPerUnalignedRead_(),
-		bwtOpsPer0nRead_(),
-		backtracksPer0nRead_(),
-		bwtOpsPer1nRead_(),
-		backtracksPer1nRead_(),
-		bwtOpsPer2nRead_(),
-		backtracksPer2nRead_(),
-		bwtOpsPer3orMoreNRead_(),
-		backtracksPer3orMoreNRead_(),
+		curBacktracks_ = 0;
+		curBwtOps_ = 0;
+		first_ = true;
+		curIsLowEntropy_ =false;
+		curIsHomoPoly_=false;
+		curHadRanges_=false;
+		curNumNs_=0;
+		reads_=0;
+		homoReads_=0;
+		lowEntReads_=0;
+		hiEntReads_=0;
+		alignedReads_=0;
+		unalignedReads_=0;
+		threeOrMoreNReads_=0;
+		lessThanThreeNRreads_=0;
 		timer_(cout, "", false)
 	}
 	
@@ -155,56 +135,56 @@ public class AlignerMetrics {
 		if(!first_) {
 			finishRead();
 		}
-		cout << "AlignerMetrics:" << endl;
-		cout << "  # Reads:             " << reads_ << endl;
+		System.out.println("AlignerMetrics:");
+		System.out.println("  # Reads:             " + reads_);
 		float hopct = (reads_ > 0) ? (((float)homoReads_)/((float)reads_)) : (0.0f);
 		hopct *= 100.0f;
-		cout << "  % homo-polymeric:    " << (hopct) << endl;
+		System.out.println("  % homo-polymeric:    " + (hopct));
 		float lopct = (reads_ > 0) ? ((float)lowEntReads_/(float)(reads_)) : (0.0f);
 		lopct *= 100.0f;
-		cout << "  % low-entropy:       " << (lopct) << endl;
+		System.out.println("  % low-entropy:       " + (lopct));
 		float unpct = (reads_ > 0) ? ((float)unalignedReads_/(float)(reads_)) : (0.0f);
 		unpct *= 100.0f;
-		cout << "  % unaligned:         " << (unpct) << endl;
+		System.out.println("  % unaligned:         " + (unpct));
 		float npct = (reads_ > 0) ? ((float)threeOrMoreNReads_/(float)(reads_)) : (0.0f);
 		npct *= 100.0f;
-		cout << "  % with 3 or more Ns: " << (npct) << endl;
-		cout << endl;
-		cout << "  Total BWT ops:    avg: " << bwtOpsPerRead_.mean() << ", stddev: " << bwtOpsPerRead_.stddev() << endl;
-		cout << "  Total Backtracks: avg: " << backtracksPerRead_.mean() << ", stddev: " << backtracksPerRead_.stddev() << endl;
+		System.out.println( "  % with 3 or more Ns: " + (npct));
+		System.out.println();
+		System.out.println( "  Total BWT ops:    avg: " + bwtOpsPerRead_.mean() + ", stddev: " + bwtOpsPerRead_.stddev());
+		System.out.println("  Total Backtracks: avg: " + backtracksPerRead_.mean() + ", stddev: " + backtracksPerRead_.stddev());
 		time_t elapsed = timer_.elapsed();
-		cout << "  BWT ops per second:    " << (bwtOpsPerRead_.tot()/elapsed) << endl;
-		cout << "  Backtracks per second: " << (backtracksPerRead_.tot()/elapsed) << endl;
-		cout << endl;
-		cout << "  Homo-poly:" << endl;
-		cout << "    BWT ops:    avg: " << bwtOpsPerHomoRead_.mean() << ", stddev: " << bwtOpsPerHomoRead_.stddev() << endl;
-		cout << "    Backtracks: avg: " << backtracksPerHomoRead_.mean() << ", stddev: " << backtracksPerHomoRead_.stddev() << endl;
-		cout << "  Low-entropy:" << endl;
-		cout << "    BWT ops:    avg: " << bwtOpsPerLoEntRead_.mean() << ", stddev: " << bwtOpsPerLoEntRead_.stddev() << endl;
-		cout << "    Backtracks: avg: " << backtracksPerLoEntRead_.mean() << ", stddev: " << backtracksPerLoEntRead_.stddev() << endl;
-		cout << "  High-entropy:" << endl;
-		cout << "    BWT ops:    avg: " << bwtOpsPerHiEntRead_.mean() << ", stddev: " << bwtOpsPerHiEntRead_.stddev() << endl;
-		cout << "    Backtracks: avg: " << backtracksPerHiEntRead_.mean() << ", stddev: " << backtracksPerHiEntRead_.stddev() << endl;
-		cout << endl;
-		cout << "  Unaligned:" << endl;
-		cout << "    BWT ops:    avg: " << bwtOpsPerUnalignedRead_.mean() << ", stddev: " << bwtOpsPerUnalignedRead_.stddev() << endl;
-		cout << "    Backtracks: avg: " << backtracksPerUnalignedRead_.mean() << ", stddev: " << backtracksPerUnalignedRead_.stddev() << endl;
-		cout << "  Aligned:" << endl;
-		cout << "    BWT ops:    avg: " << bwtOpsPerAlignedRead_.mean() << ", stddev: " << bwtOpsPerAlignedRead_.stddev() << endl;
-		cout << "    Backtracks: avg: " << backtracksPerAlignedRead_.mean() << ", stddev: " << backtracksPerAlignedRead_.stddev() << endl;
-		cout << endl;
-		cout << "  0 Ns:" << endl;
-		cout << "    BWT ops:    avg: " << bwtOpsPer0nRead_.mean() << ", stddev: " << bwtOpsPer0nRead_.stddev() << endl;
-		cout << "    Backtracks: avg: " << backtracksPer0nRead_.mean() << ", stddev: " << backtracksPer0nRead_.stddev() << endl;
-		cout << "  1 N:" << endl;
-		cout << "    BWT ops:    avg: " << bwtOpsPer1nRead_.mean() << ", stddev: " << bwtOpsPer1nRead_.stddev() << endl;
-		cout << "    Backtracks: avg: " << backtracksPer1nRead_.mean() << ", stddev: " << backtracksPer1nRead_.stddev() << endl;
-		cout << "  2 Ns:" << endl;
-		cout << "    BWT ops:    avg: " << bwtOpsPer2nRead_.mean() << ", stddev: " << bwtOpsPer2nRead_.stddev() << endl;
-		cout << "    Backtracks: avg: " << backtracksPer2nRead_.mean() << ", stddev: " << backtracksPer2nRead_.stddev() << endl;
-		cout << "  >2 Ns:" << endl;
-		cout << "    BWT ops:    avg: " << bwtOpsPer3orMoreNRead_.mean() << ", stddev: " << bwtOpsPer3orMoreNRead_.stddev() << endl;
-		cout << "    Backtracks: avg: " << backtracksPer3orMoreNRead_.mean() << ", stddev: " << backtracksPer3orMoreNRead_.stddev() << endl;
-		cout << endl;
+		System.out.println("  BWT ops per second:    " + (bwtOpsPerRead_.tot()/elapsed));
+		System.out.println("  Backtracks per second: " + (backtracksPerRead_.tot()/elapsed));
+		System.out.println();
+		System.out.println("  Homo-poly:" );
+		System.out.println("    BWT ops:    avg: " + bwtOpsPerHomoRead_.mean() + ", stddev: " + bwtOpsPerHomoRead_.stddev() );
+		System.out.println("    Backtracks: avg: " + backtracksPerHomoRead_.mean() + ", stddev: " + backtracksPerHomoRead_.stddev() );
+		System.out.println("  Low-entropy:" );;
+		System.out.println("    BWT ops:    avg: " + bwtOpsPerLoEntRead_.mean() + ", stddev: " + bwtOpsPerLoEntRead_.stddev() );
+		System.out.println("    Backtracks: avg: " + backtracksPerLoEntRead_.mean() + ", stddev: " + backtracksPerLoEntRead_.stddev() );
+		System.out.println("  High-entropy:" );
+		System.out.println("    BWT ops:    avg: " + bwtOpsPerHiEntRead_.mean() + ", stddev: " + bwtOpsPerHiEntRead_.stddev() );
+		System.out.println("    Backtracks: avg: " + backtracksPerHiEntRead_.mean() + ", stddev: " + backtracksPerHiEntRead_.stddev() );
+		System.out.println();
+		System.out.println("  Unaligned:" );
+		System.out.println("    BWT ops:    avg: " + bwtOpsPerUnalignedRead_.mean() + ", stddev: " + bwtOpsPerUnalignedRead_.stddev() );
+		System.out.println("    Backtracks: avg: " + backtracksPerUnalignedRead_.mean() + ", stddev: " + backtracksPerUnalignedRead_.stddev() );;
+		System.out.println("  Aligned:" );
+		System.out.println("    BWT ops:    avg: " + bwtOpsPerAlignedRead_.mean() + ", stddev: " + bwtOpsPerAlignedRead_.stddev() );
+		System.out.println("    Backtracks: avg: " + backtracksPerAlignedRead_.mean() + ", stddev: " + backtracksPerAlignedRead_.stddev() );
+		System.out.println();
+		System.out.println("  0 Ns:" );
+		System.out.println("    BWT ops:    avg: " + bwtOpsPer0nRead_.mean() + ", stddev: " + bwtOpsPer0nRead_.stddev() );
+		System.out.println("    Backtracks: avg: " + backtracksPer0nRead_.mean() + ", stddev: " + backtracksPer0nRead_.stddev() );
+		System.out.println("  1 N:" );
+		System.out.println("    BWT ops:    avg: " + bwtOpsPer1nRead_.mean() + ", stddev: " + bwtOpsPer1nRead_.stddev() );
+		System.out.println("    Backtracks: avg: " + backtracksPer1nRead_.mean() + ", stddev: " + backtracksPer1nRead_.stddev() );
+		System.out.println("  2 Ns:" );
+		System.out.println("    BWT ops:    avg: " + bwtOpsPer2nRead_.mean() + ", stddev: " + bwtOpsPer2nRead_.stddev() );
+		System.out.println("    Backtracks: avg: " + backtracksPer2nRead_.mean() + ", stddev: " + backtracksPer2nRead_.stddev() );
+		System.out.println("  >2 Ns:" );
+		System.out.println("    BWT ops:    avg: " + bwtOpsPer3orMoreNRead_.mean() + ", stddev: " + bwtOpsPer3orMoreNRead_.stddev() );
+		System.out.println("    Backtracks: avg: " + backtracksPer3orMoreNRead_.mean() + ", stddev: " + backtracksPer3orMoreNRead_.stddev() );
+		System.out.println();
 	}
 }
