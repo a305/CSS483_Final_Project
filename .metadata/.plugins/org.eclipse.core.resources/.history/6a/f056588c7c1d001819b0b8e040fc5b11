@@ -57,9 +57,10 @@ public class SeedAligner {
 		ret.first = 0;  // # seeds that require alignment
 		ret.second = 0; // # seeds that hit in cache with non-empty results
 		sr.reset(read, offIdx2off_, nseeds);
+		assert(sr.repOk(&cache.current(), true)); // require that SeedResult be initialized
 		// For each seed position
 		for(int fwi = 0; fwi < 2; fwi++) {
-			Boolean fw = (fwi == 0);
+			bool fw = (fwi == 0);
 			if((fw && nofw) || (!fw && norc)) {
 				// Skip this orientation b/c user specified --nofw or --norc
 				continue;

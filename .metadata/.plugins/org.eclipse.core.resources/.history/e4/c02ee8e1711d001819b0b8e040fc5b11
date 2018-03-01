@@ -1,0 +1,118 @@
+package com.uwb.bt2j.aligner;
+
+public class SAMConfig {
+	public enum SamFlags {
+		// Comments use language from v1.4-r962 spec
+		SAM_FLAG_PAIRED(1),   // templ. having mult. frag.s in sequencing
+		SAM_FLAG_MAPPED_PAIRED(2),   // each frag properly aligned
+		SAM_FLAG_UNMAPPED(4),   // fragment unmapped
+		SAM_FLAG_MATE_UNMAPPED(8),   // next fragment in template unmapped
+		SAM_FLAG_QUERY_STRAND(16),  // SEQ is reverse comp'ed from original
+		SAM_FLAG_MATE_STRAND(32),  // next fragment SEQ reverse comp'ed
+		SAM_FLAG_FIRST_IN_PAIR(64),  // first fragment in template
+		SAM_FLAG_SECOND_IN_PAIR(128), // last fragment in template
+		SAM_FLAG_NOT_PRIMARY(256), // secondary alignment
+		SAM_FLAG_FAILS_CHECKS(512), // not passing quality controls
+		SAM_FLAG_DUPLICATE(1024); // PCR or optical duplicate
+		private int x;
+		SamFlags(int y){x = y;}
+	}
+	public SamConfig(
+			EList<String> refnames,  // reference sequence names
+			EList<double> reflens,   // reference sequence lengths
+			Boolean truncQname,          // truncate read name to 255?
+			Boolean omitsec,             // omit secondary SEQ/QUAL
+			Boolean noUnal,              // omit unaligned reads
+			String pg_id, // id
+			String pg_pn, // name
+			String pg_vn, // version
+			String pg_cl, // command-line
+			String rgs,   // read groups string
+			Boolean print_as,
+			Boolean print_xs,
+			Boolean print_xss,
+			Boolean print_yn,
+			Boolean print_xn,
+			Boolean print_x0,
+			Boolean print_x1,
+			Boolean print_xm,
+			Boolean print_xo,
+			Boolean print_xg,
+			Boolean print_nm,
+			Boolean print_md,
+			Boolean print_yf,
+			Boolean print_yi,
+			Boolean print_ym,
+			Boolean print_yp,
+			Boolean print_yt,
+			Boolean print_ys,
+			Boolean print_zs,
+			Boolean print_xr,
+			Boolean print_xt,
+			Boolean print_xd,
+			Boolean print_xu,
+			Boolean print_ye, // streak of failed DPs at end
+			Boolean print_yl, // longest streak of failed DPs
+			Boolean print_yu, // index of last succeeded DP
+			Boolean print_xp, // print seed hit information
+			Boolean print_yr, // # redundant seed hits
+			Boolean print_zb, // # Ftab lookups
+			Boolean print_zr, // # redundant path checks
+			Boolean print_zf, // # FM Index ops
+			Boolean print_zm, // FM Index op string for best-first search
+			Boolean print_zi, // # seed extend loop iters
+			Boolean print_zp,
+			Boolean print_zu,
+			Boolean print_zt) {
+		truncQname_ = truncQname;
+		omitsec_ = omitsec;
+		noUnal_ = noUnal;
+		pg_id_ = pg_id;
+		pg_pn_=pg_pn;
+		pg_vn_=pg_vn;
+		pg_cl_=pg_cl;
+		rgs_=rgs;
+		refnames_=refnames;
+		reflens_=reflens;
+		print_as_=print_as; // alignment score of best alignment
+		print_xs_=print_xs; // alignment score of second-best alignment
+		print_xss_=print_xss;
+		print_yn_=print_yn; // minimum valid score and perfect score
+		print_xn_=print_xn;
+		print_x0_=print_x0;
+		print_x1_=print_x1;
+		print_xm_=print_xm;
+		print_xo_=print_xo;
+		print_xg_=print_xg;
+		print_nm_=print_nm;
+		print_md_=print_md;
+		print_yf_=print_yf;
+		print_yi_=print_yi;
+		print_ym_=print_ym;
+		print_yp_=print_yp;
+		print_yt_=print_yt;
+		print_ys_=print_ys;
+		print_zs_=print_zs;
+		print_xr_=print_xr;
+		print_xt_=print_xt; // time elapsed in microseconds
+		print_xd_=print_xd; // DP extend attempts
+		print_xu_=print_xu; // ungapped extend attempts
+		print_ye_=print_ye; // streak of failed DPs at end
+		print_yl_=print_yl; // longest streak of failed DPs
+		print_yu_=print_yu; // index of last succeeded DP
+		print_xp_=print_xp; // print seed hit information
+		print_yr_=print_yr; // index of last succeeded DP
+		print_zb_=print_zb; // # Ftab lookups
+		print_zr_=print_zr; // # redundant path checks
+		print_zf_=print_zf; // # FM Index ops
+		print_zm_=print_zm; // FM Index op string for best-first search
+		print_zi_=print_zi; // # seed extend loop iters
+		print_zp_=print_zp; // # seed extend loop iters
+		print_zu_=print_zu; // # seed extend loop iters
+		print_zt_=print_zt;  // extra features for MAPQ estimation
+	}
+	
+	public void printRefName(BTString o, String name) {
+		
+	}
+}

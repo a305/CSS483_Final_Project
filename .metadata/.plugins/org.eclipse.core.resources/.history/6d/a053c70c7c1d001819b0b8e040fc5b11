@@ -1,0 +1,16 @@
+package com.uwb.bt2j.aligner.seed;
+
+public class SeedAligner {
+	public enum SeedAlignerActions {
+		SA_ACTION_TYPE_RESET = 1,
+				SA_ACTION_TYPE_SEARCH_SEED, // 2
+				SA_ACTION_TYPE_FTAB,        // 3
+				SA_ACTION_TYPE_FCHR,        // 4
+				SA_ACTION_TYPE_MATCH,       // 5
+				SA_ACTION_TYPE_EDIT         // 6
+				private int x;
+		SeedAlignerActions(int y) {
+			x = y;
+		}
+	}
+}

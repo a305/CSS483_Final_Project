@@ -1,0 +1,16 @@
+package com.uwb.bt2j.aligner.seed;
+
+public class Seed {
+	public Boolean instantiate(
+			Read read,
+			BTDnaString seq,
+			BTString qual,
+			Scoring pens,
+			int depth,
+			int seedoffidx,
+			int seedtypeidx,
+			Boolean fw,
+			InstaitiatedSeed is) {
+		
+	}
+}
