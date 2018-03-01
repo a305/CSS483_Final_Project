@@ -72,19 +72,41 @@ protected Boolean xeq_;
   }
   
   public Boolean printYF(BTString o, Boolean first) {
-  
+    String flag = "";
+	if     (!lenfilt_) flag = "LN";
+	else if(!nfilt_  ) flag = "NS";
+	else if(!scfilt_ ) flag = "SC";
+	else if(!qcfilt_ ) flag = "QC";
+	if(flag[0] != '\0') {
+		if(!first) o.append('\t');
+		o.append("YF:Z:");
+		o.append(flag);
+		return false;
+	}
+	return true;
   }
   
   public void printYM(BTString o) {
-  
+o.append("YM:i:");
+	o.append(maxed() ? '1' : '0');
   }
   
   public void printYP(BTString o) {
-  
+  o.append("YP:i:");
+	o.append(maxedPair() ? '1' : '0');
   }
   
   public void printYT(BTString o) {
-  
+  o.append("YT:Z:");
+	if(alignedConcordant()) {
+		o.append("CP");
+	} else if(alignedDiscordant()) {
+		o.append("DP");
+	} else if(alignedUnpairedMate()) {
+		o.append("UP");
+	} else if(alignedUnpaired()) {
+		o.append("UU");
+	}
   }
   
   public int pairing() {
