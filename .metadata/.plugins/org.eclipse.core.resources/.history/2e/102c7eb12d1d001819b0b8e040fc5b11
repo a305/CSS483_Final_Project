@@ -260,32 +260,7 @@ class Scoring<T> {
 			double ns2,            // # Ns in mate 2
 			Boolean filt1,            // true -> mate 1 rejected by filter
 			Boolean filt2) {
-		// Both fail to pass by default
-		filt1 = filt2 = false;
-		if(rd1 != null && rd2 != null && ncatpair) {
-			double rdlen1 = rd1.length();
-			double rdlen2 = rd2.length();
-			double maxns = nCeil.f<double>((double)(rdlen1 + rdlen2));
-			for(double i = 0; i < rdlen1; i++) {
-				if((rd1)[i] == 4) ns1++;
-				if(ns1 > maxns) {
-					// doesn't pass
-					return;
-				}
-			}
-			for(double i = 0; i < rdlen2; i++) {
-				if((*rd2)[i] == 4) ns2++;
-				if(ns2 > maxns) {
-					// doesn't pass
-					return;
-				}
-			}
-			// Both pass
-			filt1 = filt2 = true;
-		} else {
-			if(rd1 != null) filt1 = nFilter(rd1, ns1);
-			if(rd2 != null) filt2 = nFilter(rd2, ns2);
-		}
+	 
   }
   
   public final int readGapOpen() {

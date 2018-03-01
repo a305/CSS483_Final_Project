@@ -95,54 +95,6 @@ class Scoring<T> {
 		initPens<float>(matchBonuses, matchType, matchConst, matchConst);
   }
   
-  public Boolean scoreFilter(long minsc, double rdlen) {
-	  long sc = (long)(rdlen * match(30));
-		return sc >= minsc;
-  }
-  
-  public int maxReadGaps(long minsc, double rdlen) {
-		// Score if all characters match.  TODO: remove assumption that match bonus
-		// is independent of quality value.
-		long sc = (long)(rdlen * match(30));
-		// Now convert matches to read gaps until sc calls below minsc
-		Boolean first = true;
-		int num = 0;
-		while(sc >= minsc) {
-			if(first) {
-				first = false;
-				// Subtract both penalties
-				sc -= readGapOpen();
-			} else {
-				// Subtract just the extension penalty
-				sc -= readGapExtend();
-			}
-			num++;
-		}
-		return num-1;
-  }
-  
-  public int maxRefGaps(long minsc, double rdlen) {
-	// Score if all characters match.  TODO: remove assumption that match bonus
-		// is independent of quality value.
-		long sc = (long)(rdlen * match(30));
-		// Now convert matches to read gaps until sc calls below minsc
-		Boolean first = true;
-		int num = 0;
-		while(sc >= minsc) {
-			sc -= match(30);
-			if(first) {
-				first = false;
-				// Subtract both penalties
-				sc -= refGapOpen();
-			} else {
-				// Subtract just the extension penalty
-				sc -= refGapExtend();
-			}
-			num++;
-		}
-		return num-1;
-  }
-  
   public void setMatchBonus(int bonus) {
 		matchType  = CostModel.COST_MODEL_CONSTANT;
 		matchConst = bonus;
@@ -239,53 +191,20 @@ class Scoring<T> {
     
   }
   
-  public final Boolean nFilter(BTDnaString rd, double ns) {
-	  double rdlen = rd.length();
-		double maxns = nCeil.f<double>((double)rdlen);
-		for(double i = 0; i < rdlen; i++) {
-			if(rd[i] == 4) {
-				ns++;
-				if(ns > maxns) {
-					return false; // doesn't pass
-				}
-			}
-		}
-		return true; // passes
+  public final int maxReadGaps() {
+    
   }
   
-  public void nFilterPair(
-		  BTDnaString rd1, // mate 1
-			BTDnaString rd2, // mate 2
-			double ns1,            // # Ns in mate 1
-			double ns2,            // # Ns in mate 2
-			Boolean filt1,            // true -> mate 1 rejected by filter
-			Boolean filt2) {
-		// Both fail to pass by default
-		filt1 = filt2 = false;
-		if(rd1 != null && rd2 != null && ncatpair) {
-			double rdlen1 = rd1.length();
-			double rdlen2 = rd2.length();
-			double maxns = nCeil.f<double>((double)(rdlen1 + rdlen2));
-			for(double i = 0; i < rdlen1; i++) {
-				if((rd1)[i] == 4) ns1++;
-				if(ns1 > maxns) {
-					// doesn't pass
-					return;
-				}
-			}
-			for(double i = 0; i < rdlen2; i++) {
-				if((*rd2)[i] == 4) ns2++;
-				if(ns2 > maxns) {
-					// doesn't pass
-					return;
-				}
-			}
-			// Both pass
-			filt1 = filt2 = true;
-		} else {
-			if(rd1 != null) filt1 = nFilter(rd1, ns1);
-			if(rd2 != null) filt2 = nFilter(rd2, ns2);
-		}
+  public final int maxRefGaps() {
+    
+  }
+  
+  public final Boolean nFilter() {
+    
+  }
+  
+  public void nFilterPair() {
+    
   }
   
   public final int readGapOpen() {

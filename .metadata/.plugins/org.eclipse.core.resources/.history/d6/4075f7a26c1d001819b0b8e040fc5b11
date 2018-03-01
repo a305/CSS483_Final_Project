@@ -1,0 +1,33 @@
+package com.uwb.bt2j.aligner;
+
+public class Edit {
+	public Edit(double po, int ch, int qc, int ty, Boolean chrs) {
+		init(po, ch, qc, ty, chrs);
+	}
+	
+	public void reset() {
+		pos = pos2 = Double.MAX_VALUE;
+		chr = qchr = type = 0;
+	}
+	
+	public Boolean inited() {
+		return pos != Double.MAX_VALUE;
+	}
+	
+	public void init() {
+		chr = ch;
+		qchr = qc;
+		type = ty;
+		pos = po;
+		if(qc == '-') {
+			// Read gap
+			pos2 = Double.MAX_VALUE / 2;
+		} else {
+			pos2 = Double.MAX_VALUE;
+		}
+		if(!chrs) {
+			chr = "ACGTN"[chr];
+			qchr = "ACGTN"[qchr];
+		}
+	}
+}

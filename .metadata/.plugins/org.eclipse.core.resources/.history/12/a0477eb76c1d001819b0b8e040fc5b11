@@ -1,0 +1,113 @@
+package com.uwb.bt2j.aligner;
+
+public class Edit {
+	public Edit(double po, int ch, int qc, int ty, Boolean chrs) {
+		init(po, ch, qc, ty, chrs);
+	}
+	
+	public void reset() {
+		pos = pos2 = Double.MAX_VALUE;
+		chr = qchr = type = 0;
+	}
+	
+	public Boolean inited() {
+		return pos != Double.MAX_VALUE;
+	}
+	
+	public void init() {
+		chr = ch;
+		qchr = qc;
+		type = ty;
+		pos = po;
+		if(qc == '-') {
+			// Read gap
+			pos2 = Double.MAX_VALUE / 2;
+		} else {
+			pos2 = Double.MAX_VALUE;
+		}
+		if(!chrs) {
+			chr = "ACGTN"[chr];
+			qchr = "ACGTN"[qchr];
+		}
+	}
+	
+	public Boolean hasN() {
+		return chr == 'N' || qchr == 'N';
+	}
+	
+	public Boolean isReadGap() {
+		return type == EDIT_TYPE_READ_GAP;
+	}
+	
+	public Boolean isRefGap() {
+		return type == EDIT_TYPE_REF_GAP;
+	}
+	
+	public Boolean isGap() {
+		return (type == EDIT_TYPE_REF_GAP || type == EDIT_TYPE_READ_GAP);
+	}
+	
+	public static double numGaps(EList<Edit> es) {
+		double gaps = 0;
+		for(double i = 0; i < es.size(); i++) {
+			if(es[i].isGap()) gaps++;
+		}
+		return gaps;
+	}
+	
+	public Boolean isMismatch() {
+		return type == EDIT_TYPE_MM;
+	}
+	
+	public static void sort(EList<Edit> edits) {
+		
+	}
+	
+	public static void invertPoss(
+			EList<Edit> edits,
+			double sz,
+			double ei,
+			double en,
+			Boolean sort) {
+
+	}
+	
+	public static void invertPoss(
+			EList<Edit> edits,
+			double sz,
+			Boolean sort) {
+		invertPoss(edits, sz, 0, edits.size(), sort);
+	}
+	
+	public static void clipLo(EList<Edit> edits, double len, double amt) {
+		
+	}
+	
+	public static void clipHi(EList<Edit> edits, double len, double amt) {
+		
+	}
+	
+	public static void toRef(BTDnaString read, EList<Edit> edits, BTDnaString ref, Boolean fw, double trim5, Boolean trim3) {
+		
+	}
+	
+	public static void printQAlign(OutputStream os, String prefix, BTDnaString read, EList<Edit> edits) {
+		
+	}
+	
+	public static void printQAlignNoCheck(OutputStream os, BTDnaString read, EList<Edit> edits) {
+		
+	}
+	
+	public static void printQAlignNoCheck(OutputStream os, String prefix, BTDnaString read, EList<Edit> edits) {
+		
+	}
+	
+	public static void print(OutputStream os, EList<Edit> edits, char delim) {
+		
+	}
+	
+	public static void merge(EList<Edit> dst, EList<Edit> src) {
+		
+	}
+}

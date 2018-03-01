@@ -1,0 +1,18 @@
+package com.uwb.bt2j.aligner;
+
+public class SearchGlobals {
+	public static final Boolean     gReportOverhangs;
+	public static final Boolean     gNoMaqRound;
+	public static final Boolean     gStrandFix;
+	public static final Boolean     gRangeMode;
+	public static final int      gVerbose;
+	public static final int      gQuiet;
+	public static final Boolean     gNofw;
+	public static final Boolean     gNorc;
+	public static final Boolean     gMate1fw;
+	public static final Boolean     gMate2fw;
+	public static final int      gMinInsert;
+	public static final int      gMaxInsert;
+	public static final int      gGapBarrier;
+	public static final int      gAllowRedundant;
+}

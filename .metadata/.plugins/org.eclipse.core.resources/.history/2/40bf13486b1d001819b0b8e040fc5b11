@@ -1,0 +1,12 @@
+package com.uwb.bt2j.aligner;
+
+public class Edit {
+	public Edit(double po, int ch, int qc, int ty, Boolean chrs) {
+		init(po, ch, qc, ty, chrs);
+	}
+	
+	public void reset() {
+		pos = pos2 = Double.MAX_VALUE;
+		chr = qchr = type = 0;
+	}
+}
