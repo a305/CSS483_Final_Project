@@ -1,0 +1,118 @@
+package com.uwb.bt2j.aligner;
+
+public class AlignerMetrics {
+	public int curBackTrracks_;
+	public int curBwtOps_;
+	
+	protected Boolean first_;
+	protected Boolean curIsLowEntropy_;
+	protected Boolean curIsHomoPoly_;
+	protected Boolean curHadRanges_;
+	protected int curNumNs_;
+	
+	protected int reads_;
+	protected int homoReads_;
+	protected int lowEntReads_;
+	protected int hiEntReads_;
+	protected int alignedReads_;
+	protected int unalignedReads_;
+	protected int threeOrMoreNReads_;
+	protected int lessThanThreeNRreads_;
+	
+	protected RunningStat bwtOpsPerRead_;
+	protected RunningStat backtracksPerRead_;
+	protected RunningStat bwtOpsPerHomoRead_;
+	protected RunningStat backtracksPerHomoRead_;
+	protected RunningStat bwtOpsPerLoEntRead_;
+	protected RunningStat backtracksPerLoEntRead_;
+	protected RunningStat bwtOpsPerHiEntRead_;
+	protected RunningStat backtracksPerHiEntRead_;
+	protected RunningStat bwtOpsPerAlignedRead_;
+	protected RunningStat backtracksPerAlignedRead_;
+	protected RunningStat bwtOpsPerUnalignedRead_;
+	protected RunningStat backtracksPerUnalignedRead_;
+	protected RunningStat bwtOpsPer0nRead_;
+	protected RunningStat backtracksPer0nRead_;
+	protected RunningStat bwtOpsPer1nRead_;
+	protected RunningStat backtracksPer1nRead_;
+	protected RunningStat bwtOpsPer2nRead_;
+	protected RunningStat backtracksPer2nRead_;
+	protected RunningStat bwtOpsPer3orMoreNRead_;
+	protected RunningStat backtracksPer3orMoreNRead_;
+	protected Timer timer_;
+	
+	public AlignerMetrics() {
+		
+	}
+	
+	public void nextRead(BTDnaString read) {
+		if(!first_) {
+			finishRead();
+		}
+		first_ = false;
+		//float ent = entropyDna5(read);
+		float ent = 0.0f;
+		curIsLowEntropy_ = (ent < 0.75f);
+		curIsHomoPoly_ = (ent < 0.001f);
+		curHadRanges_ = false;
+		curBwtOps_ = 0;
+		curBacktracks_ = 0;
+		// Count Ns
+		curNumNs_ = 0;
+		final double len = read.length();
+		for(double i = 0; i < len; i++) {
+			if((int)read[i] == 4) curNumNs_++;
+		}
+	}
+	
+	public void setReadHasRange() {
+		curHadRanges_ = true;
+	}
+	
+	public void finishRead() {
+		reads_++;
+		if(curIsHomoPoly_) homoReads_++;
+		else if(curIsLowEntropy_) lowEntReads_++;
+		else hiEntReads_++;
+		if(curHadRanges_) alignedReads_++;
+		else unalignedReads_++;
+		bwtOpsPerRead_.push((float)curBwtOps_);
+		backtracksPerRead_.push((float)curBacktracks_);
+		// Drill down by entropy
+		if(curIsHomoPoly_) {
+			bwtOpsPerHomoRead_.push((float)curBwtOps_);
+			backtracksPerHomoRead_.push((float)curBacktracks_);
+		} else if(curIsLowEntropy_) {
+			bwtOpsPerLoEntRead_.push((float)curBwtOps_);
+			backtracksPerLoEntRead_.push((float)curBacktracks_);
+		} else {
+			bwtOpsPerHiEntRead_.push((float)curBwtOps_);
+			backtracksPerHiEntRead_.push((float)curBacktracks_);
+		}
+		// Drill down by whether it aligned
+		if(curHadRanges_) {
+			bwtOpsPerAlignedRead_.push((float)curBwtOps_);
+			backtracksPerAlignedRead_.push((float)curBacktracks_);
+		} else {
+			bwtOpsPerUnalignedRead_.push((float)curBwtOps_);
+			backtracksPerUnalignedRead_.push((float)curBacktracks_);
+		}
+		if(curNumNs_ == 0) {
+			lessThanThreeNRreads_++;
+			bwtOpsPer0nRead_.push((float)curBwtOps_);
+			backtracksPer0nRead_.push((float)curBacktracks_);
+		} else if(curNumNs_ == 1) {
+			lessThanThreeNRreads_++;
+			bwtOpsPer1nRead_.push((float)curBwtOps_);
+			backtracksPer1nRead_.push((float)curBacktracks_);
+		} else if(curNumNs_ == 2) {
+			lessThanThreeNRreads_++;
+			bwtOpsPer2nRead_.push((float)curBwtOps_);
+			backtracksPer2nRead_.push((float)curBacktracks_);
+		} else {
+			threeOrMoreNReads_++;
+			bwtOpsPer3orMoreNRead_.push((float)curBwtOps_);
+			backtracksPer3orMoreNRead_.push((float)curBacktracks_);
+		}
+	}
+}
