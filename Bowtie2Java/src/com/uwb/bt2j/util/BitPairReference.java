@@ -18,7 +18,7 @@ public class BitPairReference {
   protected Boolean useShmem_;
   protected Boolean verbose_;  
 
-  public BitPairReference() {
+  public BitPairReference(String adjustedEbwtFileBase, boolean color, boolean b, Object object, Object object2, boolean c, boolean d, boolean e, boolean f, int verbose, int verbose2) {
     
   }
   
