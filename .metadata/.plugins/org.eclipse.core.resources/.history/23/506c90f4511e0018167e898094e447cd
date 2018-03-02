@@ -1,0 +1,99 @@
+package com.uwb.bt2j.util.pattern;
+
+import com.uwb.bt2j.aligner.Read;
+import com.uwb.bt2j.util.EList;
+
+import javafx.util.Pair;
+
+public class FastqPatternSource extends CFilePatternSource{
+
+	private boolean first_;
+	private boolean interleaved_;
+	
+	public FastqPatternSource(PatternParams p, EList<String> infiles, boolean interleaved) {
+		super(p, infiles);
+		first_ = true;
+		interleaved_ = interleaved;
+	}
+	
+	public void reset() {
+		super.reset();
+		first_ = true;
+	}
+
+	protected Pair<Boolean, Integer> nextBatchFromFile(PerThreadReadBuf pt, boolean batch_a, int readi) {
+		int c = -1;
+		EList<Read> readbuf = batch_a ? pt.bufa_ : pt.bufb_;
+		if(first_) {
+			c = getc_wrapper();
+			if (c == -1) {
+				return new Pair(true, 0);
+			}
+			while(c == '\r' || c == '\n') {
+				c = getc_wrapper();
+			}
+			if(c != '@') {
+				System.err.println("Error: reads file does not look like a FASTQ file");
+			}
+			first_ = false;
+			readbuf[readi].readOrigBuf.append('@');	
+		}
+		
+		boolean done = false, aborted = false;
+		// Read until we run out of input or until we've filled the buffer
+		while (readi < pt.max_buf_ && !done) {
+			long buf = readbuf[readi].readOrigBuf;
+			int newlines = 4;
+			while(newlines) {
+				c = getc_wrapper();
+				done = c < 0;
+				if(c == '\n' || (done && newlines == 1)) {
+					// Saw newline, or EOF that we're
+					// interpreting as final newline
+					newlines--;
+					c = '\n';
+				} else if(done) {
+					// account for newline at the end of the file
+					if (newlines == 4) {
+						newlines = 0;
+					}
+					else {
+						aborted = true; // Unexpected EOF
+					}
+					break;
+				}
+				buf.append(c);
+			}
+			if (c > 0) {
+				if (interleaved_) {
+					// alternate between read buffers
+					batch_a = !batch_a;
+					readbuf = batch_a ? pt.bufa_ : pt.bufb_;
+					// increment read counter after each pair gets read
+					readi = batch_a ? readi+1 : readi;
+				}
+				else {
+					readi++;
+				}
+			}
+		}
+		if(aborted) {
+			readi--;
+		}
+		return new Pair(done, readi);
+	}
+
+	@Override
+	protected void resetForNextFile() {
+		first_ = true;
+	}
+
+	@Override
+	public void nextBatch(PerThreadReadBuf pt, boolean batch_a, boolean lock) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public abstract boolean parse(Read ra, Read rb, long rdid);
+	
+}

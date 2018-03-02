@@ -2,7 +2,7 @@ package com.uwb.bt2j.aligner;
 
 import org.omg.CORBA_2_3.portable.OutputStream;
 
-import com.uwb.bt2j.util.EList;
+import com.uwb.bt2j.util.types.EList;
 
 import javafx.util.Pair;
 

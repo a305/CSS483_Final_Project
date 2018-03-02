@@ -1,0 +1,16 @@
+package com.uwb.bt2j.util.pattern;
+
+public class PatternSource {
+	public PatternSource(PatternParams p) {
+		pp_ = p;
+		readCnt_ = 0;
+	}
+	
+	public Pair<boolean, Integer> nextBatch(PerThreadReadBuf pt, boolean batch_a, boolean lock) {
+		
+	}
+	
+	PatternSource patsrcFromStrings() {
+		
+	}
+}

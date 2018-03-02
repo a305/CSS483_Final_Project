@@ -51,7 +51,7 @@ public class RandomSource {
 		return first | second;
 	}
 	
-	public double nextSizeT() {
+	public int nextSizeT() {
 		return nextU32();
 	}
 	

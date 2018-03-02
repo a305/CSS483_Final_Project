@@ -1,0 +1,14 @@
+package com.uwb.bt2j.util.types;
+
+public class PListSlice {
+	public PListSlice() {
+		i_ = 0;
+		len_ = 0;
+	}
+	
+	public PListSlice(PList<T> list, long i, long len) {
+		i_ = i;
+		len_ = len;
+		list_ = list;
+	}
+}

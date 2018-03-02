@@ -1,0 +1,118 @@
+package com.uwb.bt2j.util.pattern;
+
+import com.uwb.bt2j.aligner.Read;
+import com.uwb.bt2j.util.EList;
+
+import javafx.util.Pair;
+
+public abstract class PatternComposer {
+	public PatternComposer(PatternParams p) {
+		
+	}
+	
+	public abstract void reset();
+	public abstract Pair<Boolean, Integer> nextBatch(PerThreadReadBuf pt);
+	public abstract boolean parse(Read ra, Read rb, long rdid);
+	public static PatternComposer setupPatternComposer(
+			EList<String> si,
+			EList<String> m1,
+			EList<String> m2,
+			EList<String> m12,
+			EList<String> q,
+			EList<String> q1,
+			EList<String> q2,
+			PatternParams p,
+			boolean verbose) {
+		EList<PatternSource> a  = new EList<PatternSource>();
+		EList<PatternSource> b  = new EList<PatternSource>();
+		EList<PatternSource> ab = new EList<PatternSource>();
+		// Create list of pattern sources for paired reads appearing
+		// interleaved in a single file
+		for(int i = 0; i < m12.size(); i++) {
+			EList<String>* qs = m12;
+			EList<String> tmp;
+			if(p.fileParallel) {
+				// Feed query files one to each PatternSource
+				qs = &tmp;
+				tmp.push_back(m12[i]);
+			}
+			ab.push_back(PatternSource.patsrcFromStrings(p, qs));
+			if(!p.fileParallel) {
+				break;
+			}
+		}
+
+		// Create list of pattern sources for paired reads
+		for(int i = 0; i < m1.size(); i++) {
+			EList<String> qs = m1;
+			EList<String> tmpSeq;
+			EList<String> tmpQual;
+			if(p.fileParallel) {
+				// Feed query files one to each PatternSource
+				qs = tmpSeq;
+				tmpSeq.push_back(m1[i]);
+			}
+			a.push_back(PatternSource.patsrcFromStrings(p, *qs));
+			if(!p.fileParallel) {
+				break;
+			}
+		}
+
+		// Create list of pattern sources for paired reads
+		for(size_t i = 0; i < m2.size(); i++) {
+			const EList<string>* qs = &m2;
+			EList<string> tmpSeq;
+			EList<string> tmpQual;
+			if(p.fileParallel) {
+				// Feed query files one to each PatternSource
+				qs = &tmpSeq;
+				tmpSeq.push_back(m2[i]);
+				assert_eq(1, tmpSeq.size());
+			}
+			b.push_back(PatternSource::patsrcFromStrings(p, *qs));
+			if(!p.fileParallel) {
+				break;
+			}
+		}
+		// All mates/mate files must be paired
+		assert_eq(a.size(), b.size());
+
+		// Create list of pattern sources for the unpaired reads
+		for(size_t i = 0; i < si.size(); i++) {
+			const EList<string>* qs = &si;
+			PatternSource* patsrc = NULL;
+			EList<string> tmpSeq;
+			EList<string> tmpQual;
+			if(p.fileParallel) {
+				// Feed query files one to each PatternSource
+				qs = &tmpSeq;
+				tmpSeq.push_back(si[i]);
+				assert_eq(1, tmpSeq.size());
+			}
+			patsrc = PatternSource::patsrcFromStrings(p, *qs);
+			assert(patsrc != NULL);
+			a.push_back(patsrc);
+			b.push_back(NULL);
+			if(!p.fileParallel) {
+				break;
+			}
+		}
+
+		PatternComposer *patsrc = NULL;
+		if(m12.size() > 0) {
+			patsrc = new SoloPatternComposer(ab, p);
+			for(size_t i = 0; i < a.size(); i++) delete (*a)[i];
+			for(size_t i = 0; i < b.size(); i++) delete (*b)[i];
+			delete a; delete b;
+		} else {
+			patsrc = new DualPatternComposer(a, b, p);
+			for(size_t i = 0; i < ab.size(); i++) delete (*ab)[i];
+			delete ab;
+		}
+		return patsrc;
+	}
+	
+	public static void freeEListPMembers(EList<PatternSource> e) {
+		
+	}
+}

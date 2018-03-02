@@ -1,0 +1,68 @@
+package com.uwb.bt2j.util.types;
+
+import javafx.util.Pair;
+
+public class EMap <K,V>{
+	private int cat_;
+	private EMap<K,V> list_;
+	private int sz_;
+	private int cur_;
+	
+	public EMap(int cat) {
+		cat_ = cat;
+		list_ = null;
+		sz_ = 128;
+		cur_ = 0;
+	}
+	
+	public EMap(int isz, int cat) {
+		cat_ = cat;
+		list_ = null;
+		sz_ = isz;
+		cur_ = 0;
+	}
+	
+	public EMap(EMap<K,V> o) {
+		list_ = null;
+	}
+	
+	public int size() {
+		return cur_;
+	}
+	
+	public boolean empty() {
+		return cur_ == 0;
+	}
+	
+	public boolean insert(Pair<K,V> el) {
+		int i = 0;
+		if(cur_ == 0) {
+			insert(el, 0);
+			return true;
+		}
+		if(cur_ < 16) {
+			// Linear scan
+			i = scanLoBound(el.first);
+		} else {
+			// Binary search
+			i = bsearchLoBound(el.first);
+		}
+		if(list_[i] == el) return false; // already there
+		insert(el, i);
+		return true; // not already there
+	}
+	
+	public boolean contains(K el) {
+		if(cur_ == 0) return false;
+		else if(cur_ == 1) return el == list_[0].first;
+		int i;
+		if(cur_ < 16) {
+			// Linear scan
+			i = scanLoBound(el);
+		} else {
+			// Binary search
+			i = bsearchLoBound(el);
+		}
+		return i != cur_ && list_[i].first == el;
+	}
+}

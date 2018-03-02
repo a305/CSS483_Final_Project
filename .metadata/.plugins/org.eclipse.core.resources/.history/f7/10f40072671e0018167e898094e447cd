@@ -1,0 +1,23 @@
+package com.uwb.bt2j.util.types;
+
+public class Pool {
+	public Pool(long bytes, double pagesz, int cat) {
+		cat_ = cat;
+		cur_ = 0;
+		pagesz_ = pagesz;
+		pages_ = cat;
+		
+		double super_page_num = ((bytes+pagesz-1)/pagesz + 1);
+		super_pages = new byte[(int) (pagesz*super_page_num)];
+		for(int i = 0; i < super_page_num ; i++) {
+			pages_.push_back(&super_pages[i*pagesz]);	
+#ifdef USE_MEM_TALLY
+			gMemTally.add(cat, pagesz);
+#else
+			(void)cat_;
+			(void)pagesz_;
+#endif
+			assert(pages_.back() != NULL);
+		}
+	}
+}

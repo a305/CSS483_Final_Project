@@ -1,0 +1,13 @@
+package com.uwb.bt2j.util.types;
+
+public class RedBlack <K, P>{
+	public RedBlack(int pageSz, int cat) {
+		//perPage_ = pageSz/
+		pages_ = cat;
+		clear();
+	}
+	
+	public RedBlackNode lookup(K key) {
+		
+	}
+}

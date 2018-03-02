@@ -1,0 +1,7 @@
+package com.uwb.bt2j.util.pattern;
+
+public class PerThreadReadBuf {
+	public PerThreadReadBuf(double max_buf) {
+		
+	}
+}

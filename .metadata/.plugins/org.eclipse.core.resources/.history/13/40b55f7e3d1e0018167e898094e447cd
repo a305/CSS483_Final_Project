@@ -1,0 +1,31 @@
+package com.uwb.bt2j.util.pattern;
+
+import com.uwb.bt2j.aligner.Read;
+import com.uwb.bt2j.util.EList;
+
+public class PatternSource {
+	public PatternSource(PatternParams p) {
+		pp_ = p;
+		readCnt_ = 0;
+	}
+	
+	public Pair<boolean, Integer> nextBatch(PerThreadReadBuf pt, boolean batch_a, boolean lock) {
+		
+	}
+	
+	public boolean parse(Read ra, Read rb, long rdid) {
+		
+	}
+	
+	public void reset() {
+		readCnt_ = 0;
+	}
+	
+	PatternSource patsrcFromStrings(PatternParams p, EList<String> qs) {
+		
+	}
+	
+	public long readCount() {
+		return readCnt_;
+	}
+}

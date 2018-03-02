@@ -2,6 +2,7 @@ package com.uwb.bt2j.util;
 
 import com.uwb.bt2j.util.file.BitpairOutFileBuf;
 import com.uwb.bt2j.util.file.FileBuf;
+import com.uwb.bt2j.util.types.EList;
 
 public class BitPairReference {
   protected double byteToU32_[];

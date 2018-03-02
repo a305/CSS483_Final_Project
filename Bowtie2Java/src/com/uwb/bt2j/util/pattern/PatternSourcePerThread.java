@@ -1,18 +1,93 @@
 package com.uwb.bt2j.util.pattern;
 
+import com.uwb.bt2j.aligner.Read;
+
 import javafx.util.Pair;
 
-public class PatternSourcePerThread {
-	public void finalize() {
-		
+public abstract class PatternSourcePerThread {
+	private PatternComposer composer_;
+	private PerThreadReadBuf buf_;
+	private PatternParams pp_;
+	private boolean last_batch_;
+	private int last_batch_size_;
+	
+	public PatternSourcePerThread(PatternComposer composer, PatternParams pp) {
+		composer_ = composer;
+		buf_ = pp.max_buf;
+		pp_ = pp;
+		last_batch_ = false;
+		last_batch_size_ = 0;
 	}
 	
-	public void finalizePair() {
-		
+	private Pair<Boolean, Integer> nextBatch() {
+		buf_.reset();
+		Pair<Boolean,Integer> res = composer_.nextBatch(buf_);
+		buf_.init();
+		return res;
 	}
 	
-	public Pair<Boolean,Boolean> nextReadPair() {
-		
+	private void finalize(Read ra) {
+		ra.mate = 1;
+		ra.rdid = buf_.rdid();
+		ra.seed = Pattern.genRandSeed(ra.patFw, ra.qual, ra.name, pp_.seed);
+		ra.finalize();
+		if(pp_.fixName) {
+			ra.fixMateName(1);
+		}
 	}
+	
+	private void finalizePair(Read ra, Read rb) {
+		ra.mate = 1;
+		rb.mate = 2;
+		ra.rdid = rb.rdid = buf_.rdid();
+		ra.seed = Pattern.genRandSeed(ra.patFw, ra.qual, ra.name, pp_.seed);
+		rb.seed = Pattern.genRandSeed(rb.patFw, rb.qual, rb.name, pp_.seed);
+		ra.finalize();
+		rb.finalize();
+		if(pp_.fixName) {
+			ra.fixMateName(1);
+			rb.fixMateName(2);
+		}
+	}
+	
+	public Pair<Boolean, Boolean> nextReadPair() {
+		// Prepare batch
+		if(buf_.exhausted()) {
+			Pair<Boolean, Integer> res = nextBatch(); // more parsing needed!
+			if(res.first && res.second == 0) {
+				return new Pair(false, true);
+			}
+			last_batch_ = res.first;
+			last_batch_size_ = res.second;
+		} else {
+			buf_.next(); // advance cursor; no parsing or locking needed
+		}
+		// Now fully parse read/pair *outside* the critical section
+		if(!parse(buf_.read_a(), buf_.read_b())) {
+			return new Pair(false, false);
+		}
+		// Finalize read/pair
+		if(!buf_.read_b().patFw.empty()) {
+			finalizePair(buf_.read_a(), buf_.read_b());
+		} else {
+			finalize(buf_.read_a());
+		}
+		boolean this_is_last = buf_.cur_buf_ == static_cast<unsigned int>(last_batch_size_-1);
+		return new Pair(true, this_is_last ? last_batch_ : false);
+	}
+	
+	private boolean parse(Read ra, Read rb) {
+		return composer_.parse(ra, rb, buf_.rdid());
+	}
+	
+	public Read read_a() {
+		return buf_.read_a();
+	}
+	
+	public Read read_b() {
+		return buf_.read_b();
+	}
+	
+	public abstract Pair<Boolean,Boolean> nextReadPair();
 	
 }

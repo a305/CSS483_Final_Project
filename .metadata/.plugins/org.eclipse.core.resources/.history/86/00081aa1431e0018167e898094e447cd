@@ -1,0 +1,32 @@
+package com.uwb.bt2j.util.pattern;
+
+import com.uwb.bt2j.util.EList;
+
+import javafx.util.Pair;
+
+public class TabbedPatternSource extends CFilePatternSource{
+
+	public TabbedPatternSource(PatternParams p, EList<String> infiles, boolean secondName) {
+		super(p, infiles);
+		secondName_ = secondName;
+	}
+
+	@Override
+	protected Pair<Boolean, Integer> nextBatchFromFile(PerThreadReadBuf pt, boolean batch_a, int read_idx) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected void resetForNextFile() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void nextBatch(PerThreadReadBuf pt, boolean batch_a, boolean lock) {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

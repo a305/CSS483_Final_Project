@@ -1,0 +1,36 @@
+package com.uwb.bt2j.util.pattern;
+
+import com.uwb.bt2j.aligner.Read;
+
+public class PerThreadReadBuf {
+	public PerThreadReadBuf(double max_buf) {
+		max_buf_ = max_buf;
+		bufa_ = max_buf;
+		bufb_ = max_buf;
+		
+		bufa_.resize(max_buf);
+		bufb_.resize(max_buf);
+		reset();
+	}
+	
+	public Read read_a() {
+		return bufa_[cur_buf_];
+	}
+	
+	public Read read_b() {
+		return bufb_[cur_buf_];
+	}
+	
+	public long rdid() {
+		return rdid_ + cur_buf_;
+	}
+	
+	public void reset() {
+		cur_buf_ = bufa_.size();
+		for(int i = 0; i < max_buf_; i++) {
+			bufa_[i].reset();
+			bufb_[i].reset();
+		}
+		rdid_ = Long.MAX_VALUE;
+	}
+}

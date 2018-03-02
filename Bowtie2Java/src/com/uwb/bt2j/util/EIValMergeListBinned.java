@@ -1,5 +1,7 @@
 package com.uwb.bt2j.util;
 
+import com.uwb.bt2j.util.types.EList;
+
 public class EIValMergeListBinned {
 	public static final int NBIN = 7;
 	protected EList<EIValMergeList> bins_;

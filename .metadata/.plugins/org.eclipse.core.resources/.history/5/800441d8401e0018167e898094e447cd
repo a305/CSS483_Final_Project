@@ -1,0 +1,56 @@
+package com.uwb.bt2j.util.pattern;
+
+import com.uwb.bt2j.aligner.Read;
+
+public class CFilePatternSource extends PatternSource{
+	public CFilePatternSource(PatternParams p,EList<String> infiles) {
+		super(p);
+		infiles_ = infiles;
+		filecur_ = 0;
+		fp_ = null;
+		zfp_ = null;
+		is_open_ = false;
+		skip_ = p.skip;
+		first_ = true;
+		compressed_ = false;
+		errs_.resize(infiles_.size());
+		errs_.fill(0, infiles_.size(), false);
+		open(); // open first file in the list
+		filecur_++;
+	}
+
+	public Pair<Boolean, int> nextBatchFromFile(PerThreadReadBuf pt, boolean batch_a, int read_idx) {
+		
+	}
+	
+	public void resetForNextFile() {
+			
+	}
+	
+	public void open() {
+		
+	}
+	
+	public int getc_wrapper() {
+		return gzgetc(zfp_);
+	}
+
+	@Override
+	public void nextBatch(PerThreadReadBuf pt, boolean batch_a, boolean lock) {
+	
+	}
+
+	@Override
+	public boolean parse(Read ra, Read rb, long rdid) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void reset() {
+		readCnt_ = 0;
+		filecur_ = 0;
+		open();
+		filecur_++;
+	}
+}

@@ -1,0 +1,21 @@
+package com.uwb.bt2j.util.pattern;
+
+public class PerThreadReadBuf {
+	public PerThreadReadBuf(double max_buf) {
+		max_buf_ = max_buf;
+		bufa_ = max_buf;
+		bufb_ = max_buf;
+		
+		bufa_.resize(max_buf);
+		bufb_.resize(max_buf);
+		reset();
+	}
+	
+	public Read read_a() {
+		bufa_[cur_buf_];
+	}
+	
+	public Read read_b() {
+		bufb_[cur_buf_];
+	}
+}

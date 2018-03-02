@@ -1,0 +1,42 @@
+package com.uwb.bt2j.util.pattern;
+
+import com.uwb.bt2j.aligner.Read;
+
+import javafx.util.Pair;
+
+public abstract class PatternSourcePerThread {
+	
+	public PatternSourcePerThread(PatternComposer composer, PatternParams pp) {
+		composer_ = composer;
+		buf_ = pp.max_buf;
+		pp_ = pp;
+		last_batch_ = false;
+		last_batch_size_ = 0;
+	}
+	
+	private Pair<Boolean, Integer> nextBatch() {
+		buf_.reset();
+		Pair<Boolean,Integer> res = composer_.nextBatch(buf_);
+		buf_.init();
+		return res;
+	}
+	
+	private void finalize() {
+		
+	}
+	
+	private void finalizePair() {
+		
+	}
+	
+	public Read read_a() {
+		return buf_.read_a();
+	}
+	
+	public Read read_b() {
+		return buf_.read_b();
+	}
+	
+	public abstract Pair<Boolean,Boolean> nextReadPair();
+	
+}

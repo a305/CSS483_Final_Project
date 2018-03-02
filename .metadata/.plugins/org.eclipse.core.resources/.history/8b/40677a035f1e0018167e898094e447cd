@@ -1,0 +1,7 @@
+package com.uwb.bt2j.util.types;
+
+public class ESet {
+	public ESet(int cat) {
+		cat_
+	}
+}

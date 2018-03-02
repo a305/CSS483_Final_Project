@@ -1,7 +1,7 @@
 package com.uwb.bt2j.aligner.seed;
 
 import com.uwb.bt2j.aligner.Edit;
-import com.uwb.bt2j.util.EList;
+import com.uwb.bt2j.util.types.EList;
 
 public class SeedResults {
 	protected double              nonzTot_;     // # offsets with non-zero size

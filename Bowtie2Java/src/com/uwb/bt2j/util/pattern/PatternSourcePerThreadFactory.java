@@ -1,5 +1,7 @@
 package com.uwb.bt2j.util.pattern;
 
+import com.uwb.bt2j.util.types.EList;
+
 public class PatternSourcePerThreadFactory {
 	private PatternComposer composer_;
 	private PatternParams pp_;
@@ -16,7 +18,7 @@ public class PatternSourcePerThreadFactory {
 	}
 
 	public EList<PatternSourcePerThread> create(double n) {
-		EList<PatternSourcePerThread> v = new EList<PatternSourcePerThread>;
+		EList<PatternSourcePerThread> v = new EList<PatternSourcePerThread>();
 		for(double i = 0; i < n; i++) {
 			v.push_back(new PatternSourcePerThread(composer_, pp_));
 		}

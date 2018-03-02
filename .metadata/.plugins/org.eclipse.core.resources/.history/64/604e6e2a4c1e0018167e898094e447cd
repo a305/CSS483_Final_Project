@@ -1,0 +1,37 @@
+package com.uwb.bt2j.util.pattern;
+
+import com.uwb.bt2j.aligner.Read;
+import com.uwb.bt2j.util.EList;
+
+public class VectorPatternSource extends PatternSource{
+	private double cur_;
+	private double skip_;
+	private boolean paired_;
+	private EList<String> tokbuf_;
+	private char nametmp_[];
+	
+	public VectorPatternSource(PatternParams p, EList<String> v) {
+		super(p);
+	}
+	
+	private Pair<boolean, int> nextBatchImpl(PerThreadReadBuf pt, boolean batch_a) {
+		
+	}
+	
+	@Override
+	public void nextBatch(PerThreadReadBuf pt, boolean batch_a, boolean lock) {
+		
+	}
+
+	@Override
+	public boolean parse(Read ra, Read rb, long rdid) {
+
+	}
+
+	@Override
+	public void reset() {
+		readCnt_ = 0;
+		cur_ = skip_;
+		paired_ = false;
+	}
+}

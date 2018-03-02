@@ -19,17 +19,17 @@ public class Read {
 	public BTString    qualRev;
 
 	// For remembering the exact input text used to define a read
-	SStringExpandable<String> readOrigBuf;
+	public SStringExpandable<String> readOrigBuf;
 
 	public BTString name;      // read name
 	public long  rdid;      // 0-based id based on pair's offset in read file(s)
-	int      mate;      // 0 = single-end, 1 = mate1, 2 = mate2
-	long seed;      // random seed
-	boolean     parsed;    // true iff read has been fully parsed
+	public int      mate;      // 0 = single-end, 1 = mate1, 2 = mate2
+	public double seed;      // random seed
+	public boolean     parsed;    // true iff read has been fully parsed
 	int   ns_;       // # Ns
 	char     filter;    // if read format permits filter char, set it here
-	int      trimmed5;  // amount actually trimmed off 5' end
-	int      trimmed3;  // amount actually trimmed off 3' end
+	public int      trimmed5;  // amount actually trimmed off 5' end
+	public int      trimmed3;  // amount actually trimmed off 3' end
 	HitSet  hitset;    // holds previously-found hits; for chaining
 	public Read() {
 		reset();

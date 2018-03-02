@@ -1,5 +1,7 @@
 package com.uwb.bt2j.util;
 
+import com.uwb.bt2j.util.types.EList;
+
 public class OutputQueue {
 	protected OutFileBuf obuf_;
 	protected long cur_;

@@ -1,0 +1,8 @@
+package com.uwb.bt2j.util;
+public class AutoArray <T>{
+  public AutoArray() {
+    
+  }
+  
+ 
+}

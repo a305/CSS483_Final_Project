@@ -1,0 +1,63 @@
+package com.uwb.bt2j.util.types;
+class ELList <T>{
+  public ELList(int cat) {
+    cat_ = cat;
+    list_ = null;
+    sz_ = 128;
+    cur_ = 0;
+  }
+  
+  public ELList(int isz, int cat) {
+	  cat_ = cat;
+	    list_ = null;
+	    sz_ = isz;
+	    cur_ = 0;
+  }
+  
+  public ELList(ELList<T> o, int cat) {
+	  cat_ = cat;
+	    list_ = null;
+	    sz_ = 0;
+	    cur_ = 0;
+  }
+  
+  public void xfer(ELList<T> o) {
+	  list_ = o.list_; // list_ is an array of EList<T>s
+		sz_   = o.sz_;
+		cur_  = o.cur_;
+		o.list_ = null;
+		o.sz_ = o.cur_ = 0;
+  }
+  
+  public int size() {
+    return cur_;
+  }
+  
+  public boolean empty() {
+    return cur_ == 0;
+  }
+  
+  public boolean nill() {
+    list_ == null;
+  }
+  
+  public void expand() {
+	  if(cur_ == sz_) expandCopy(sz_+1);
+		cur_++;
+  }
+  
+  public void resize() {
+	  if(sz <= cur_) {
+			cur_ = sz;
+			return;
+		}
+		if(sz_ < sz) {
+			expandCopy(sz);
+		}
+		cur_ = sz;
+  }
+  
+  public void clear() {
+    cur_ = 0;
+  }
+}

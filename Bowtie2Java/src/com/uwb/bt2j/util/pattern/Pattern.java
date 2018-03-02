@@ -1,5 +1,8 @@
 package com.uwb.bt2j.util.pattern;
 
+import com.uwb.bt2j.util.strings.BTDnaString;
+import com.uwb.bt2j.util.strings.BTString;
+
 public class Pattern {
 	public static double genRandSeed(BTDnaString qry, BTString qual, BTString name, double seed) {
 		double rseed = (seed + 101) * 59 * 61 * 67 * 71 * 73 * 79 * 83;

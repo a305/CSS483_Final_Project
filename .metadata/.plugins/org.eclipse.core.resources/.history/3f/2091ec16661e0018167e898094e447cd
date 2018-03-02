@@ -1,0 +1,22 @@
+package com.uwb.bt2j.util.types;
+
+public class EBitList {
+	public EBitList(int isz, int cat) {
+		l_ =
+		reset();
+	}
+	
+	public EBitList(int cat) {
+		l_ = cat;
+		reset();
+	}
+	
+	public void clear() {
+		reset();
+	}
+	
+	public void reset() {
+		l_.clear();
+		max_ = Integer.MAX_VALUE;
+	}
+}

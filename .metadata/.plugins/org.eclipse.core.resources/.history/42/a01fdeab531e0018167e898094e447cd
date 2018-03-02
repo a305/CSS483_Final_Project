@@ -1,0 +1,12 @@
+package com.uwb.bt2j.util;
+public class AutoArray<T>{
+	private int cat_;
+	private T t_;
+	private double sz_;
+	
+  public AutoArray(double sz, int cat) {
+    cat_ = cat;
+    t_ = new T[];
+    
+  }
+}

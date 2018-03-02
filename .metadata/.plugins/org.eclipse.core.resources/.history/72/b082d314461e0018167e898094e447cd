@@ -1,0 +1,39 @@
+package com.uwb.bt2j.util.pattern;
+
+import com.uwb.bt2j.aligner.Read;
+import com.uwb.bt2j.util.EList;
+
+import javafx.util.Pair;
+
+public class RawPatternSource extends CFilePatternSource{
+
+	public RawPatternSource(PatternParams p, EList<String> infiles) {
+		super(p, infiles);
+		first_ = true;
+	}
+
+	@Override
+	protected Pair<Boolean, Integer> nextBatchFromFile(PerThreadReadBuf pt, boolean batch_a, int read_idx) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected void resetForNextFile() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void nextBatch(PerThreadReadBuf pt, boolean batch_a, boolean lock) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean parse(Read ra, Read rb, long rdid) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+}

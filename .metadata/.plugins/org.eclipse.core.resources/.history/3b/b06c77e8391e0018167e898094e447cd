@@ -1,0 +1,13 @@
+package com.uwb.bt2j.util;
+
+import com.uwb.bt2j.aligner.AlignerFlags;
+import com.uwb.bt2j.aligner.AlignmentSetSumm;
+
+public class BowtieMapq3 extends Mapq {
+
+	public long mapq(AlignmentSetSumm s, AlignerFlags flags, boolean mate1, double rdlen, double ordlen, String inps) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+}

@@ -1,0 +1,9 @@
+package com.uwb.bt2j.util.types;
+
+public class DoublyLinkedList<T> {
+	DoublyLinkedList<T> prev;
+	DoublyLinkedList<T> next;
+	T payload;
+	
+	public DoublyLinkedList() {	}
+}

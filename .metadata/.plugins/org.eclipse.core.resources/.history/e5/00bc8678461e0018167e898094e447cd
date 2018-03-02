@@ -1,0 +1,19 @@
+package com.uwb.bt2j.util.pattern;
+
+public abstract class PatternComposer {
+	public PatternComposer(PatternParams p) {
+		
+	}
+	
+	public abstract void reset();
+	
+	public PatternComposer setupPatternComposer() {
+		
+	}
+	
+	public void freeEListPMembers() {
+		
+	}
+	
+	
+}

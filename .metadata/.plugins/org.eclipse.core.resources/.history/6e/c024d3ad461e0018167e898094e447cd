@@ -1,0 +1,24 @@
+package com.uwb.bt2j.util.pattern;
+
+import com.uwb.bt2j.aligner.Read;
+
+import javafx.util.Pair;
+
+public abstract class PatternComposer {
+	public PatternComposer(PatternParams p) {
+		
+	}
+	
+	public abstract void reset();
+	public abstract Pair<Boolean, Integer> nextBatch(PerThreadReadBuf pt);
+	public abstract boolean parse(Read ra, Read rb, long rdid);
+	public static PatternComposer setupPatternComposer() {
+		
+	}
+	
+	public void freeEListPMembers() {
+		
+	}
+	
+	
+}

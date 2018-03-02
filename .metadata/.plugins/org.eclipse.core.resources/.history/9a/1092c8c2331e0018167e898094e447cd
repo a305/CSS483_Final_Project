@@ -1,0 +1,14 @@
+package com.uwb.bt2j.util;
+
+public class Uniqueness {
+	public static boolean bestIsUnique(
+			AlignmentSetSumm s,
+			AlignerFlags flags,
+			boolean mate1,
+			double rdlen,
+			double ordlen,
+			String inps
+			) {
+		return !VALID_AL_SCORE(s.bestUnchosenScore(mate1));
+	}
+}

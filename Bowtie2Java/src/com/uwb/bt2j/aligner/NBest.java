@@ -1,6 +1,6 @@
 package com.uwb.bt2j.aligner;
 
-import com.uwb.bt2j.util.EList;
+import com.uwb.bt2j.util.types.EList;
 
 public class NBest<T,TList> {
 	

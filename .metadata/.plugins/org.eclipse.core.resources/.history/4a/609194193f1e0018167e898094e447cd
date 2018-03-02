@@ -1,0 +1,40 @@
+package com.uwb.bt2j.util.pattern;
+
+import com.uwb.bt2j.aligner.Read;
+
+public class VectorPatternSource extends PatternSource{
+	
+	public VectorPatternSource(PatternParams p, EList<Sting> v) {
+		super(p);
+	}
+
+	public Pair<Boolean, int> nextBatchImpl() {
+		
+	}
+	
+	public Pair<Boolean, int> nextBatch() {
+		
+	}
+	
+	public Boolean parse() {
+		
+	}
+
+	@Override
+	public void nextBatch(PerThreadReadBuf pt, boolean batch_a, boolean lock) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean parse(Read ra, Read rb, long rdid) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
+		
+	}
+}

@@ -1,0 +1,8 @@
+package com.uwb.bt2j.util.types;
+
+public class EBitList {
+	public EBitList(int isz, int cat) {
+		l_ =
+		reset();
+	}
+}
