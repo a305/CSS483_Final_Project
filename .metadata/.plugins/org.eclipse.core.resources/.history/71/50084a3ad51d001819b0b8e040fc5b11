@@ -1,0 +1,7 @@
+package com.uwb.bt2j.aligner;
+
+public class NBest<T> {
+	public NBest() {
+		nelt_ = nbest_ = n_ = 0;
+	}
+}

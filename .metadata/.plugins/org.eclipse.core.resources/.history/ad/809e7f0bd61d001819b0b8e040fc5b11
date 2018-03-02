@@ -1,0 +1,16 @@
+package com.uwb.bt2j.aligner.dp;
+
+public class DynamicProgrammingNucFrame {
+	public void init(size_t   nedsz_,
+			size_t   aedsz_,
+			size_t   celsz_,
+			size_t   row_,
+			size_t   col_,
+			size_t   gaps_,
+			size_t   readGaps_,
+			size_t   refGaps_,
+			AlignmentScore score_,
+			int      ct_) {
+		
+	}
+}

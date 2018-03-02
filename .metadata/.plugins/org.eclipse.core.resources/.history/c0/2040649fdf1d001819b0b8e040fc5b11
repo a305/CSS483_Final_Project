@@ -1,0 +1,33 @@
+package com.uwb.bt2j.util;
+
+import java.io.File;
+import java.io.FileInputStream;
+
+public class FileBuf {
+	public static boolean isnewline(int c){
+		return c == '\r' || c == '\n';
+	}
+	
+	public static boolean isspace_notnl(int c) {
+		return isspace(c) && !isnewline(c);
+	}
+	
+	public FileBuf() {
+		init();
+	}
+	
+	public FileBuf(File in) {
+		init();
+		_in = in;
+	}
+	
+	public FileBuf(gzFile in) {
+		init();
+		_zIn = in;
+	}
+	
+	public FileBuf(FileInputStream inf) {
+		init();
+		_inf = inf;
+	}
+}

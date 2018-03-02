@@ -1,0 +1,13 @@
+package com.uwb.bt2j.aligner.dp;
+
+public class DynamicProgrammingBtCandidate {
+	public enum BtCandidate {
+		BT_CAND_FATE_SUCCEEDED(1),
+				BT_CAND_FATE_FAILED(2),
+				BT_CAND_FATE_FILT_START(3),     // skipped b/c starting cell already explored
+				BT_CAND_FATE_FILT_DOMINATED(4), // skipped b/c it was dominated
+				BT_CAND_FATE_FILT_SCORE(5);      // skipped b/c score not interesting anymore
+	private int y;
+	BtCandidate(int x){y = x;}
+	}
+}
