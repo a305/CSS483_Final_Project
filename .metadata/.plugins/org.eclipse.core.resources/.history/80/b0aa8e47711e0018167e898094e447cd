@@ -1,0 +1,7 @@
+package com.uwb.bt2j.aligner.dp;
+
+public class DPRect {
+	public DPRect(int cat) {
+		refl = refr = triml = trimr = corel = corer = 0;
+	}
+}
