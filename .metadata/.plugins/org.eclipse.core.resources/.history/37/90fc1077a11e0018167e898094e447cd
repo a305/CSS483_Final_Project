@@ -1,0 +1,21 @@
+package com.uwb.bt2j.aligner;
+
+public class Ebwt {
+	public static final String gEbwt_ext = "bt2";
+	public String gLastIOErrMsg;
+  
+	public String adjustEbwtBase() {
+		
+	}
+	
+	public void joinedToTextOff(
+			long qlen, 
+			long off,
+			long tidx,
+			long textoff,
+			long tlen,
+			boolean rejectStraddle,
+			boolean straddled){
+		
+	}
+}

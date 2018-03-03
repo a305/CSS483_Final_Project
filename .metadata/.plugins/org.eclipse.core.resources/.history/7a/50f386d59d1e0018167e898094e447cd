@@ -1,0 +1,42 @@
+package com.uwb.bt2j.aligner.groupwalk;
+
+import com.uwb.bt2j.aligner.Ebwt;
+import com.uwb.bt2j.util.BitPairReference;
+import com.uwb.bt2j.util.types.EList;
+
+import javafx.util.Pair;
+
+public class GroupWalkState <T> {
+	public EList<Boolean> masks[];
+	public EList<Long> map;
+	public GroupWalkState(int cat) {
+		masks[0].setCat(cat);
+		masks[1].setCat(cat);
+		masks[2].setCat(cat);
+		masks[3].setCat(cat);
+	}
+	
+	public GroupWalkState() {
+		map_ = new EList(0, 4);
+		reset();
+	}
+	
+	public Pair<Long,Long> init(
+			Ebwt ebwt,             // index to walk left in
+			BitPairReference ref,  // bitpair-encoded reference
+			SARangeWithOffs<T> sa,       // SA range with offsets
+			EList<GroupWalkState> sts,       // EList of GWStates for range being advanced
+			GroupWalkHit<T> hit,                // Corresponding hit structure
+			long range,               // which range is this?
+			boolean reportList,              // if true, "report" resolved offsets immediately by adding them to 'res' list
+			EList<WalkResult> res,   // EList where resolved offsets should be appended
+			long tp,                  // top of range at this step
+			long bt,                  // bot of range at this step
+			long st,                  // # steps taken to get to this step
+			WalkMetrics met) {
+		top = tp;
+		bot = bt;
+		step = st;
+		return init(ebwt, ref, sa, sts, hit, range, reportList, res, met);
+	}
+}

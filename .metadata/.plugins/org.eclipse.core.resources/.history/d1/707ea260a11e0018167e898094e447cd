@@ -1,0 +1,10 @@
+package com.uwb.bt2j.aligner;
+
+public class Ebwt {
+	public static final String gEbwt_ext = "bt2";
+	public String gLastIOErrMsg;
+  
+	public String adjustEbwtBase() {
+		
+	}
+}

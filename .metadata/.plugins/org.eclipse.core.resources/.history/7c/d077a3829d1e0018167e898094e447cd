@@ -1,0 +1,14 @@
+package com.uwb.bt2j.aligner.groupwalk;
+
+import com.uwb.bt2j.util.types.EList;
+
+public class GroupWalkState {
+	public EList<Boolean> masks[];
+	public EList<Long> map;
+	public GroupWalkState(int cat) {
+		masks[0].setCat(cat);
+		masks[1].setCat(cat);
+		masks[2].setCat(cat);
+		masks[3].setCat(cat);
+	}
+}

@@ -1,0 +1,49 @@
+package com.uwb.bt2j.aligner.groupwalk;
+
+import com.uwb.bt2j.aligner.Ebwt;
+import com.uwb.bt2j.util.BitPairReference;
+import com.uwb.bt2j.util.types.EList;
+
+public class GroupWalk2S<T> {
+	public GroupWalk2S() {
+		st_ = new EList(8, 4);
+		reset();
+	}
+	
+	public void reset() {
+		elt_ = rep_ = 0;
+	}
+	
+	public void init(
+			Ebwt ebwtFw,         // forward Bowtie index for walking left
+			BitPairReference ref,// bitpair-encoded reference
+			SARangeWithOffs<T> sa,     // SA range with offsets
+			RandomSource rnd,          // pseudo-random generator for sampling rows
+			WalkMetrics met)           // update metrics here
+	{
+		reset();
+				// Init GWHit
+				hit_.init(sa, 0, false, 0);
+				// Init corresponding GWState
+				st_.resize(1);
+				st_.back().reset();
+				long top = sa.topf;
+				long bot = (long)(top + sa.size());
+				st_.back().initMap(bot-top);
+				st_.ensure(4);
+				st_.back().init(
+					ebwtFw,             // Bowtie index
+					ref,                // bitpair-encoded reference
+					sa,                 // SA range with offsets
+					st_,                // EList<GWState>
+					hit_,               // GWHit
+					0,                  // range 0
+					false,              // put resolved elements into res_?
+					null,               // put resolved elements here
+					top,                // BW row at top
+					bot,                // BW row at bot
+					0,                  // # steps taken
+					met);               // update metrics here
+				elt_ += sa.size();
+	}
+}
