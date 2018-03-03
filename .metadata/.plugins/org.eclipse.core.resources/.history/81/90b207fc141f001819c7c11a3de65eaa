@@ -1,0 +1,36 @@
+package com.uwb.bt2j.aligner.seed;
+
+import com.uwb.bt2j.util.IndexTypes;
+
+public class QVal {
+	public QVal() {
+		reset();
+	}
+	
+	public long offset() {
+		return i_;
+	}
+	
+	public long numRanges() {
+		return rangen_;
+	}
+	
+	publc long numElts() {
+		return eltn_;
+	}
+	
+	public boolean empty() {
+		return numRanges() == 0;
+	}
+	
+	public boolean valid() {
+		return rangen_ != IndexTypes.OFF_MASK;
+	}
+	
+	public void reset() {
+		i_ = 0;
+		rangen_ = eltn_ = IndexTypes.OFF_MASK;
+	}
+	
+	public void init(long i, long ranges, long elts)
+}

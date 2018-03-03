@@ -1,20 +1,38 @@
 package com.uwb.bt2j.aligner.seed;
 
+import com.uwb.bt2j.aligner.Read;
+import com.uwb.bt2j.aligner.Scoring;
+import com.uwb.bt2j.util.strings.BTDnaString;
+import com.uwb.bt2j.util.strings.BTString;
+import com.uwb.bt2j.util.types.EList;
+
+import javafx.util.Pair;
+
 public class Seed {
 	public int len;
-	public int type;
+	public SeedType type;
 	public Constraint overall;
 	public Constraint zones[];
 	
-	public Seed() {
-		init(0,0,null);
+	public enum SeedType {
+		SEED_TYPE_EXACT(1),
+		SEED_TYPE_LEFT_TO_RIGHT(2),
+		SEED_TYPE_RIGHT_TO_LEFT(3),
+		SEED_TYPE_INSIDE_OUT(4);
+		
+		private int x;
+		SeedType(int y){x = y;}
 	}
 	
-	public Seed(int ln, int ty, Constraint oc) {
+	public Seed() {
+		init(0,SeedType.SEED_TYPE_EXACT,null);
+	}
+	
+	public Seed(int ln, SeedType ty, Constraint oc) {
 		init(ln, ty, oc);
 	}
 	
-	public void init(int ln, int ty, Constraint oc) {
+	public void init(int ln, SeedType ty, Constraint oc) {
 		len = ln;
 		type = ty;
 		overall = oc;
@@ -61,54 +79,67 @@ public class Seed {
 		switch(type) {
 			case SEED_TYPE_EXACT: {
 				for(int k = 0; k < seedlen; k++) {
-					is.steps[k] = -(seedlen - k);
+					is.steps.remove(k);
+					is.steps.insert(-(seedlen - k), k);;
 					// Zone 0 all the way
-					is.zones[k].first = is.zones[k].second = 0;
+					is.zones.remove(k);
+					is.zones.insert(new Pair(0,0),k);
 				}
 				break;
 			}
 			case SEED_TYPE_LEFT_TO_RIGHT: {
 				for(int k = 0; k < seedlen; k++) {
-					is.steps[k] = k+1;
+					is.steps.insert(k+1,k);
 					// Zone 0 from 0 up to ceil(len/2), then 1
-					is.zones[k].first = is.zones[k].second = ((k < (seedlen+1)/2) ? 0 : 1);
+					is.zones.remove(k);
+					int x = ((k < (seedlen+1)/2) ? 0 : 1);
+					is.zones.insert(new Pair(x,x),k);
 				}
 				// Zone 1 ends at the RHS
-				is.zones[seedlen-1].first = is.zones[seedlen-1].second = -1;
+				is.zones.remove(seedlen-1);
+				is.zones.insert(new Pair(-1,-1), seedlen-1);
 				break;
 			}
 			case SEED_TYPE_RIGHT_TO_LEFT: {
 				for(int k = 0; k < seedlen; k++) {
-					is.steps[k] = -(seedlen - k);
-					// Zone 0 from 0 up to floor(len/2), then 1
-					is.zones[k].first  = ((k < seedlen/2) ? 0 : 1);
-					// Inserts: Zone 0 from 0 up to ceil(len/2)-1, then 1
-					is.zones[k].second = ((k < (seedlen+1)/2+1) ? 0 : 1);
+					is.steps.remove(k);
+					is.steps.insert(-(seedlen - k),k);
+					is.zones.remove(k);
+					is.zones.insert(new Pair(((k < seedlen/2) ? 0 : 1), ((k < (seedlen+1)/2+1) ? 0 : 1)),k);
 				}
-				is.zones[seedlen-1].first = is.zones[seedlen-1].second = -1;
+				is.zones.remove(seedlen-1);
+				is.zones.insert(new Pair(-1,-1), seedlen-1);
 				break;
 			}
 			case SEED_TYPE_INSIDE_OUT: {
 				// Zone 0 from ceil(N/4) up to N-floor(N/4)
 				int step = 0;
 				for(int k = (seedlen+3)/4; k < seedlen - (seedlen/4); k++) {
-					is.zones[step].first = is.zones[step].second = 0;
-					is.steps[step++] = k+1;
+					is.zones.remove(step);
+					is.zones.insert(new Pair(0,0),step);
+					is.steps.remove(step);
+					is.steps.insert(k+1, step++);
 				}
 				// Zone 1 from N-floor(N/4) up
 				for(int k = seedlen - (seedlen/4); k < seedlen; k++) {
-					is.zones[step].first = is.zones[step].second = 1;
-					is.steps[step++] = k+1;
+					is.zones.remove(step);
+					is.zones.insert(new Pair(1,1),step);
+					is.steps.remove(step);
+					is.steps.insert(k+1, step++);
 				}
 				// No Zone 1 if seedlen is short (like 2)
 				//assert_eq(1, is.zones[step-1].first);
-				is.zones[step-1].first = is.zones[step-1].second = -1;
+				is.zones.remove(step-1);
+				is.zones.insert(new Pair(-1,-1),step-1);
 				// Zone 2 from ((seedlen+3)/4)-1 down to 0
 				for(int k = ((seedlen+3)/4)-1; k >= 0; k--) {
-					is.zones[step].first = is.zones[step].second = 2;
-					is.steps[step++] = -(k+1);
+					is.zones.remove(step);
+					is.zones.insert(new Pair(2,2),step);
+					is.steps.remove(step);
+					is.steps.insert(-(k+1), step++);
 				}
-				is.zones[step-1].first = is.zones[step-1].second = -2;
+				is.zones.remove(step-1);
+				is.zones.insert(new Pair(-2,-2),step-1);
 				break;
 			}
 		}
@@ -127,20 +158,20 @@ public class Seed {
 		Boolean streak = true;
 		is.maxjump = 0;
 		Boolean ret = true;
-		Boolean ltr = (is.steps[0] > 0); // true -> left-to-right
-		for(double i = 0; i < is.steps.size(); i++) {
-			int off = is.steps[i];
-			off = abs(off)-1;
-			Constraint cons = is.cons[abs(is.zones[i].first)];
-			int c = seq[off];
-			int q = qual[off];
-			if(ltr != (is.steps[i] > 0) || // changed direction
-			   is.zones[i].first != 0 ||   // changed zone
-			   is.zones[i].second != 0)    // changed zone
+		Boolean ltr = (is.steps.get(0) > 0); // true -> left-to-right
+		for(int i = 0; i < is.steps.size(); i++) {
+			int off = is.steps.get(i);
+			off = Math.abs(off)-1;
+			Constraint cons = is.cons[Math.abs(is.zones.get(i).getKey())];
+			String c = seq.get(off);
+			int q = qual.get(off);
+			if(ltr != (is.steps.get(i) > 0) || // changed direction
+			   is.zones.get(i).getKey() != 0 ||   // changed zone
+			   is.zones.get(i).getValue() != 0)    // changed zone
 			{
 				streak = false;
 			}
-			if(c == 4) {
+			if(c == "4") {
 				// Induced mismatch
 				if(cons.canN(q, pens)) {
 					cons.chargeN(q, pens);
@@ -158,12 +189,24 @@ public class Seed {
 		return ret;
 	}
 	
-	public void oneMmSeeds(int ln, EList<Seed> pols, Constraint oall) {
+	public static void zeroMmSeeds(int ln,EList<Seed> pols,Constraint oall) {
 		oall.init();
 		// Seed policy 1: left-to-right search
 		pols.expand();
 		pols.back().len = ln;
-		pols.back().type = SEED_TYPE_LEFT_TO_RIGHT;
+		pols.back().type = SeedType.SEED_TYPE_EXACT;
+		pols.back().zones[0] = Constraint.exact();
+		pols.back().zones[1] = Constraint.exact();
+		pols.back().zones[2] = Constraint.exact();
+		pols.back().overall = oall;
+	}
+	
+	public static void oneMmSeeds(int ln, EList<Seed> pols, Constraint oall) {
+		oall.init();
+		// Seed policy 1: left-to-right search
+		pols.expand();
+		pols.back().len = ln;
+		pols.back().type = SeedType.SEED_TYPE_LEFT_TO_RIGHT;
 		pols.back().zones[0] = Constraint.exact();
 		pols.back().zones[1] = Constraint.mmBased(1);
 		pols.back().zones[2] = Constraint.exact(); // not used
@@ -171,7 +214,7 @@ public class Seed {
 		// Seed policy 2: right-to-left search
 		pols.expand();
 		pols.back().len = ln;
-		pols.back().type = SEED_TYPE_RIGHT_TO_LEFT;
+		pols.back().type = SeedType.SEED_TYPE_RIGHT_TO_LEFT;
 		pols.back().zones[0] = Constraint.exact();
 		pols.back().zones[1] = Constraint.mmBased(1);
 		pols.back().zones[1].mmsCeil = 0;
@@ -179,20 +222,20 @@ public class Seed {
 		pols.back().overall = oall;
 	}
 	
-	public void twoMmSeeds(int ln, EList<Seed> pols, Constraint oall) {
+	public static void twoMmSeeds(int ln, EList<Seed> pols, Constraint oall) {
 		oall.init();
 		// Seed policy 1: left-to-right search
 		pols.expand();
 		pols.back().len = ln;
-		pols.back().type = SEED_TYPE_LEFT_TO_RIGHT;
+		pols.back().type = SeedType.SEED_TYPE_LEFT_TO_RIGHT;
 		pols.back().zones[0] = Constraint.exact();
 		pols.back().zones[1] = Constraint.mmBased(2);
 		pols.back().zones[2] = Constraint.exact(); // not used
-		pols.back().overall = &oall;
+		pols.back().overall = oall;
 		// Seed policy 2: right-to-left search
 		pols.expand();
 		pols.back().len = ln;
-		pols.back().type = SEED_TYPE_RIGHT_TO_LEFT;
+		pols.back().type = SeedType.SEED_TYPE_RIGHT_TO_LEFT;
 		pols.back().zones[0] = Constraint.exact();
 		pols.back().zones[1] = Constraint.mmBased(2);
 		pols.back().zones[1].mmsCeil = 1; // Must have used at least 1 mismatch
@@ -201,7 +244,7 @@ public class Seed {
 		// Seed policy 3: inside-out search
 		pols.expand();
 		pols.back().len = ln;
-		pols.back().type = SEED_TYPE_INSIDE_OUT;
+		pols.back().type = SeedType.SEED_TYPE_INSIDE_OUT;
 		pols.back().zones[0] = Constraint.exact();
 		pols.back().zones[1] = Constraint.mmBased(1);
 		pols.back().zones[1].mmsCeil = 0; // Must have used at least 1 mismatch

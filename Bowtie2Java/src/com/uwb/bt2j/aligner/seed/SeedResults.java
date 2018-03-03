@@ -1,6 +1,9 @@
 package com.uwb.bt2j.aligner.seed;
 
 import com.uwb.bt2j.aligner.Edit;
+import com.uwb.bt2j.aligner.Read;
+import com.uwb.bt2j.util.strings.BTDnaString;
+import com.uwb.bt2j.util.strings.BTString;
 import com.uwb.bt2j.util.types.EList;
 
 public class SeedResults {
@@ -53,7 +56,7 @@ public class SeedResults {
 			QVal qv,           // range of ranges in cache
 			AlignmentCache ac, // cache
 			double seedIdx,         // seed index (from 5' end)
-			booleanean     seedFw) {
+			boolean     seedFw) {
 		if(qv.empty()) return;
 		if(seedFw) {
 			hitsFw_[seedIdx] = qv;
@@ -80,7 +83,7 @@ public class SeedResults {
 		}
 	}
 	
-	public void reset(Read read, EList<double> offIdx2off, double numOffs) {
+	public void reset(Read read, EList<Double> offIdx2off, double numOffs) {
 		clearSeeds();
 		numOffs_ = numOffs;
 		seqFw_.resize(numOffs_);
@@ -95,6 +98,31 @@ public class SeedResults {
 		sortedRc_.resize(numOffs_);
 		offIdx2off_ = offIdx2off;
 		for(double i = 0; i < numOffs_; i++) {
+			sortedFw_[i] = sortedRc_[i] = false;
+			hitsFw_[i].reset();
+			hitsRc_[i].reset();
+			isFw_[i].clear();
+			isRc_[i].clear();
+		}
+		read_ = read;
+		sorted_ = false;
+	}
+	
+	public void reset(Read read, EList<Integer> offIdx2off, int numOffs) {
+		clearSeeds();
+		numOffs_ = numOffs;
+		seqFw_.resize(numOffs_);
+		seqRc_.resize(numOffs_);
+		qualFw_.resize(numOffs_);
+		qualRc_.resize(numOffs_);
+		hitsFw_.resize(numOffs_);
+		hitsRc_.resize(numOffs_);
+		isFw_.resize(numOffs_);
+		isRc_.resize(numOffs_);
+		sortedFw_.resize(numOffs_);
+		sortedRc_.resize(numOffs_);
+		offIdx2off_ = offIdx2off;
+		for(int i = 0; i < numOffs_; i++) {
 			sortedFw_[i] = sortedRc_[i] = false;
 			hitsFw_[i].reset();
 			hitsRc_[i].reset();
@@ -202,7 +230,7 @@ public class SeedResults {
 		return uniTot_;
 	}
 	
-	public double numUniqueSeedsStrand(booleanean fw) {
+	public double numUniqueSeedsStrand(boolean fw) {
 		return uniTotS_[fw ? 0 : 1];
 	}
 	
@@ -210,7 +238,7 @@ public class SeedResults {
 		return repTot_;
 	}
 	
-	public double numRepeatSeedsStrand(booleanean fw) {
+	public double numRepeatSeedsStrand(boolean fw) {
 		return repTotS_[fw ? 0 : 1];
 	}
 	
@@ -296,13 +324,13 @@ public class SeedResults {
 	/**
 	 * Return true iff there are 0 hits being held.
 	 */
-	public booleanean empty() { return numRanges() == 0; }
+	public boolean empty() { return numRanges() == 0; }
 	
-	public QVal hitsAtOffIdx(booleanean fw, double seedoffidx) {
+	public QVal hitsAtOffIdx(boolean fw, double seedoffidx) {
 		return fw ? hitsFw_[seedoffidx] : hitsRc_[seedoffidx];
 	}
 	
-	public EList<InstantiatedSeed> instantiatedSeeds(booleanean fw, double seedoffidx) {
+	public EList<InstantiatedSeed> instantiatedSeeds(boolean fw, double seedoffidx) {
 		return fw ? isFw_[seedoffidx] : isRc_[seedoffidx];
 	}
 	
@@ -314,7 +342,7 @@ public class SeedResults {
 		return read_;
 	}
 	
-	public void rankSeedHits(RandomSource rnd, booleanean all) {
+	public void rankSeedHits(RandomSource rnd, boolean all) {
 		if(all) {
 			for(double i = 1; i < numOffs_; i++) {
 				for(int fwi = 0; fwi <= 1; fwi++) {
@@ -517,5 +545,9 @@ public class SeedResults {
 	
 	public double readLength() {
 		return read_.length();
+	}
+
+	public void addExactEeFw(long top, long bot, Edit e1, Edit e2, boolean fw, long score) {
+		exactFwHit_.init(top, bot, e1, e2, fw, score);
 	}
 }

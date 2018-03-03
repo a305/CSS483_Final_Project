@@ -1,7 +1,15 @@
 package com.uwb.bt2j.aligner.seed;
 
+import com.uwb.bt2j.aligner.Edit;
+import com.uwb.bt2j.aligner.PerReadMetrics;
+import com.uwb.bt2j.aligner.Read;
+import com.uwb.bt2j.aligner.Scoring;
 import com.uwb.bt2j.aligner.cache.QKey;
+import com.uwb.bt2j.indexer.Ebwt;
 import com.uwb.bt2j.indexer.SideLocus;
+import com.uwb.bt2j.util.strings.BTDnaString;
+import com.uwb.bt2j.util.strings.BTString;
+import com.uwb.bt2j.util.types.EList;
 
 import javafx.util.Pair;
 
@@ -17,14 +25,14 @@ public class SeedAligner {
 	public boolean fw_;
 	public EList<Edit> edits_;
 	public AlignmentCacheIface ca_;
-	public EList<double> offIdx2off_;
+	public EList<Double> offIdx2off_;
 	public long bwops_;
 	public long bwedits_;
 	public BTDnaString tmprfdnastr_;
 	public BTDnaString tmpdnastr_;
 	
 	public enum SeedAlignerActions {
-		SA_ACTION_TYPE_RESET(1),
+				SA_ACTION_TYPE_RESET(1),
 				SA_ACTION_TYPE_SEARCH_SEED(2), // 2
 				SA_ACTION_TYPE_FTAB(3),        // 3
 				SA_ACTION_TYPE_FCHR(4),        // 4
@@ -64,18 +72,16 @@ public class SeedAligner {
 			Pair<Integer, Integer> instFw,
 			Pair<Integer, Integer> instRc) {
 		offIdx2off_.clear();
-		int len = seeds[0].len; // assume they're all the same length
+		int len = seeds.get(0).len; // assume they're all the same length
 		// Calc # seeds within read interval
 		int nseeds = 1;
 		if((int)read.length() - (int)off > len) {
 			nseeds += ((int)read.length() - (int)off - len) / per;
 		}
 		for(int i = 0; i < nseeds; i++) {
-			offIdx2off_.push_back(per * i + (int)off);
+			offIdx2off_.push_back((double) (per * i + (int)off));
 		}
-		Pair<Integer, Integer> ret;
-		ret.first = 0;  // # seeds that require alignment
-		ret.second = 0; // # seeds that hit in cache with non-empty results
+		Pair<Integer, Integer> ret = new Pair(0,0);
 		sr.reset(read, offIdx2off_, nseeds);
 		// For each seed position
 		for(int fwi = 0; fwi < 2; fwi++) {
@@ -87,28 +93,27 @@ public class SeedAligner {
 			// For each seed position
 			for(int i = 0; i < nseeds; i++) {
 				int depth = i * per + (int)off;
-				int seedlen = seeds[0].len;
+				int seedlen = seeds.get(0).len;
 				// Extract the seed sequence at this offset
 				// If fw == true, we extract the characters from i*per to
 				// i*(per-1) (exclusive).  If fw == false, 
 				instantiateSeq(
 					read,
-					sr.seqs(fw)[i],
-					sr.quals(fw)[i],
+					sr.seqs(fw).get(i),
+					sr.quals(fw).get(i),
 					Integer.min((int)seedlen, (int)read.length()),
 					depth,
 					fw);
-				QKey qk(sr.seqs(fw)[i]);
+				QKey qk = new QKey(sr.seqs(fw).get(i));
 				// For each search strategy
-				EList<InstantiatedSeed>& iss = sr.instantiatedSeeds(fw, i);
+				EList<InstantiatedSeed> iss = sr.instantiatedSeeds(fw, i);
 				for(int j = 0; j < (int)seeds.size(); j++) {
 					iss.expand();
-					assert_eq(seedlen, seeds[j].len);
 					InstantiatedSeed is = iss.back();
-					if(seeds[j].instantiate(
+					if(seeds.get(j).instantiate(
 						read,
-						sr.seqs(fw)[i],
-						sr.quals(fw)[i],
+						sr.seqs(fw).get(i),
+						sr.quals(fw).get(i),
 						pens,
 						depth,
 						i,
@@ -117,8 +122,9 @@ public class SeedAligner {
 						is))
 					{
 						// Can we fill this seed hit in from the cache?
-						ret.first++;
-						if(fwi == 0) { instFw.first++; } else { instRc.first++; }
+						ret = new Pair(ret.getKey() + 1, ret.getValue());
+						if(fwi == 0) { instFw = new Pair(instFw.getKey() + 1, instFw.getValue()); } 
+						else { instRc = new Pair(instRc.getKey() + 1, instRc.getValue()); }
 					} else {
 						// Seed may fail to instantiate if there are Ns
 						// that prevent it from matching
@@ -159,8 +165,8 @@ public class SeedAligner {
 					continue;
 				}
 				QVal qv;
-				seq_  = sr.seqs(fw)[i];  // seed sequence
-				qual_ = sr.quals(fw)[i]; // seed qualities
+				seq_  = sr.seqs(fw).get(i);  // seed sequence
+				qual_ = sr.quals(fw).get(i); // seed qualities
 				off_  = off;              // seed offset (from 5')
 				fw_   = fw;               // seed orientation
 				// Tell the cache that we've started aligning, so the cache can
@@ -175,10 +181,10 @@ public class SeedAligner {
 				if(ret == 0) {
 					// Not already in cache
 					possearches++;
-					for(double j = 0; j < iss.size(); j++) {
+					for(int j = 0; j < iss.size(); j++) {
 						// Set seq_ and qual_ appropriately, using the seed sequences
 						// and qualities already installed in SeedResults
-						s_ = iss[j];
+						s_ = iss.get(j);
 						// Do the search with respect to seq_, qual_ and s_.
 						if(!searchSeedBi()) {
 							// Memory exhausted during search
@@ -210,8 +216,8 @@ public class SeedAligner {
 		prm.nSeedRangesRc = sr.numRangesRc();
 		prm.nSeedEltsFw = sr.numEltsFw();
 		prm.nSeedEltsRc = sr.numEltsRc();
-		prm.seedMedian = (ulong)(sr.medianHitsPerSeed() + 0.5);
-		prm.seedMean = (ulong)sr.averageHitsPerSeed();
+		prm.seedMedian = (sr.medianHitsPerSeed() + 0.5);
+		prm.seedMean = sr.averageHitsPerSeed();
 
 		prm.nSdFmops += bwops_;
 		met.seedsearch += seedsearches;
@@ -225,20 +231,20 @@ public class SeedAligner {
 		met.bweds += bwedits_;
 	}
 	
-	public Boolean sanityPartial(
-			Ebwt ebwtRw,
+	public boolean sanityPartial(
+			Ebwt ebwtFw,
 			Ebwt ebwtBw,
 			BTDnaString seq,
-			double dep,
+			int dep,
 			double len,
-			Boolean do1mm,
+			boolean do1mm,
 			long topFw,
 			long botfw,
 			long topbw,
 			long botbw) {
 		tmpdnastr_.clear();
-		for(double i = dep; i < len; i++) {
-			tmpdnastr_.append(seq[i]);
+		for(int i = dep; i < len; i++) {
+			tmpdnastr_.append(seq.get(i));
 		}
 		long top_fw = 0, bot_fw = 0;
 		ebwtFw.contains(tmpdnastr_, top_fw, bot_fw);
@@ -248,6 +254,15 @@ public class SeedAligner {
 			ebwtBw.contains(tmpdnastr_, top_bw, bot_bw);
 		}
 		return true;
+	}
+	
+	private void INIT_LOCS(long top, long bot, SideLocus tloc, SideLocus bloc, Ebwt e) {
+		if(bot - top == 1) {
+			tloc.initFromRow(top, e.eh(), e.ebwt());
+			bloc.invalidate();
+		} else {
+			SideLocus.initFromTopBot(top, bot, e.eh(), e.ebwt(), tloc, bloc);
+		}
 	}
 	
 	public double exactSweep(
@@ -264,15 +279,15 @@ public class SeedAligner {
 			SeedSearchMetrics met) {
 		long top = 0, bot = 0;
 		SideLocus tloc, bloc;
-		double len = read.length();
+		int len = read.length();
 		double nelt = 0;
 		for(int fwi = 0; fwi < 2; fwi++) {
-			Boolean fw = (fwi == 0);
+			boolean fw = (fwi == 0);
 			if( fw && nofw) continue;
 			if(!fw && norc) continue;
 			BTDnaString seq = fw ? read.patFw : read.patRc;
 			int ftabLen = ebwt.eh().ftabChars();
-			double dep = 0;
+			int dep = 0;
 			double nedit = 0;
 			Boolean done = false;
 			while(dep < len && !done) {
@@ -281,9 +296,9 @@ public class SeedAligner {
 				Boolean doFtab = ftabLen > 1 && left >= (double)ftabLen;
 				if(doFtab) {
 					// Does N interfere with use of Ftab?
-					for(double i = 0; i < (double)ftabLen; i++) {
-						int c = seq[len-dep-1-i];
-						if(c > 3) {
+					for(int i = 0; i < (double)ftabLen; i++) {
+						String c = seq.get(len-dep-1-i);
+						if(c.compareTo("3") > 0) {
 							doFtab = false;
 							break;
 						}
@@ -295,10 +310,10 @@ public class SeedAligner {
 					dep += (double)ftabLen;
 				} else {
 					// Use fchr
-					int c = seq[len-dep-1];
-					if(c < 4) {
-						top = ebwt.fchr()[c];
-						bot = ebwt.fchr()[c+1];
+					String c = seq.get(len-dep-1);
+					if(c.compareTo("4") < 0) {
+						top = ebwt.fchr().get(c);
+						bot = ebwt.fchr().get(c+1);
 					}
 					dep++;
 				}
@@ -313,18 +328,18 @@ public class SeedAligner {
 				INIT_LOCS(top, bot, tloc, bloc, ebwt);
 				// Keep going
 				while(dep < len) {
-					int c = seq[len-dep-1];
-					if(c > 3) {
+					String c = seq.get(len-dep-1);
+					if(c.compareTo("3") > 0) {
 						top = bot = 0;
 					} else {
 						if(bloc.valid()) {
 							bwops_ += 2;
-							top = ebwt.mapLF(tloc, c);
-							bot = ebwt.mapLF(bloc, c);
+							top = ebwt.mapLF(tloc);
+							bot = ebwt.mapLF(bloc);
 						} else {
 							bwops_++;
 							top = ebwt.mapLF1(top, tloc, c);
-							if(top == OFF_MASK) {
+							if(top == IndexTypes.OFF_MASK) {
 								top = bot = 0;
 							} else {
 								bot = top+1;
@@ -382,8 +397,8 @@ public class SeedAligner {
 			Boolean               rep1mm, // report 1mm hits?
 			SeedResults       hits,   // holds all the seed hits (and exact hit)
 			SeedSearchMetrics met) {   // metrics{
-		double len = read.length();
-		int nceil = sc.nCeil.f<int>((double)len);
+		int len = read.length();
+		int nceil = sc.nCeil.f<Integer>((double)len);
 		double ns = read.ns();
 		if(ns > 1) {
 			// Can't align this with <= 1 mismatches
@@ -398,10 +413,10 @@ public class SeedAligner {
 			halfBw++;
 		}
 		SideLocus tloc, bloc;
-		long t[4], b[4];   // dest BW ranges for BWT
+		long t[], b[];   // dest BW ranges for BWT
 		t[0] = t[1] = t[2] = t[3] = 0;
 		b[0] = b[1] = b[2] = b[3] = 0;
-		long tp[4], bp[4]; // dest BW ranges for BWT'
+		long tp[], bp[]; // dest BW ranges for BWT'
 		tp[0] = tp[1] = tp[2] = tp[3] = 0;
 		bp[0] = bp[1] = bp[2] = bp[3] = 0;
 		long top = 0, bot = 0, topp = 0, botp = 0;
@@ -427,8 +442,8 @@ public class SeedAligner {
 				double nea = ebwtfw ? halfFw : halfBw;
 				// Check if there's an N in the near portion
 				Boolean skip = false;
-				for(double dep = 0; dep < nea; dep++) {
-					if(seq[len-dep-1] > 3) {
+				for(int dep = 0; dep < nea; dep++) {
+					if(seq.get(len-dep-1).compareTo("3") > 0) {
 						skip = true;
 						break;
 					}
@@ -448,7 +463,7 @@ public class SeedAligner {
 					if(bot - top == 0) {
 						continue;
 					}
-					int c = seq[len - ftabLen];
+					int c = seq.get(len - ftabLen);
 					t[c] = top; b[c] = bot;
 					tp[c] = topp; bp[c] = botp;
 					dep = ftabLen;
@@ -484,7 +499,7 @@ public class SeedAligner {
 					} else {
 						bwops_++;
 						top = ebwt.mapLF1(top, tloc, rdc);
-						if(top == OFF_MASK) {
+						if(top == IndexTypes.OFF_MASK) {
 							do_continue = true;
 							break;
 						}
@@ -572,7 +587,7 @@ public class SeedAligner {
 								} else {
 									bwops_++;
 									topm = ebwt.mapLF1(topm, tlocm, rdcm);
-									if(topm == OFF_MASK) {
+									if(topm == IndexTypes.OFF_MASK) {
 										break;
 									}
 									botm = topm + 1;
@@ -861,7 +876,7 @@ public class SeedAligner {
 				long top = ltr ? topb : topf;
 				bwops_++;
 				t[c] = ebwt.mapLF1(top, tloc, c);
-				if(t[c] == OFF_MASK) {
+				if(t[c] == IndexTypes.OFF_MASK) {
 					return true;
 				}
 				b[c] = t[c]+1;

@@ -1,4 +1,7 @@
 package com.uwb.bt2j.aligner;
+
+import com.uwb.bt2j.indexer.Ebwt;
+
 class AlignerDriver {
 
   	protected DescentRootSelector sel_;

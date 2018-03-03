@@ -2,8 +2,11 @@ package com.uwb.bt2j.aligner;
 
 import org.omg.CORBA_2_3.portable.OutputStream;
 
+import com.uwb.bt2j.aligner.seed.SeedAlignmentPolicy;
 import com.uwb.bt2j.aligner.sink.ALNSink;
+import com.uwb.bt2j.indexer.Ebwt;
 import com.uwb.bt2j.util.BitPairReference;
+import com.uwb.bt2j.util.Formats.FileFormat;
 import com.uwb.bt2j.util.file.OutFileBuf;
 import com.uwb.bt2j.util.pattern.PatternComposer;
 import com.uwb.bt2j.util.pattern.PatternParams;
@@ -161,17 +164,17 @@ class Aligner<T> {
 	public static Boolean saw_a;
 	public static Boolean saw_k;
 	
-	public Boolean gMate1fw;
-	public Boolean gMate2fw;
-	public Boolean gFlippedMatesOK;
-	public Boolean gDovetailMatesOK;
+	public static Boolean gMate1fw;
+	public static Boolean gMate2fw;
+	public static Boolean gFlippedMatesOK;
+	public static Boolean gDovetailMatesOK;
 	public Boolean gContainsMatesOK;
-	public Boolean gOlapMatesOK;
-	public Boolean gExpandToFrag;
-	public Boolean gReportDiscordant;
-	public Boolean gReportMixed;
+	public static Boolean gOlapMatesOK;
+	public static Boolean gExpandToFrag;
+	public static Boolean gReportDiscordant;
+	public static Boolean gReportMixed;
 	public Boolean gNoFw;
-	public Boolean gNorc;
+	public static Boolean gNorc;
 	public Boolean gReportOverhangs;
 	
 	public static PatternComposer   multiseed_patsrc;
@@ -184,12 +187,13 @@ class Aligner<T> {
 	public static ALNSink                 multiseed_msink;
 	public static OutFileBuf              multiseed_metricsOfb;
 	
-	public int gVerbose;
-	public int qQuiet;
-	public int gMinInsert;
-	public int gMaxInsert;
+	public static FileFormat format;
+	public static boolean gVerbose;
+	public static boolean qQuiet;
+	public static int gMinInsert;
+	public static int gMaxInsert;
 	public int gGapBarrier;
-	public int gDefaultSeedLen;
+	public static int gDefaultSeedLen;
 	
 	public static void main(String[] args) {
 		try {
@@ -219,20 +223,14 @@ class Aligner<T> {
 				System.out.println( "Options: " + COMPILER_OPTIONS);
 			}
 			{
-				Timer _t(cerr, "Overall time: ", timing);
 				if(startVerbose) {
 					System.err.println( "Parsing index and read arguments: "); logTime(cerr, true);
 				}
 
 				// Get index basename (but only if it wasn't specified via --index)
-				if(bt2index.empty()) {
+				if(bt2index.isEmpty()) {
 					System.err.println( "No index, query, or output file specified!");
-					printUsage(cerr);
-				}
-		
-				if(thread_stealing && thread_stealing_dir.empty()) {
-					System.err.println( "When --thread-ceiling is specified, must also specify --thread-piddir");
-					printUsage(cerr);
+					printUsage(System.err);
 				}
 
 				// Get query filename
@@ -240,7 +238,7 @@ class Aligner<T> {
 				
 				if(optind >= args.length) {
 					if(!got_reads) {
-						printUsage(cerr);
+						printUsage(System.err);
 						System.err.println( "***");
 						System.err.println(  "Error: Must specify at least one read input with -U/-1/-2");
 					}
@@ -249,14 +247,14 @@ class Aligner<T> {
 					tokenize(args[optind++], ",", queries);
 					if(queries.empty()) {
 						System.err.println( "Tokenized query file list was empty!");
-						printUsage(cerr);
+						printUsage(System.err);
 					}
 				}
 
 				// Get output filename
-				if(optind < args.length && outfile.empty()) {
+				if(optind < args.length && outfile.isEmpty()) {
 					outfile = args[optind++];
-					System.err.println( "Warning: Output file '" + outfile.c_str()
+					System.err.println( "Warning: Output file '" + outfile
 					     + "' was specified without -S.  This will not work in "
 						 + "future Bowtie 2 versions.  Please use -S instead."
 						 );
@@ -318,7 +316,7 @@ class Aligner<T> {
 		startVerbose			= 0;
 		gQuiet					= false;
 		sanityCheck				= 0;  // enable expensive sanity checks
-		format					= FASTQ; // default read format is FASTQ
+		format					= FileFormat.FASTQ; // default read format is FASTQ
 		origString				= ""; // reference text, or filename(s)
 		seed					= 0; // srandom() seed
 		timing					= 0; // whether to report basic timing data
@@ -341,7 +339,7 @@ class Aligner<T> {
 		thread_stealing_dir		= ""; // keep track of pids in this directory
 		thread_stealing			= false; // true iff thread stealing is in use
 		FNAME_SIZE				= 4096;
-		outType					= OUTPUT_SAM;  // style of output
+		outType					= 1;  // style of output
 		noRefNames				= false; // true -> print reference indexes; not names
 		khits					= 1;     // number of hits per read; >1 is much slower
 		mhits					= 50;    // stop after finding this many alignments+1
@@ -417,7 +415,7 @@ class Aligner<T> {
 		gSeedLenIsSet			= false;
 		bwaSwLikeC              = 5.5f;
 		bwaSwLikeT              = 20.0f;
-		gDefaultSeedLen			= DEFAULT_SEEDLEN;
+		gDefaultSeedLen			= SeedAlignmentPolicy.Scoring.DEFAULT_SEEDLEN;
 		qcFilter                = false; // don't believe upstream qc by default
 		rgid					= "";    // SAM outputs for @RG header line
 		rgs						= "";    // SAM outputs for @RG header line
@@ -429,29 +427,29 @@ class Aligner<T> {
 		qualities2.clear();
 		polstr.clear();
 		msNoCache       = true; // true -> disable local cache
-		bonusMatchType  = DEFAULT_MATCH_BONUS_TYPE;
-		bonusMatch      = DEFAULT_MATCH_BONUS;
-		penMmcType      = DEFAULT_MM_PENALTY_TYPE;
-		penMmcMax       = DEFAULT_MM_PENALTY_MAX;
-		penMmcMin       = DEFAULT_MM_PENALTY_MIN;
-		penNType        = DEFAULT_N_PENALTY_TYPE;
-		penN            = DEFAULT_N_PENALTY;
-		penNCatPair     = DEFAULT_N_CAT_PAIR; // concatenate mates before N filtering?
+		bonusMatchType  = Scoring.DEFAULT_MATCH_BONUS_TYPE;
+		bonusMatch      = Scoring.DEFAULT_MATCH_BONUS;
+		penMmcType      = Scoring.DEFAULT_MM_PENALTY_TYPE;
+		penMmcMax       = Scoring.DEFAULT_MM_PENALTY_MAX;
+		penMmcMin       = Scoring.DEFAULT_MM_PENALTY_MIN;
+		penNType        = Scoring.DEFAULT_N_PENALTY_TYPE;
+		penN            = Scoring.DEFAULT_N_PENALTY;
+		penNCatPair     = Scoring.DEFAULT_N_CAT_PAIR; // concatenate mates before N filtering?
 		localAlign      = false;     // do local alignment in DP steps
 		noisyHpolymer   = false;
-		penRdGapConst   = DEFAULT_READ_GAP_CONST;
-		penRfGapConst   = DEFAULT_REF_GAP_CONST;
-		penRdGapLinear  = DEFAULT_READ_GAP_LINEAR;
-		penRfGapLinear  = DEFAULT_REF_GAP_LINEAR;
-		scoreMin.init  (SIMPLE_FUNC_LINEAR, DEFAULT_MIN_CONST,   DEFAULT_MIN_LINEAR);
-		nCeil.init     (SIMPLE_FUNC_LINEAR, 0.0f, Double.MAX_VALUE, 2.0f, 0.1f);
-		msIval.init    (SIMPLE_FUNC_LINEAR, 1.0f, Double.MAX_VALUE, DEFAULT_IVAL_B, DEFAULT_IVAL_A);
+		penRdGapConst   = Scoring.DEFAULT_READ_GAP_CONST;
+		penRfGapConst   = Scoring.DEFAULT_REF_GAP_CONST;
+		penRdGapLinear  = Scoring.DEFAULT_READ_GAP_LINEAR;
+		penRfGapLinear  = Scoring.DEFAULT_REF_GAP_LINEAR;
+		scoreMin.init  (SimpleFunc.SIMPLE_FUNC_LINEAR, Scoring.DEFAULT_MIN_CONST,   Scoring.DEFAULT_MIN_LINEAR);
+		nCeil.init     (SimpleFunc.SIMPLE_FUNC_LINEAR, 0.0f, Double.MAX_VALUE, 2.0f, 0.1f);
+		msIval.init    (SimpleFunc.SIMPLE_FUNC_LINEAR, 1.0f, Double.MAX_VALUE, Scoring.DEFAULT_IVAL_B, Scoring.DEFAULT_IVAL_A);
 		descConsExp     = 2.0;
 		descPrioritizeRoots = false;
 		descLanding = 20;
-		descentTotSz.init(SIMPLE_FUNC_LINEAR, 1024.0, Double.MAX_VALUE, 0.0, 1024.0);
-		descentTotFmops.init(SIMPLE_FUNC_LINEAR, 100.0, Double.MAX_VALUE, 0.0, 10.0);
-		multiseedMms    = DEFAULT_SEEDMMS;
+		descentTotSz.init(SimpleFunc.SIMPLE_FUNC_LINEAR, 1024.0, Double.MAX_VALUE, 0.0, 1024.0);
+		descentTotFmops.init(SimpleFunc.SIMPLE_FUNC_LINEAR, 100.0, Double.MAX_VALUE, 0.0, 10.0);
+		multiseedMms    = SeedAlignmentPolicy.DEFAULT_SEEDMMS;
 		multiseedLen    = gDefaultSeedLen;
 		multiseedOff    = 0;
 		seedCacheLocalMB   = 32; // # MB to use for non-shared seed alignment cacheing
@@ -849,11 +847,11 @@ class Aligner<T> {
 		
 			if (l < lower || l > upper) {
 				System.err.println(errmsg);
-				printUsage(cerr);
+				printUsage(System.err);
 			}
 			return (int)l;
 		System.err.println(errmsg);
-		printUsage(cerr);
+		printUsage(System.err);
 		return -1;
 	}
 	
@@ -918,7 +916,7 @@ class Aligner<T> {
 			break;
 		}
 		case ARG_DESC_EXP: {
-			descConsExp = parse<double>(arg);
+			descConsExp = parse<Double>(arg);
 			if(descConsExp < 0.0) {
 				System.err.println( "Error: --desc-exp must be greater than or equal to 0");
 			}
@@ -934,7 +932,7 @@ class Aligner<T> {
 		case 'f': format = FASTA; break;
 		case 'F': {
 			format = FASTA_CONT;
-			Pair<double, double> p = parsePair<double>(arg, ',');
+			Pair<Double, Double> p = parsePair<Double>(arg, ',');
 			fastaContLen = p.first;
 			fastaContFreq = p.second;
 			break;
@@ -1211,13 +1209,13 @@ class Aligner<T> {
 		case ARG_ORIG:
 			if(arg == null || arg.length() == 0) {
 				System.err.println( "--orig arg must be followed by a string");
-				printUsage(cerr);
+				printUsage(System.err);
 			}
 			origString = arg;
 			break;
 		case ARG_LOCAL: {
 			localAlign = true;
-			gDefaultSeedLen = DEFAULT_LOCAL_SEEDLEN;
+			gDefaultSeedLen = Scoring.DEFAULT_LOCAL_SEEDLEN;
 			break;
 		}
 		case ARG_END_TO_END: localAlign = false; break;
@@ -1397,7 +1395,7 @@ class Aligner<T> {
 		}
 		case ARG_VERSION: showVersion = 1; break;
 		default:
-			printUsage(cerr);
+			printUsage(System.err);
 			throw 1;
 	}
 	if (!localAlign && scUnMapped) {
@@ -1536,7 +1534,6 @@ class Aligner<T> {
 			readsPerBatch,                   // size of output buffer of reads 
 			skipReads);                      // first read will have this rdid
 		{
-			Timer _t(cerr, "Time searching: ", timing);
 			// Set up penalities
 			if(bonusMatch > 0 && !localAlign) {
 				System.err.println( "Warning: Match bonus always = 0 in --end-to-end mode; ignoring user setting" );

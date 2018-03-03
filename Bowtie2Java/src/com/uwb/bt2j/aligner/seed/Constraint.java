@@ -1,5 +1,6 @@
 package com.uwb.bt2j.aligner.seed;
 
+import com.uwb.bt2j.aligner.Scoring;
 import com.uwb.bt2j.aligner.SimpleFunc;
 
 public class Constraint {
@@ -22,7 +23,7 @@ public class Constraint {
 	
 	public void init() {
 		edits = mms = ins = dels = penalty = editsCeil = mmsCeil =
-				insCeil = delsCeil = penaltyCeil = MAX_I;
+				insCeil = delsCeil = penaltyCeil = Integer.MAX_VALUE;
 				penFunc.reset();
 				instantiated = false;
 	}
@@ -118,33 +119,33 @@ public class Constraint {
 		instantiated = true;
 	}
 	
-	public Constraint exact() {
-		Constraint c;
+	public static Constraint exact() {
+		Constraint c = new Constraint();
 		c.edits = c.mms = c.ins = c.dels = c.penalty = 0;
 		return c;
 	}
 	
 	public Constraint penaltyBased(int pen) {
-		Constraint c;
+		Constraint c = new Constraint();
 		c.penalty = pen;
 		return c;
 	}
 	
 	public Constraint penaltyFuncBased(SimpleFunc f) {
-		Constraint c;
+		Constraint c = new Constraint();
 		c.penFunc = f;
 		return c;
 	}
 	
-	public Constraint mmBased(int mms) {
-		Constraint c;
+	public static Constraint mmBased(int mms) {
+		Constraint c = new Constraint();
 		c.mms = mms;
 		c.edits = c.dels = c.ins = 0;
 		return c;
 	}
 	
 	public Constraint editBased(int edits) {
-		Constraint c;
+		Constraint c = new Constraint();
 		c.edits = edits;
 		c.dels = c.ins = c.mms = 0;
 		return c;

@@ -1,0 +1,17 @@
+package com.uwb.bt2j.util;
+
+public class Tokenize<T> {
+	public static void tokenize(String s, String delims, T ss, int max) {
+		//string::size_type lastPos = s.find_first_not_of(delims, 0);
+		int lastPos = 0;
+		long pos = s.indexOf(delims,lastPos);
+		while (pos != -1 || lastPos != -1) {
+			ss.push_back(s.substring(lastPos, pos - lastPos));
+			lastPos = s.find_first_not_of(delims, pos);
+			pos = s.find_first_of(delims, lastPos);
+			if(ss.size() == (max - 1)) {
+				pos = string::npos;
+			}
+		}
+	}
+}

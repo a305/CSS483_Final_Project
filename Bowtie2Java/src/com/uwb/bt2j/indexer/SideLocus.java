@@ -1,6 +1,5 @@
 package com.uwb.bt2j.indexer;
 
-import com.uwb.bt2j.aligner.EbwtParams;
 import com.uwb.bt2j.util.IndexTypes;
 
 public class SideLocus {

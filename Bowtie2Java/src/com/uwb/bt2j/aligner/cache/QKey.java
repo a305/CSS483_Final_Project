@@ -1,5 +1,7 @@
 package com.uwb.bt2j.aligner.cache;
 
+import com.uwb.bt2j.util.strings.BTDnaString;
+
 public class QKey {
 	
 	public long seq;

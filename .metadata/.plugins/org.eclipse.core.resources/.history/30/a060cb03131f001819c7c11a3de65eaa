@@ -1,0 +1,35 @@
+package com.uwb.bt2j.aligner;
+
+public class PerReadMetrics {
+	public PerReadMetrics() {
+		reset();
+	}
+	
+	public void reset() {
+		nExIters =
+				nExDps   = nExDpSuccs   = nExDpFails   =
+				nMateDps = nMateDpSuccs = nMateDpFails =
+				nExUgs   = nExUgSuccs   = nExUgFails   =
+				nMateUgs = nMateUgSuccs = nMateUgFails =
+				nExEes   = nExEeSuccs   = nExEeFails   =
+				nRedundants =
+				nEeFmops = nSdFmops = nExFmops =
+				nDpFail = nDpFailStreak = nDpLastSucc =
+				nUgFail = nUgFailStreak = nUgLastSucc =
+				nEeFail = nEeFailStreak = nEeLastSucc =
+				nFilt = 0;
+				nFtabs = 0;
+				nRedSkip = 0;
+				nRedFail = 0;
+				nRedIns = 0;
+				doFmString = false;
+				nSeedRanges = nSeedElts = 0;
+				nSeedRangesFw = nSeedEltsFw = 0;
+				nSeedRangesRc = nSeedEltsRc = 0;
+				seedMedian = seedMean = 0;
+				bestLtMinscMate1 =
+				bestLtMinscMate2 = Long.MIN_VALUE;
+				seedPctUnique = seedPctRep = seedsPerNuc = seedHitAvg = 0.0f;
+				fmString.reset();
+	}
+}
