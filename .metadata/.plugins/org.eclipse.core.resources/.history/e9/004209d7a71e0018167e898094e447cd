@@ -78,7 +78,7 @@ public class SideLocus {
 		_bp = -1;
 	}
 	
-	public long side(byte ebwt) {
+	public byte side(byte ebwt) {
 		return ebwt + _sideByteOff;
 	}
 }

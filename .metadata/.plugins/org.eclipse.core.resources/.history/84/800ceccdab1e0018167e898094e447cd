@@ -8,12 +8,6 @@ public class RefRecord {
 	public long len;
 	public boolean first;
 	
-	public enum ReadDir {
-		REF_READ_FORWARD, // don't reverse reference sequence
-				REF_READ_REVERSE,     // reverse entire reference sequence
-				REF_READ_REVERSE_EACH // reverse each unambiguous stretch of reference
-	}
-	
 	public RefRecord() {}
 	public RefRecord(long _off, long _len, boolean _first) {
 		off = _off;

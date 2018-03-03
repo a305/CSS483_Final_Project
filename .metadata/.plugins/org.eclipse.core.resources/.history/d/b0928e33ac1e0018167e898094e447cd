@@ -1,0 +1,15 @@
+package com.uwb.bt2j.util;
+
+public class RefReadInParams {
+	public boolean color;
+	public int reverse;
+	public boolean nsToAs;
+	public boolean bisulfite;
+	
+	public RefReadInParams(boolean col, int r, boolea nsToA, boolean bisulf) {
+		color - col;
+		reverse = r;
+		nsToAs = nsToA;
+		bisulfite = bisulf;
+	}
+}

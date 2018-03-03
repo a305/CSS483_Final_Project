@@ -7,10 +7,9 @@ public class SideLocus {
 	
 	long _sideByteOff; // offset of top side within ebwt[]
 	long _sideNum;     // index of side
-	public long _charOff;      // character offset within side
-	public long _by;            // byte within side (not adjusted for bw sides)
-	public long _bp;            // bitpair within byte (not adjusted for bw sides)
-	
+	public int _charOff;      // character offset within side
+	public int _by;            // byte within side (not adjusted for bw sides)
+	public int _bp;            // bitpair within byte (not adjusted for bw sides)
 	public SideLocus() {
 		_sideByteOff = 0;
 		_sideNum = 0;
@@ -35,7 +34,7 @@ public class SideLocus {
 		long spread = bot - top;
 		// Many cache misses on the following lines
 		if(ltop._charOff + spread < sideBwtLen) {
-			lbot._charOff = (int)(ltop._charOff + spread);
+			lbot._charOff = (upublic int)(ltop._charOff + spread);
 			lbot._sideNum = ltop._sideNum;
 			lbot._sideByteOff = ltop._sideByteOff;
 			lbot._by = lbot._charOff >> 2;
@@ -78,7 +77,7 @@ public class SideLocus {
 		_bp = -1;
 	}
 	
-	public long side(byte ebwt) {
+	public byte side(byte ebwt) {
 		return ebwt + _sideByteOff;
 	}
 }

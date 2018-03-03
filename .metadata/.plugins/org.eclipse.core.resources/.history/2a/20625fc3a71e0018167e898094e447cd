@@ -22,9 +22,9 @@ public class EbwtParams {
 	long _offsLen;
 	long _offsSz;
 	int _lineSz; 
-	public int _sideSz; 
+	int _sideSz; 
 	int _sideBwtSz; 
-	public int _sideBwtLen; 
+	int _sideBwtLen; 
 	long _numSides;
 	long _numLines;
 	long _ebwtTotLen;

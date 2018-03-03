@@ -8,7 +8,7 @@ public class SideLocus {
 	long _sideByteOff; // offset of top side within ebwt[]
 	long _sideNum;     // index of side
 	public long _charOff;      // character offset within side
-	public long _by;            // byte within side (not adjusted for bw sides)
+	public int _by;            // byte within side (not adjusted for bw sides)
 	public long _bp;            // bitpair within byte (not adjusted for bw sides)
 	
 	public SideLocus() {
@@ -78,7 +78,7 @@ public class SideLocus {
 		_bp = -1;
 	}
 	
-	public long side(byte ebwt) {
+	public byte side(byte ebwt) {
 		return ebwt + _sideByteOff;
 	}
 }

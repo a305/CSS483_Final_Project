@@ -1,0 +1,10 @@
+package com.uwb.bt2j.util;
+
+public class RefRecord {
+	public RefRecord() {}
+	public RefRecord(long _off, long _len, boolean _first) {
+		off = _off;
+		len = _len;
+		first = _first;
+	}
+}

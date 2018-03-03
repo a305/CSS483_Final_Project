@@ -1,0 +1,54 @@
+package com.uwb.bt2j.util;
+
+import com.uwb.bt2j.util.file.BitpairOutFileBuf;
+import com.uwb.bt2j.util.file.FileBuf;
+import com.uwb.bt2j.util.types.EList;
+
+import javafx.util.Pair;
+
+public class RefReadInParams <TStr>{
+	public boolean color;
+	public int reverse;
+	public boolean nsToAs;
+	public boolean bisulfite;
+	
+	public RefReadInParams(boolean col, int r, boolean nsToA, boolean bisulf) {
+		color = col;
+		reverse = r;
+		nsToAs = nsToA;
+		bisulfite = bisulf;
+	}
+	
+	public RefRecord fastaRefReadSize(
+			FileBuf in,
+			RefReadInParams rparms,
+			boolean first,
+			BitpairOutFileBuf bpout) {
+		
+	}
+	
+	public Pair<Double, Double> fastaRefReadSizes(
+			EList<FileBuf> in,
+			EList<RefRecord> recs,
+			RefReadInParams rparms,
+			BitpairOutFileBuf bpout,
+			long numSeqs) {
+		
+	}
+	
+	public void reverseRefRecords(
+			EList<RefRecord> src,
+			EList<RefRecord> dst,
+			boolean recursive,
+			boolean verbose) {
+		
+	}
+	
+	public static RefRecord fastaRefReadAppend(
+			FileBuf in,             // input file
+			boolean first,              // true iff this is the first record in the file
+			TStr dst,               // destination buf for parsed characters
+			long dstoff,          // index of next character in dst to assign
+			RefReadInParams rparms, // 
+			String name)     // put parsed FASTA name here
+}

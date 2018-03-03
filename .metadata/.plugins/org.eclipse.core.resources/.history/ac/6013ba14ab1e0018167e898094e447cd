@@ -1,0 +1,25 @@
+package com.uwb.bt2j.util;
+
+import java.io.File;
+
+public class RefRecord {
+	public RefRecord() {}
+	public RefRecord(long _off, long _len, boolean _first) {
+		off = _off;
+		len = _len;
+		first = _first;
+	}
+	
+	public RefRecord(File in, boolean swap) {
+		if(!in.canRead()) {
+			System.err.println("Error reading RefRecord offset from FILE");
+		}
+		if(swap) off = endianSwapU(off);
+		if(!fread(&len, OFF_SIZE, 1, in)) {
+			System.err.println("Error reading RefRecord offset from FILE");
+			throw 1;
+		}
+		if(swap) len = endianSwapU(len);
+		first = fgetc(in) ? true : false;
+	}
+}

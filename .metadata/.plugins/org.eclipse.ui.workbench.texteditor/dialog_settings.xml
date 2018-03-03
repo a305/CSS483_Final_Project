@@ -2,30 +2,30 @@
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
 		<item value="false" key="isRegEx"/>
-		<item value="double" key="selection"/>
+		<item value="Alphabet.dinuc2color" key="selection"/>
 		<item value="true" key="casesensitive"/>
 		<item value="false" key="incremental"/>
 		<item value="true" key="wrap"/>
 		<item value="false" key="wholeword"/>
 		<list key="findhistory">
-			<item value="size_t"/>
-			<item value="NULL"/>
-			<item value="-&gt;"/>
-			<item value="TIndexOff"/>
-			<item value="int64_t"/>
-			<item value="uint64_t"/>
+			<item value="dinuc2color"/>
+			<item value="asc2dna"/>
+			<item value="TIndexOffU"/>
+			<item value="booleanean"/>
 			<item value="bool"/>
-			<item value="int&amp;"/>
+			<item value="uint64_t"/>
+			<item value="int32_t"/>
+			<item value="uint32_t"/>
 		</list>
 		<list key="replacehistory">
-			<item value="double"/>
-			<item value="null"/>
-			<item value="."/>
+			<item value="Alphabet.dinuc2color"/>
+			<item value="Alphabet.asc2dna"/>
 			<item value="long"/>
 			<item value="boolean"/>
+			<item value="public int"/>
 			<item value="int"/>
-			<item value="System.err.println("/>
-			<item value="public long"/>
+			<item value="+ &quot;"/>
+			<item value="+ &quot;\n&quot;"/>
 		</list>
 	</section>
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
