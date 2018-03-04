@@ -789,22 +789,6 @@ public class Ebwt <TStr>{
 		return ftabHi(ftabSeqToInt(seq, off, false));
 	}
 	
-	public boolean ftabLoHi(
-			BTDnaString seq, // sequence to extract from
-			int off,             // offset into seq to begin extracting
-			boolean rev,               // reverse while extracting
-			long top,
-			long bot)
-			) {
-		long fi = ftabSeqToInt(seq, off, rev);
-		if(fi == Long.MAX_VALUE) {
-			return false;
-		}
-		top = ftabHi(fi);
-		bot = ftabLo(fi+1);
-		return true;
-	}
-	
 	public long ftabHi(long i) {
 		return Ebwt.ftabHi(
 				ftab(),
@@ -930,65 +914,6 @@ public class Ebwt <TStr>{
 		_zEbwtByteOff += sideByteOff;
 	}
 	
-	public static int readFlags(String instr) {
-		
-	}
-	
-	public void print(OutputStream out) {
-		print(out, _eh);
-	}
-	
-	public void print(OutputStream out, EbwtParams eh) {
-		eh.print(out); // print params
-		out.write(("Ebwt (" + (isInMemory()? "memory" : "disk") + "):" + "\n"
-		    + "    zOff: "         + _zOff + "\n"
-		    + "    zEbwtByteOff: " + _zEbwtByteOff + "\n"
-		    + "    zEbwtBpOff: "   + _zEbwtBpOff + "\n"
-		    + "    nPat: "  + _nPat + "\n"
-		    + "    plen: ").getBytes());
-		if(plen() == null) {
-			out.write( "null" + "\n");
-		} else {
-			out.write( "non-null, [0] = " + plen()[0] + "\n");
-		}
-		out.write( "    rstarts: ";
-		if(rstarts() == null) {
-			out.write( "null" + "\n");
-		} else {
-			out.write( "non-null, [0] = " + rstarts()[0] + "\n");
-		}
-		out.write( "    ebwt: ";
-		if(ebwt() == null) {
-			out.write( "null" + "\n");
-		} else {
-			out.write( "non-null, [0] = " + ebwt()[0] + "\n");
-		}
-		out.write( "    fchr: ";
-		if(fchr() == null) {
-			out.write( "null" + "\n");
-		} else {
-			out.write( "non-null, [0] = " + fchr()[0] + "\n");
-		}
-		out.write( "    ftab: ";
-		if(ftab() == null) {
-			out.write( "null" + "\n");
-		} else {
-			out.write( "non-null, [0] = " + ftab()[0] + "\n");
-		}
-		out.write( "    eftab: ";
-		if(eftab() == null) {
-			out.write( "null" + "\n");
-		} else {
-			out.write( "non-null, [0] = " + eftab()[0] + "\n");
-		}
-		out.write( "    offs: ";
-		if(offs() == null) {
-			out.write( "null" + "\n");
-		} else {
-			out.write( "non-null, [0] = " + offs()[0] + "\n");
-		}
-	}
-	
 	public TStr join(EList<TStr> l, int seed) {
 		RandomSource rand; // reproducible given same seed
 		rand.init(seed);
@@ -1007,7 +932,6 @@ public class Ebwt <TStr>{
 		}
 		return ret;
 	}
-	
 	public TStr join(
 			EList<FileBuf> l,
             EList<RefRecord> szs,
@@ -1478,8 +1402,6 @@ public class Ebwt <TStr>{
 		VMSG_NL("Exiting Ebwt::buildToDisk()");
 	}
 	
-	
-	
 	public void joinedToTextOff(
 			long qlen, 
 			long off,
@@ -1543,6 +1465,80 @@ public class Ebwt <TStr>{
 		tlen = this.plen()[tidx];
 	}
 	
+	public long    zOff()         { return _zOff; }
+	public long    zEbwtByteOff() { return _zEbwtByteOff; }
+	public long    zEbwtBpOff()   { return _zEbwtBpOff; } 
+	public long    nPat()         { return _nPat; }
+	public long    nFrag()        { return _nFrag; }
+	public long   ftab()              { return _ftab.get(); }
+	public long   eftab()             { return _eftab.get(); }
+	public long   offs()              { return _offs.get(); }
+	public long   plen()              { return _plen.get(); }
+	public long   rstarts()           { return _rstarts.get(); }
+	public boolean        toBe()         { return _toBigEndian; }
+	public boolean        sanityCheck()  { return _sanity; }
+	public EList<String> refnames()        { return _refnames; }
+	public boolean        fw()           { return fw_; }
+	
+	public static int readFlags(String instr) {
+		
+	}
+	
+	public void print(OutputStream out) {
+		print(out, _eh);
+	}
+	
+	public void print(OutputStream out, EbwtParams eh) {
+		eh.print(out); // print params
+		out.write(("Ebwt (" + (isInMemory()? "memory" : "disk") + "):" + "\n"
+		    + "    zOff: "         + _zOff + "\n"
+		    + "    zEbwtByteOff: " + _zEbwtByteOff + "\n"
+		    + "    zEbwtBpOff: "   + _zEbwtBpOff + "\n"
+		    + "    nPat: "  + _nPat + "\n"
+		    + "    plen: ").getBytes());
+		if(plen() == null) {
+			out.write( "null" + "\n");
+		} else {
+			out.write( "non-null, [0] = " + plen()[0] + "\n");
+		}
+		out.write( "    rstarts: ";
+		if(rstarts() == null) {
+			out.write( "null" + "\n");
+		} else {
+			out.write( "non-null, [0] = " + rstarts()[0] + "\n");
+		}
+		out.write( "    ebwt: ";
+		if(ebwt() == null) {
+			out.write( "null" + "\n");
+		} else {
+			out.write( "non-null, [0] = " + ebwt()[0] + "\n");
+		}
+		out.write( "    fchr: ";
+		if(fchr() == null) {
+			out.write( "null" + "\n");
+		} else {
+			out.write( "non-null, [0] = " + fchr()[0] + "\n");
+		}
+		out.write( "    ftab: ";
+		if(ftab() == null) {
+			out.write( "null" + "\n");
+		} else {
+			out.write( "non-null, [0] = " + ftab()[0] + "\n");
+		}
+		out.write( "    eftab: ";
+		if(eftab() == null) {
+			out.write( "null" + "\n");
+		} else {
+			out.write( "non-null, [0] = " + eftab()[0] + "\n");
+		}
+		out.write( "    offs: ";
+		if(offs() == null) {
+			out.write( "null" + "\n");
+		} else {
+			out.write( "non-null, [0] = " + offs()[0] + "\n");
+		}
+	}
+	
 	public long countBt2Side(SideLocus l, int c) {
 		byte[] side = l.side(this.ebwt());
 		long cCnt = countUpTo(l, c);
@@ -1562,21 +1558,6 @@ public class Ebwt <TStr>{
 		ret = acgt[c] + cCnt + this.fchr()[c];
 		return ret;
 	}
-	
-	public long    zOff()         { return _zOff; }
-	public long    zEbwtByteOff() { return _zEbwtByteOff; }
-	public long    zEbwtBpOff()   { return _zEbwtBpOff; } 
-	public long    nPat()         { return _nPat; }
-	public long    nFrag()        { return _nFrag; }
-	public long   ftab()              { return _ftab.get(); }
-	public long   eftab()             { return _eftab.get(); }
-	public long   offs()              { return _offs.get(); }
-	public long   plen()              { return _plen.get(); }
-	public long   rstarts()           { return _rstarts.get(); }
-	public boolean        toBe()         { return _toBigEndian; }
-	public boolean        sanityCheck()  { return _sanity; }
-	public EList<String> refnames()        { return _refnames; }
-	public boolean        fw()           { return fw_; }
 	
 	public void countBt2SideRange(SideLocus l, long num, long[] cntsUpto, long[] cntsIn, EList<boolean> masks) {
 		countUpToEx(l, cntsUpto);
@@ -1618,6 +1599,59 @@ public class Ebwt <TStr>{
 		}
 		WITHIN_FCHR_DOLLARA(cntsIn);
 	}
+	
+	public long countBt2SideRange2(
+			SideLocus l,
+			boolean startAtLocus,
+			long num,
+			long[] arrs,
+			EList<boolean> masks,
+			long maskOff){
+		long nm = 0; // number of nucleotides tallied so far
+		int iby = 0;      // initial byte offset
+		int ibp = 0;      // initial base-pair offset
+		if(startAtLocus) {
+			iby = l._by;
+			ibp = l._bp;
+		} else {
+			// Start at beginning
+		}
+		int by = iby, bp = ibp;
+		byte[] side = l.side(this.ebwt());
+		while(nm < num) {
+			int c = (side[by] >> (bp * 2)) & 3;
+			masks[0][maskOff + nm] = masks[1][maskOff + nm] =
+			masks[2][maskOff + nm] = masks[3][maskOff + nm] = false;
+			// Note: we tally $ just like an A
+			arrs[c]++; // tally it
+			masks[c][maskOff + nm] = true; // not dead
+			nm++;
+			if(++bp == 4) {
+				bp = 0;
+				by++;
+				if(by == (int)this._eh._sideBwtSz) {
+					// Fell off the end of the side
+					break;
+				}
+			}
+		}
+		WITHIN_FCHR_DOLLARA(arrs);
+		return nm;
+	}
+	
+	public int rowL(SideLocus l) {
+		// Extract and return appropriate bit-pair
+		return unpack_2b_from_8b(l.side(this.ebwt())[l._by], l._bp);
+	}
+	
+	public int rowL(long i) {
+		// Extract and return appropriate bit-pair
+		SideLocus l;
+		l.initFromRow(i, _eh, ebwt());
+		return rowL(l);
+	}
+	
+	
 	
 	public void countBt2SideEx(SideLocus l, long[] arrs) {
 		countUpToEx(l, arrs);
@@ -1695,152 +1729,22 @@ public class Ebwt <TStr>{
 		}
 	}
 	
-	public void mapLFEx(SideLocus l, long[] arrs) {
-		countBt2SideEx(l, arrs);
-	}
 	
-	public void mapLFEx(long top, long bot, long[] tops, long[] bots) {
-		SideLocus ltop, lbot;
-		SideLocus.initFromTopBot(top, bot, _eh, ebwt(), ltop, lbot);
-		mapLFEx(ltop, lbot, tops, bots);
-	}
 	
-	public void mapLFEx(SideLocus ltop, SIdeLocus lbot, long[] tops, long[] bots) {
-		countBt2SideEx(ltop, tops);
-		countBt2SideEx(lbot, bots);
-	}
-	
-	public long countBt2SideRange2(
-			SideLocus l,
-			boolean startAtLocus,
-			long num,
-			long[] arrs,
-			EList<boolean> masks,
-			long maskOff){
-		long nm = 0; // number of nucleotides tallied so far
-		int iby = 0;      // initial byte offset
-		int ibp = 0;      // initial base-pair offset
-		if(startAtLocus) {
-			iby = l._by;
-			ibp = l._bp;
-		} else {
-			// Start at beginning
+	public boolean ftabLoHi(
+			BTDnaString seq, // sequence to extract from
+			int off,             // offset into seq to begin extracting
+			boolean rev,               // reverse while extracting
+			long top,
+			long bot)
+			) {
+		long fi = ftabSeqToInt(seq, off, rev);
+		if(fi == Long.MAX_VALUE) {
+			return false;
 		}
-		int by = iby, bp = ibp;
-		byte[] side = l.side(this.ebwt());
-		while(nm < num) {
-			int c = (side[by] >> (bp * 2)) & 3;
-			masks[0][maskOff + nm] = masks[1][maskOff + nm] =
-			masks[2][maskOff + nm] = masks[3][maskOff + nm] = false;
-			// Note: we tally $ just like an A
-			arrs[c]++; // tally it
-			masks[c][maskOff + nm] = true; // not dead
-			nm++;
-			if(++bp == 4) {
-				bp = 0;
-				by++;
-				if(by == (int)this._eh._sideBwtSz) {
-					// Fell off the end of the side
-					break;
-				}
-			}
-		}
-		WITHIN_FCHR_DOLLARA(arrs);
-		return nm;
-	}
-	
-	public int rowL(SideLocus l) {
-		// Extract and return appropriate bit-pair
-		return unpack_2b_from_8b(l.side(this.ebwt())[l._by], l._bp);
-	}
-	
-	public int rowL(long i) {
-		// Extract and return appropriate bit-pair
-		SideLocus l;
-		l.initFromRow(i, _eh, ebwt());
-		return rowL(l);
-	}
-	
-	public void mapLFRange(SideLocus ltop, SIdeLocus lbot, long num, long[] cntsUpto, long[] cntsIn, EList<boolean> masks) {
-		countBt2SideRange(ltop, num, cntsUpto, cntsIn, masks);
-		if(_sanity && !overrideSanity) {
-			// Make sure results match up with individual calls to mapLF;
-			// be sure to override sanity-checking in the callee, or we'll
-			// have infinite recursion
-			TIndexOffU tops[4] = {0, 0, 0, 0};
-			TIndexOffU bots[4] = {0, 0, 0, 0};
-
-			mapLFEx(ltop, lbot, tops, bots, false);
-		}
-	}
-	
-	public long mapLF(SideLocus l) {
-		long ret;
-		int c = rowL(l);
-		ret = countBt2Side(l, c);
-		if(_sanity && !overrideSanity) {
-			// Make sure results match up with results from mapLFEx;
-			// be sure to override sanity-checking in the callee, or we'll
-			// have infinite recursion
-			TIndexOffU arrs[] = { 0, 0, 0, 0 };
-			mapLFEx(l, arrs, true);
-		}
-		return ret;
-	}
-	
-	public long mapLF(SideLocus l, int c) {
-		long ret;
-		ret = countBt2Side(l, c);
-		if(_sanity && !overrideSanity) {
-			// Make sure results match up with results from mapLFEx;
-			// be sure to override sanity-checking in the callee, or we'll
-			// have infinite recursion
-			TIndexOffU arrs[] = { 0, 0, 0, 0 };
-			mapLFEx(l, arrs, true);
-		}
-		return ret;
-	}
-	
-	public void mapBiLFEx(SideLocus ltop, SIdeLocus lbot, long[] tops, long[] bots, long[] topsP, long[] botsP) {
-		countBt2SideEx(ltop, tops);
-		countBt2SideEx(lbot, bots);
-		
-		// bots[0..3] - tops[0..3] = # of ways to extend the suffix with an
-		// A, C, G, T
-		botsP[0] = topsP[0] + (bots[0] - tops[0]);
-		topsP[1] = botsP[0];
-		botsP[1] = topsP[1] + (bots[1] - tops[1]);
-		topsP[2] = botsP[1];
-		botsP[2] = topsP[2] + (bots[2] - tops[2]);
-		topsP[3] = botsP[2];
-		botsP[3] = topsP[3] + (bots[3] - tops[3]);
-	}
-	
-	public long mapLF1(long row, SideLocus l, int c) {
-		if(rowL(l) != c || row == _zOff) return IndexTypes.IndexTypes.OFF_MASK;
-		long ret = countBt2Side(l, c);
-		if(_sanity && !overrideSanity) {
-			// Make sure results match up with results from mapLFEx;
-			// be sure to override sanity-checking in the callee, or we'll
-			// have infinite recursion
-			TIndexOffU arrs[] = { 0, 0, 0, 0 };
-			mapLFEx(l, arrs, true);
-		}
-		return ret;
-	}
-	
-	public int mapLF1(long row, SideLocus l) {
-		if(row == _zOff) return -1;
-		int c = rowL(l);
-		row = countBt2Side(l, c);
-		if(_sanity && !overrideSanity) {
-			// Make sure results match up with results from mapLFEx;
-			// be sure to override sanity-checking in the callee, or we'll
-			// have infinite recursion
-			TIndexOffU arrs[] = { 0, 0, 0, 0 };
-			mapLFEx(l, arrs, true);
-		}
-		return c;
+		top = ftabHi(fi);
+		bot = ftabLo(fi+1);
+		return true;
 	}
 	
 	public boolean is_read_err(int fdesc, int ret, int count) {
@@ -1865,6 +1769,19 @@ public class Ebwt <TStr>{
 	
 	public byte ebwt() {
 		return _ebwt.get();
+	}
+	
+	public long mapLF(SideLocus l) {
+		long ret;
+		int c = rowL(l);
+		ret = countBt2Side(l, c);
+		return ret;
+	}
+	
+	public long mapLF1(long row, SideLocus l, int c) {
+		if(rowL(l) != c || row == _zOff) return IndexTypes.IndexTypes.OFF_MASK;
+		long ret = countBt2Side(l, c);
+		return ret;
 	}
 	
 	private PrintStream log() {

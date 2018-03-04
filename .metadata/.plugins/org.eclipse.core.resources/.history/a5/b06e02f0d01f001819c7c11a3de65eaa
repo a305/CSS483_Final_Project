@@ -789,22 +789,6 @@ public class Ebwt <TStr>{
 		return ftabHi(ftabSeqToInt(seq, off, false));
 	}
 	
-	public boolean ftabLoHi(
-			BTDnaString seq, // sequence to extract from
-			int off,             // offset into seq to begin extracting
-			boolean rev,               // reverse while extracting
-			long top,
-			long bot)
-			) {
-		long fi = ftabSeqToInt(seq, off, rev);
-		if(fi == Long.MAX_VALUE) {
-			return false;
-		}
-		top = ftabHi(fi);
-		bot = ftabLo(fi+1);
-		return true;
-	}
-	
 	public long ftabHi(long i) {
 		return Ebwt.ftabHi(
 				ftab(),
@@ -1816,31 +1800,20 @@ public class Ebwt <TStr>{
 		botsP[3] = topsP[3] + (bots[3] - tops[3]);
 	}
 	
-	public long mapLF1(long row, SideLocus l, int c) {
-		if(rowL(l) != c || row == _zOff) return IndexTypes.IndexTypes.OFF_MASK;
-		long ret = countBt2Side(l, c);
-		if(_sanity && !overrideSanity) {
-			// Make sure results match up with results from mapLFEx;
-			// be sure to override sanity-checking in the callee, or we'll
-			// have infinite recursion
-			TIndexOffU arrs[] = { 0, 0, 0, 0 };
-			mapLFEx(l, arrs, true);
+	public boolean ftabLoHi(
+			BTDnaString seq, // sequence to extract from
+			int off,             // offset into seq to begin extracting
+			boolean rev,               // reverse while extracting
+			long top,
+			long bot)
+			) {
+		long fi = ftabSeqToInt(seq, off, rev);
+		if(fi == Long.MAX_VALUE) {
+			return false;
 		}
-		return ret;
-	}
-	
-	public int mapLF1(long row, SideLocus l) {
-		if(row == _zOff) return -1;
-		int c = rowL(l);
-		row = countBt2Side(l, c);
-		if(_sanity && !overrideSanity) {
-			// Make sure results match up with results from mapLFEx;
-			// be sure to override sanity-checking in the callee, or we'll
-			// have infinite recursion
-			TIndexOffU arrs[] = { 0, 0, 0, 0 };
-			mapLFEx(l, arrs, true);
-		}
-		return c;
+		top = ftabHi(fi);
+		bot = ftabLo(fi+1);
+		return true;
 	}
 	
 	public boolean is_read_err(int fdesc, int ret, int count) {
@@ -1865,6 +1838,19 @@ public class Ebwt <TStr>{
 	
 	public byte ebwt() {
 		return _ebwt.get();
+	}
+	
+	public long mapLF1(long row, SideLocus l, int c) {
+		if(rowL(l) != c || row == _zOff) return IndexTypes.IndexTypes.OFF_MASK;
+		long ret = countBt2Side(l, c);
+		if(_sanity && !overrideSanity) {
+			// Make sure results match up with results from mapLFEx;
+			// be sure to override sanity-checking in the callee, or we'll
+			// have infinite recursion
+			TIndexOffU arrs[] = { 0, 0, 0, 0 };
+			mapLFEx(l, arrs, true);
+		}
+		return ret;
 	}
 	
 	private PrintStream log() {
