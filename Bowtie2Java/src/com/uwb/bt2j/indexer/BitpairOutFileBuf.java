@@ -18,7 +18,7 @@ public class BitpairOutFileBuf {
 	}
 	
 	public void write(int bp) {
-		buf_[cur_] |= (bp << bpPtr_);
+		buf_[(int)cur_] |= (bp << bpPtr_);
 		if(bpPtr_ == 6) {
 			bpPtr_ = 0;
 			cur_++;
@@ -31,7 +31,7 @@ public class BitpairOutFileBuf {
 				cur_ = 0;
 			}
 			// Initialize next octet to 0
-			buf_[cur_] = 0;
+			buf_[(int)cur_] = 0;
 		} else {
 			bpPtr_ += 2;
 		}

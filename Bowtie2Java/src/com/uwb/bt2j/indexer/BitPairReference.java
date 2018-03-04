@@ -42,38 +42,38 @@ public class BitPairReference {
     string s3 = in + ".3." + gEbwt_ext;
 	string s4 = in + ".4." + gEbwt_ext;
 	
-	FILE *f3, *f4;
-	if((f3 = fopen(s3.c_str(), "rb")) == NULL) {
-	    cerr << "Could not open reference-string index file " << s3 << " for reading." << endl;
-		cerr << "This is most likely because your index was built with an older version" << endl
-		<< "(<= 0.9.8.1) of bowtie-build.  Please re-run bowtie-build to generate a new" << endl
-		<< "index (or download one from the Bowtie website) and try again." << endl;
+	FILE f3, f4;
+	if((f3 = fopen(s3, "rb")) == null) {
+	    System.err.println("Could not open reference-string index file " + s3 + " for reading.");
+		System.err.println("This is most likely because your index was built with an older version" + "\n"
+		+ "(<= 0.9.8.1) of bowtie-build.  Please re-run bowtie-build to generate a new" + "\n"
+		+ "index (or download one from the Bowtie website) and try again.");
 		loaded_ = false;
 		return;
 	}
-    if((f4 = fopen(s4.c_str(), "rb"))  == NULL) {
-        cerr << "Could not open reference-string index file " << s4 << " for reading." << endl;
+    if((f4 = fopen(s4, "rb"))  == null) {
+        System.err.println("Could not open reference-string index file " + s4 + " for reading.");
 		loaded_ = false;
 		return;
 	}
-#ifdef BOWTIE_MM
-    char *mmFile = NULL;
+////ifdef BOWTIE_MM
+    char mmFile = null;
 	if(useMm_) {
 		if(verbose_ || startVerbose) {
-			cerr << "  Memory-mapping reference index file " << s4.c_str() << ": ";
+			System.err.println("  Memory-mapping reference index file " + s4 + ": ");
 			logTime(cerr);
 		}
-		struct stat sbuf;
-		if (stat(s4.c_str(), &sbuf) == -1) {
+		//class stat sbuf;
+		if (stat(s4, sbuf) == -1) {
 			perror("stat");
-			cerr << "Error: Could not stat index file " << s4.c_str() << " prior to memory-mapping" << endl;
+			System.err.println("Error: Could not stat index file " + s4 + " prior to memory-mapping");
 			throw 1;
 		}
-		mmFile = (char*)mmap((void *)0, (double)sbuf.st_size,
+		mmFile = (char)mmap((void )0, (double)sbuf.st_size,
 				     PROT_READ, MAP_SHARED, fileno(f4), 0);
-		if(mmFile == (void *)(-1) || mmFile == NULL) {
+		if(mmFile == (void)(-1) || mmFile == null) {
 			perror("mmap");
-			cerr << "Error: Could not memory-map the index file " << s4.c_str() << endl;
+			System.err.println("Error: Could not memory-map the index file " + s4);
 			throw 1;
 		}
 		if(mmSweep) {
@@ -82,31 +82,31 @@ public class BitPairReference {
 				sum += (long) mmFile[i];
 			}
 			if(startVerbose) {
-				cerr << "  Swept the memory-mapped ref index file; checksum: " << sum << ": ";
+				System.err.println("  Swept the memory-mapped ref index file; checksum: " + sum + ": ");
 				logTime(cerr);
 			}
 		}
 	}
-#endif
+////endif
 	
 	// Read endianness sentinel, set 'swap'
-	uint32_t one;
+	uint one;
 	bool swap = false;
-	one = readU<int32_t>(f3, swap);
+	one = readU<int>(f3, swap);
 	if(one != 1) {
 		if(useMm_) {
-			cerr << "Error: Can't use memory-mapped files when the index is the opposite endianness" << endl;
+			System.err.println("Error: Can't use memory-mapped files when the index is the opposite endianness");
 			throw 1;
 		}
 		assert_eq(0x1000000, one);
 		swap = true; // have to endian swap U32s
 	}
 	
-	// Read # records
+	// Read // records
 	longU sz;
 	sz = readU<longU>(f3, swap);
 	if(sz == 0) {
-		cerr << "Error: number of reference records is 0 in " << s3.c_str() << endl;
+		System.err.println("Error: number of reference records is 0 in " + s3);
 		throw 1;
 	}
 	
@@ -136,8 +136,8 @@ public class BitPairReference {
 			cumlen = 0;
 			nrefs_++;
 		} else if(i == 0) {
-			cerr << "First record in reference index file was not marked as "
-			     << "'first'" << endl;
+			System.err.println("First record in reference index file was not marked as "
+			     + "'first'");
 			throw 1;
 		}
 		cumUnambig_.push_back(cumsz);
@@ -147,8 +147,8 @@ public class BitPairReference {
 		cumlen += recs_.back().len;
 	}
 	if(verbose_ || startVerbose) {
-		cerr << "Read " << nrefs_ << " reference strings from "
-		     << sz << " records: ";
+		System.err.println("Read " + nrefs_ + " reference strings from "
+		     + sz + " records: ");
 		logTime(cerr);
 	}
 	// Store a cap entry for the end of the last reference seq
@@ -160,7 +160,7 @@ public class BitPairReference {
 	bufSz_ = cumsz;
 	assert_eq(nrefs_, refLens_.size());
 	assert_eq(sz, recs_.size());
-	if (f3 != NULL) fclose(f3); // done with .3.gEbwt_ext file
+	if (f3 != null) fclose(f3); // done with .3.gEbwt_ext file
 	// Round cumsz up to nearest byte boundary
 	if((cumsz & 3) != 0) {
 		cumsz += (4 - (cumsz & 3));
@@ -168,14 +168,14 @@ public class BitPairReference {
 	bufAllocSz_ = cumsz >> 2;
 	assert_eq(0, cumsz & 3); // should be rounded up to nearest 4
 	if(useMm_) {
-#ifdef BOWTIE_MM
-		buf_ = (uint8_t*)mmFile;
+////ifdef BOWTIE_MM
+		buf_ = (byte)mmFile;
 		if(sanity_) {
-			FILE *ftmp = fopen(s4.c_str(), "rb");
-			sanityBuf_ = new uint8_t[cumsz >> 2];
+			FILE ftmp = fopen(s4, "rb");
+			sanityBuf_ = new byte[cumsz >> 2];
 			double ret = fread(sanityBuf_, 1, cumsz >> 2, ftmp);
 			if(ret != (cumsz >> 2)) {
-				cerr << "Only read " << ret << " bytes (out of " << (cumsz >> 2) << ") from reference index file " << s4.c_str() << endl;
+				System.err.println("Only read " + ret + " bytes (out of " + (cumsz >> 2) + ") from reference index file " + s4);
 				throw 1;
 			}
 			fclose(ftmp);
@@ -183,35 +183,35 @@ public class BitPairReference {
 				assert_eq(sanityBuf_[i], buf_[i]);
 			}
 		}
-#else
-		cerr << "Shouldn't be at " << __FILE__ << ":" << __LINE__ << " without BOWTIE_MM defined" << endl;
+////else
+		System.err.println("Shouldn't be at " + __FILE__ + ":" + __LINE__ + " without BOWTIE_MM defined");
 		throw 1;
-#endif
+////endif
 	} else {
 		bool shmemLeader = true;
 		if(!useShmem_) {
 			// Allocate a buffer to hold the reference string
 			try {
-				buf_ = new uint8_t[cumsz >> 2];
-				if(buf_ == NULL) throw std::bad_alloc();
-			} catch(std::bad_alloc& e) {
-				cerr << "Error: Ran out of memory allocating space for the bitpacked reference.  Please" << endl
-				<< "re-run on a computer with more memory." << endl;
+				buf_ = new byte[cumsz >> 2];
+				if(buf_ == null) throw Exception;
+			} catch(Exception e) {
+				System.err.println("Error: Ran out of memory allocating space for the bitpacked reference.  Please" + "\n"
+				+ "re-run on a computer with more memory.");
 				throw 1;
 			}
 		} else {
 			shmemLeader = ALLOC_SHARED_U8(
-										  (s4 + "[ref]"), (cumsz >> 2), &buf_,
+										  (s4 + "[ref]"), (cumsz >> 2), buf_,
 										  "ref", (verbose_ || startVerbose));
 		}
 		if(shmemLeader) {
 			// Open the bitpair-encoded reference file
-			FILE *f4 = fopen(s4.c_str(), "rb");
-			if(f4 == NULL) {
-				cerr << "Could not open reference-string index file " << s4.c_str() << " for reading." << endl;
-				cerr << "This is most likely because your index was built with an older version" << endl
-				<< "(<= 0.9.8.1) of bowtie-build.  Please re-run bowtie-build to generate a new" << endl
-				<< "index (or download one from the Bowtie website) and try again." << endl;
+			FILE f4 = fopen(s4, "rb");
+			if(f4 == null) {
+				System.err.println("Could not open reference-string index file " + s4 + " for reading.");
+				System.err.println("This is most likely because your index was built with an older version" + "\n"
+				+ "(<= 0.9.8.1) of bowtie-build.  Please re-run bowtie-build to generate a new" + "\n"
+				+ "index (or download one from the Bowtie website) and try again.");
 				loaded_ = false;
 				return;
 			}
@@ -219,28 +219,28 @@ public class BitPairReference {
 			double ret = fread(buf_, 1, cumsz >> 2, f4);
 			// Didn't read all of it?
 			if(ret != (cumsz >> 2)) {
-				cerr << "Only read " << ret << " bytes (out of " << (cumsz >> 2) << ") from reference index file " << s4.c_str() << endl;
+				System.err.println("Only read " + ret + " bytes (out of " + (cumsz >> 2) + ") from reference index file " + s4);
 				throw 1;
 			}
 			// Make sure there's no more
 			char c;
-			ret = fread(&c, 1, 1, f4);
+			ret = fread(c, 1, 1, f4);
 			assert_eq(0, ret); // should have failed
 			fclose(f4);
-#ifdef BOWTIE_SHARED_MEM
+////ifdef BOWTIE_SHARED_MEM
 			if(useShmem_) NOTIFY_SHARED(buf_, (cumsz >> 2));
-#endif
+////endif
 		} else {
-#ifdef BOWTIE_SHARED_MEM
+////ifdef BOWTIE_SHARED_MEM
 			if(useShmem_) WAIT_SHARED(buf_, (cumsz >> 2));
-#endif
+////endif
 		}
 	}
 	
 	// Populate byteToU32_
 	bool big = currentlyBigEndian();
 	for(int i = 0; i < 256; i++) {
-		uint32_t word = 0;
+		uint word = 0;
 		if(big) {
 			word |= ((i >> 0) & 3) << 24;
 			word |= ((i >> 2) & 3) << 16;
@@ -255,34 +255,34 @@ public class BitPairReference {
 		byteToU32_[i] = word;
 	}
 	
-#ifndef NDEBUG
+//ifndef NDEBUG
 	if(sanity_) {
 		// Compare the sequence we just read from the compact index
 		// file to the true reference sequence.
-		EList<SString<char> > *os; // for holding references
-		EList<SString<char> > osv(DEBUG_CAT); // for holding ref seqs
-		EList<SString<char> > osn(DEBUG_CAT); // for holding ref names
-		EList<double> osvLen(DEBUG_CAT); // for holding ref seq lens
-		EList<double> osnLen(DEBUG_CAT); // for holding ref name lens
-		SStringExpandable<uint32_t> tmp_destU32_;
-		if(infiles != NULL) {
+		EList<SString<char> = os; // for holding references
+		EList<SString<char> = osv(DEBUG_CAT); // for holding ref seqs
+		EList<SString<char> = osn(DEBUG_CAT); // for holding ref names
+		EList<double> = osvLen(DEBUG_CAT); // for holding ref seq lens
+		EList<double> = osnLen(DEBUG_CAT); // for holding ref name lens
+		SStringExpandable<uint> tmp_destU32_;
+		if(infiles != null) {
 			if(infilesSeq) {
 				for(double i = 0; i < infiles->size(); i++) {
 					// Remove initial backslash; that's almost
 					// certainly being used to protect the first
 					// character of the sequence from getopts (e.g.,
 					// when the first char is -)
-					if((*infiles)[i].at(0) == '\\') {
-						(*infiles)[i].erase(0, 1);
+					if((infiles)[i].at(0) == '\\') {
+						(infiles)[i].erase(0, 1);
 					}
-					osv.push_back(SString<char>((*infiles)[i]));
+					osv.push_back(SString<char>((infiles)[i]));
 				}
 			} else {
-				parseFastas(*infiles, osn, osnLen, osv, osvLen);
+				parseFastas(infiles, osn, osnLen, osv, osvLen);
 			}
-			os = &osv;
+			os = osv;
 		} else {
-			assert(origs != NULL);
+			assert(origs != null);
 			os = origs;
 		}
 		
@@ -290,19 +290,19 @@ public class BitPairReference {
 		// sanity check against what we get by calling getBase and
 		// getStretch
 		for(double i = 0; i < os->size(); i++) {
-			double olen = ((*os)[i]).length();
+			double olen = ((os)[i]).length();
 			double olenU32 = (olen + 12) / 4;
-			uint32_t *buf = new uint32_t[olenU32];
-			uint8_t *bufadj = (uint8_t*)buf;
+			uint buf = new uint[olenU32];
+			byte bufadj = (byte)buf;
 			bufadj += getStretch(buf, i, 0, olen, tmp_destU32_);
 			for(double j = 0; j < olen; j++) {
-				assert_eq((int)(*os)[i][j], (int)bufadj[j]);
-				assert_eq((int)(*os)[i][j], (int)getBase(i, j));
+				assert_eq((int)(os)[i][j], (int)bufadj[j]);
+				assert_eq((int)(os)[i][j], (int)getBase(i, j));
 			}
 			delete[] buf;
 		}
 	}
-#endif
+//endif
   }
   
   public int getBase(double tidx, double toff) {
@@ -332,13 +332,13 @@ public class BitPairReference {
   
   public int getStretchNaive(double destU32, double tidx, double toff, double count) {
 	  byte dest = (byte)destU32;
-		long reci = refRecOffs_[tidx];   // first record for target reference sequence
-		long recf = refRecOffs_[tidx+1]; // last record (exclusive) for target seq
+		long reci = refRecOffs_[(int)tidx];   // first record for target reference sequence
+		long recf = refRecOffs_[(int)tidx+1]; // last record (exclusive) for target seq
 		long cur = 0;
-		long bufOff = refOffs_[tidx];
+		long bufOff = refOffs_[(int)tidx];
 		long off = 0;
 		// For all records pertaining to the target reference sequence...
-		for(long i = reci; i < recf; i++) {
+		for(int i = (int)reci; i < recf; i++) {
 			off += recs_[i].off;
 			for(; toff < off && count > 0; toff++) {
 				dest[cur++] = 4;
@@ -531,7 +531,7 @@ public class BitPairReference {
 				// nucleotides; not colors
 				long numSeqs = 0;
 				parms.color = true;
-				writeU<long>(fout3, (long)szs.size(), bigEndian); // write # records
+				writeU<long>(fout3, (long)szs.size(), bigEndian); // write // records
 				for(double i = 0; i < szs.size(); i++) {
 					szs[i].write(fout3, bigEndian);
 				}

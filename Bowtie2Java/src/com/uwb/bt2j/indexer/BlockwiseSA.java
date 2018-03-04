@@ -59,7 +59,7 @@ public class BlockwiseSA <TStr> {
 	public boolean sanityCheck()  { return _sanityCheck; }
 	public boolean verbose()      { return _verbose; }
 	public OutputStream log()      { return _logger; }
-	public size_t size()       { return _text.length()+1; }
+	public int size()       { return _text.length()+1; }
 	
 	protected void reset() {
 		
