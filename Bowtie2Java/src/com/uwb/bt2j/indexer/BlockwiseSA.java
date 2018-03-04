@@ -2,9 +2,6 @@ package com.uwb.bt2j.indexer;
 
 import org.omg.CORBA_2_3.portable.OutputStream;
 
-import com.uwb.bt2j.util.IndexTypes;
-import com.uwb.bt2j.util.types.EList;
-
 public class BlockwiseSA <TStr> {
 	
 	protected TStr      _text;        /// original string

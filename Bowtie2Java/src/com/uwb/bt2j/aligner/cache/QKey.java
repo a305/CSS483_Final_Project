@@ -1,6 +1,6 @@
 package com.uwb.bt2j.aligner.cache;
 
-import com.uwb.bt2j.util.strings.BTDnaString;
+import com.uwb.bt2j.indexer.BTDnaString;
 
 public class QKey {
 	

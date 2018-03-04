@@ -1,9 +1,9 @@
 package com.uwb.bt2j.util.pattern;
 
 import com.uwb.bt2j.aligner.Read;
-import com.uwb.bt2j.util.Formats;
-import com.uwb.bt2j.util.Formats.FileFormat;
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.EList;
+import com.uwb.bt2j.indexer.Formats;
+import com.uwb.bt2j.indexer.Formats.FileFormat;
 
 public abstract class PatternSource {
 	protected PatternParams pp_;

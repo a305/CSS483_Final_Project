@@ -2,9 +2,9 @@ package com.uwb.bt2j.aligner.seed;
 
 import com.uwb.bt2j.aligner.Read;
 import com.uwb.bt2j.aligner.Scoring;
-import com.uwb.bt2j.util.strings.BTDnaString;
-import com.uwb.bt2j.util.strings.BTString;
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.BTDnaString;
+import com.uwb.bt2j.indexer.BTString;
+import com.uwb.bt2j.indexer.EList;
 
 import javafx.util.Pair;
 

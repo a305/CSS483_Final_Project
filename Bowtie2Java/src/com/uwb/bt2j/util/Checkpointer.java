@@ -1,7 +1,7 @@
 package com.uwb.bt2j.util;
 
-import com.uwb.bt2j.util.types.EList;
-import com.uwb.bt2j.util.types.Quad;
+import com.uwb.bt2j.indexer.EList;
+import com.uwb.bt2j.indexer.Quad;
 
 public class Checkpointer {
 	public int   perpow2_;   // 1 << perpow2_ - 2 is the # of uncheckpointed

@@ -1,6 +1,6 @@
 package com.uwb.bt2j.aligner.cache;
 
-import com.uwb.bt2j.util.IndexTypes;
+import com.uwb.bt2j.indexer.IndexTypes;
 
 public class SAVal {
 	public int topf;

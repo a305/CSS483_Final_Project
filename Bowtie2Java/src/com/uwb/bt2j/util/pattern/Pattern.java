@@ -1,7 +1,7 @@
 package com.uwb.bt2j.util.pattern;
 
-import com.uwb.bt2j.util.strings.BTDnaString;
-import com.uwb.bt2j.util.strings.BTString;
+import com.uwb.bt2j.indexer.BTDnaString;
+import com.uwb.bt2j.indexer.BTString;
 
 public class Pattern {
 	public static double genRandSeed(BTDnaString qry, BTString qual, BTString name, double seed) {

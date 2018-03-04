@@ -1,6 +1,7 @@
 package com.uwb.bt2j.aligner;
 
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.EList;
+import com.uwb.bt2j.indexer.RandomSource;
 
 public class SSEMatrix {
 	public static final double E = 0;

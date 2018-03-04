@@ -1,10 +1,10 @@
 package com.uwb.bt2j.aligner.sink;
 
 import com.uwb.bt2j.aligner.PerReadMetrics;
-import com.uwb.bt2j.aligner.RandomSource;
 import com.uwb.bt2j.aligner.Read;
 import com.uwb.bt2j.aligner.Scoring;
 import com.uwb.bt2j.aligner.seed.SeedResults;
+import com.uwb.bt2j.indexer.RandomSource;
 
 public class AlnSinkWrap {
 	protected AlnSink g_;

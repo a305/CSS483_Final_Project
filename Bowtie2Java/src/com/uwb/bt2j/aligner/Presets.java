@@ -1,6 +1,6 @@
 package com.uwb.bt2j.aligner;
 
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.EList;
 
 import javafx.util.Pair;
 

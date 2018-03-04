@@ -1,12 +1,12 @@
 package com.uwb.bt2j.aligner.cache;
 
-import com.uwb.bt2j.util.IndexTypes;
-import com.uwb.bt2j.util.types.EList;
-import com.uwb.bt2j.util.types.PList;
-import com.uwb.bt2j.util.types.PListSlice;
-import com.uwb.bt2j.util.types.Pool;
-import com.uwb.bt2j.util.types.RedBlack;
-import com.uwb.bt2j.util.types.RedBlackNode;
+import com.uwb.bt2j.indexer.EList;
+import com.uwb.bt2j.indexer.IndexTypes;
+import com.uwb.bt2j.indexer.PList;
+import com.uwb.bt2j.indexer.PListSlice;
+import com.uwb.bt2j.indexer.Pool;
+import com.uwb.bt2j.indexer.RedBlack;
+import com.uwb.bt2j.indexer.RedBlackNode;
 
 class AlignmentCache {
   public static final int CACHE_PAGE_SZ = 16 * 1024;

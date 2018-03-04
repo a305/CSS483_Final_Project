@@ -2,7 +2,7 @@ package com.uwb.bt2j.aligner;
 
 import java.io.OutputStream;
 
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.EList;
 
 public class Edit {
 	public int chr;

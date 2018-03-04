@@ -1,7 +1,7 @@
 package com.uwb.bt2j.aligner.cache;
 
-import com.uwb.bt2j.util.IndexTypes;
-import com.uwb.bt2j.util.types.PListSlice;
+import com.uwb.bt2j.indexer.IndexTypes;
+import com.uwb.bt2j.indexer.PListSlice;
 
 public class SATuple {
 	public QKey    key;  // sequence key

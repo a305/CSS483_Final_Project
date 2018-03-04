@@ -4,15 +4,16 @@ import org.omg.CORBA_2_3.portable.OutputStream;
 
 import com.uwb.bt2j.aligner.seed.SeedAlignmentPolicy;
 import com.uwb.bt2j.aligner.sink.ALNSink;
+import com.uwb.bt2j.indexer.BitPairReference;
+import com.uwb.bt2j.indexer.EList;
 import com.uwb.bt2j.indexer.Ebwt;
-import com.uwb.bt2j.util.BitPairReference;
-import com.uwb.bt2j.util.Formats.FileFormat;
-import com.uwb.bt2j.util.file.OutFileBuf;
+import com.uwb.bt2j.indexer.OutFileBuf;
+import com.uwb.bt2j.indexer.RandomSource;
+import com.uwb.bt2j.indexer.Formats.FileFormat;
 import com.uwb.bt2j.util.pattern.PatternComposer;
 import com.uwb.bt2j.util.pattern.PatternParams;
 import com.uwb.bt2j.util.pattern.PatternSourcePerThread;
 import com.uwb.bt2j.util.pattern.PatternSourcePerThreadFactory;
-import com.uwb.bt2j.util.types.EList;
 
 import javafx.util.Pair;
 

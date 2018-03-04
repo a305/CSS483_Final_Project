@@ -6,11 +6,11 @@ import com.uwb.bt2j.aligner.Read;
 import com.uwb.bt2j.aligner.Scoring;
 import com.uwb.bt2j.aligner.cache.QKey;
 import com.uwb.bt2j.aligner.cache.QVal;
+import com.uwb.bt2j.indexer.BTDnaString;
+import com.uwb.bt2j.indexer.BTString;
+import com.uwb.bt2j.indexer.EList;
 import com.uwb.bt2j.indexer.Ebwt;
 import com.uwb.bt2j.indexer.SideLocus;
-import com.uwb.bt2j.util.strings.BTDnaString;
-import com.uwb.bt2j.util.strings.BTString;
-import com.uwb.bt2j.util.types.EList;
 
 import javafx.util.Pair;
 

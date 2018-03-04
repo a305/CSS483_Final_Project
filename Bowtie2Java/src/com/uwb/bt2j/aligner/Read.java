@@ -2,9 +2,9 @@ package com.uwb.bt2j.aligner;
 
 import java.io.OutputStream;
 
-import com.uwb.bt2j.util.strings.BTDnaString;
-import com.uwb.bt2j.util.strings.BTString;
-import com.uwb.bt2j.util.strings.SStringExpandable;
+import com.uwb.bt2j.indexer.BTDnaString;
+import com.uwb.bt2j.indexer.BTString;
+import com.uwb.bt2j.indexer.SStringExpandable;
 
 import javafx.util.Pair;
 

@@ -2,10 +2,7 @@ package com.uwb.bt2j.indexer;
 
 import java.io.OutputStream;
 
-import com.uwb.bt2j.util.Formats.FileFormat;
-import com.uwb.bt2j.util.IndexTypes;
-import com.uwb.bt2j.util.Tokenize;
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.Formats.FileFormat;
 
 public class Indexer <T> {
 	

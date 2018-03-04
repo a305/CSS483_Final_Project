@@ -1,7 +1,5 @@
 package com.uwb.bt2j.indexer;
 
-import com.uwb.bt2j.util.IndexTypes;
-
 public class SideLocus {
 	
 	long _sideByteOff; // offset of top side within ebwt[]

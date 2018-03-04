@@ -1,13 +1,13 @@
 package com.uwb.bt2j.aligner.dp;
 import com.uwb.bt2j.aligner.Edit;
-import com.uwb.bt2j.aligner.RandomSource;
 import com.uwb.bt2j.aligner.Scoring;
+import com.uwb.bt2j.indexer.EFactory;
+import com.uwb.bt2j.indexer.ELList;
+import com.uwb.bt2j.indexer.ELSet;
+import com.uwb.bt2j.indexer.EList;
+import com.uwb.bt2j.indexer.Quad;
+import com.uwb.bt2j.indexer.RandomSource;
 import com.uwb.bt2j.util.Checkpointer;
-import com.uwb.bt2j.util.types.EFactory;
-import com.uwb.bt2j.util.types.ELList;
-import com.uwb.bt2j.util.types.ELSet;
-import com.uwb.bt2j.util.types.EList;
-import com.uwb.bt2j.util.types.Quad;
 
 import javafx.util.Pair;
 

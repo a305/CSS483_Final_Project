@@ -1,7 +1,7 @@
 package com.uwb.bt2j.aligner.groupwalk;
 
-import com.uwb.bt2j.util.IndexTypes;
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.EList;
+import com.uwb.bt2j.indexer.IndexTypes;
 
 import javafx.util.Pair;
 

@@ -1,8 +1,8 @@
 package com.uwb.bt2j.aligner.cache;
 
-import com.uwb.bt2j.util.strings.BTDnaString;
-import com.uwb.bt2j.util.strings.BTString;
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.BTDnaString;
+import com.uwb.bt2j.indexer.BTString;
+import com.uwb.bt2j.indexer.EList;
 
 public class AlignmentCacheIFace {
 	protected QKey qk_;  // key representation for current read substring

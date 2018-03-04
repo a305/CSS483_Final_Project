@@ -3,8 +3,6 @@ package com.uwb.bt2j.indexer;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import com.uwb.bt2j.util.IndexTypes;
-
 public class EbwtParams {
 	long _len;
 	long _bwtLen;

@@ -1,7 +1,7 @@
 package com.uwb.bt2j.util.pattern;
 
-import com.uwb.bt2j.util.Formats;
-import com.uwb.bt2j.util.Formats.FileFormat;
+import com.uwb.bt2j.indexer.Formats;
+import com.uwb.bt2j.indexer.Formats.FileFormat;
 
 public class PatternParams {
 	Formats.FileFormat format;			  // file format

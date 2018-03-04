@@ -2,7 +2,7 @@ package com.uwb.bt2j.aligner.seed;
 
 import com.uwb.bt2j.aligner.Scoring;
 import com.uwb.bt2j.aligner.Scoring.CostModel;
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.EList;
 import com.uwb.bt2j.aligner.SimpleFunc;
 
 public class SeedAlignmentPolicy {

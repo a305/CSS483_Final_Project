@@ -1,10 +1,10 @@
 package com.uwb.bt2j.aligner.groupwalk;
 
+import com.uwb.bt2j.indexer.BitPairReference;
+import com.uwb.bt2j.indexer.EList;
 import com.uwb.bt2j.indexer.Ebwt;
+import com.uwb.bt2j.indexer.IndexTypes;
 import com.uwb.bt2j.indexer.SideLocus;
-import com.uwb.bt2j.util.BitPairReference;
-import com.uwb.bt2j.util.IndexTypes;
-import com.uwb.bt2j.util.types.EList;
 
 import javafx.util.Pair;
 

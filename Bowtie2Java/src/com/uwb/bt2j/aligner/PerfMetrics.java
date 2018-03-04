@@ -2,7 +2,7 @@ package com.uwb.bt2j.aligner;
 
 import java.io.OutputStream;
 
-import com.uwb.bt2j.util.file.OutFileBuf;
+import com.uwb.bt2j.indexer.OutFileBuf;
 
 public class PerfMetrics {
 	

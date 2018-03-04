@@ -3,8 +3,8 @@ package com.uwb.bt2j.inspector;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import com.uwb.bt2j.util.BitPairReference;
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.BitPairReference;
+import com.uwb.bt2j.indexer.EList;
 
 class Bowtie2Inspector {
 	public static boolean showVersion = false;

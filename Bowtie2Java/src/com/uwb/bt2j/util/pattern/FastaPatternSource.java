@@ -1,8 +1,8 @@
 package com.uwb.bt2j.util.pattern;
 
 import com.uwb.bt2j.aligner.Read;
-import com.uwb.bt2j.util.file.FileBuf;
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.EList;
+import com.uwb.bt2j.indexer.FileBuf;
 
 import javafx.util.Pair;
 

@@ -1,6 +1,6 @@
 package com.uwb.bt2j.util;
 
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.EList;
 
 public class EIValMergeListBinned {
 	public static final int NBIN = 7;

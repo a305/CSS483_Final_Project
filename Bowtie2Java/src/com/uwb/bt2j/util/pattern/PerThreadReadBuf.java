@@ -1,7 +1,7 @@
 package com.uwb.bt2j.util.pattern;
 
 import com.uwb.bt2j.aligner.Read;
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.EList;
 
 public class PerThreadReadBuf {
 	double max_buf_; // max # reads to read into buffer at once

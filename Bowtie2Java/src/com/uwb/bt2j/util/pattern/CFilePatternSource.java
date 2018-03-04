@@ -3,7 +3,7 @@ package com.uwb.bt2j.util.pattern;
 import java.io.File;
 
 import com.uwb.bt2j.aligner.Read;
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.EList;
 
 import javafx.util.Pair;
 

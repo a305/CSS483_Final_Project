@@ -5,14 +5,6 @@ import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
-import com.uwb.bt2j.aligner.RandomSource;
-import com.uwb.bt2j.util.IndexTypes;
-import com.uwb.bt2j.util.RefReadInParams;
-import com.uwb.bt2j.util.RefRecord;
-import com.uwb.bt2j.util.file.FileBuf;
-import com.uwb.bt2j.util.strings.BTDnaString;
-import com.uwb.bt2j.util.types.EList;
-
 public class Ebwt <TStr>{
 	public static final String gEbwt_ext = "bt2";
 	public String gLastIOErrMsg;
