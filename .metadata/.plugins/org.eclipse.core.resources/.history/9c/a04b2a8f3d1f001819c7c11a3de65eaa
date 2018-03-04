@@ -1,0 +1,594 @@
+package com.uwb.bt2j.aligner.dp;
+import com.uwb.bt2j.aligner.Edit;
+import com.uwb.bt2j.aligner.RandomSource;
+import com.uwb.bt2j.aligner.Scoring;
+import com.uwb.bt2j.util.Checkpointer;
+import com.uwb.bt2j.util.types.EFactory;
+import com.uwb.bt2j.util.types.ELList;
+import com.uwb.bt2j.util.types.ELSet;
+import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.util.types.Quad;
+
+import javafx.util.Pair;
+
+class BtBranchTracer {
+  protected BtBranchProblem prob_;
+  protected EFactory<BtBranch> bs_;
+  protected ELList<Pair<Double,Double>> seenPaths_;
+  protected ELSet<Double> sawcell_;
+  protected EList<Pair<Double,Double>> unsorted_;
+  protected EList<Double> sorted1_;
+  protected EList<Double> sorted2_;
+  protected EList<Double> solutions_;
+  protected Boolean sortedSel_;
+  protected double cur_;
+  protected double nmm_;
+  protected double nnmm_;
+  protected double nrdop_;
+  protected double nrfop_;
+  protected double nrdex_;
+  protected double nrfex_;
+  protected double nmmPrune_;
+  protected double nnmmPrune_;
+  protected double nrdopPrune_;
+  protected double nrfopPrune_;
+  protected double nrdexPrune_;
+  protected double nrfexPrune_;
+  protected double row_;
+  protected double col_;
+  protected Boolean doTri_;
+  protected EList<Quad> sq_;
+  protected EList<Double> ndep_;
+  protected ELList<Quad> tri_;
+
+  public BtBranchTracer() {
+    seenPaths_ = 6;
+    sawCell_ = 6;
+  }
+  
+  public void add(long id) {
+	  unsorted_.push_back(new Pair(bs_[id].score_st_, id));
+  }
+  
+  public void addSolution(long id) {
+	  solutions_.push_back(id);
+  }
+  
+  public void examineBranch(
+		  long row,
+			long col,
+			Edit e,
+			long pen,
+			long sc,
+			long parentId){
+  
+  }
+  
+  public void addOffshoots(long bid) {
+    
+  }
+  
+  public double best(RandomSource rnd) {
+	  flushUnsorted();
+		// Perhaps shuffle everyone who's tied for first?
+		long id = sortedSel_ ? sorted1_[cur_] : sorted2_[cur_];
+		cur_++;
+		return id;
+  }
+  
+  public boolean empty() {
+    return size() == 0;
+  }
+  
+  public double size() {
+	  return unsorted_.size() +
+		       (sortedSel_ ? sorted1_.size() : sorted2_.size()) - cur_;
+  }
+  
+  public boolean emptySolution() {
+	  return sizeSolution() == 0;
+  }
+  
+  public long sizeSolution() {
+	  return solutions_.size();
+  }
+  
+  public void flushUnsorted() {
+    
+  }
+  
+  public void initRef(
+		  String         rd,     // in: read sequence
+			String         qu,     // in: quality sequence
+			long              rdlen,  // in: read sequence length
+			String         rf,     // in: reference sequence
+			long              rflen,  // in: in-rectangle reference sequence length
+			long             trflen, // in: total reference sequence length
+			long              refid,  // in: reference id
+			long             refoff, // in: reference offset
+			boolean                fw,     // in: orientation
+			DPRect       rect,   // in: DP rectangle
+			Checkpointer cper,   // in: checkpointer
+			Scoring      sc,     // in: scoring scheme
+			long              nceil)  // in: N ceiling
+  {
+	  prob_.initRef(rd, qu, rdlen, rf, rflen, trflen, refid, refoff, fw, rect, cper, sc, nceil);
+		long ndiag = rflen + rdlen - 1;
+		seenPaths_.resize(ndiag);
+		for(int i = 0; i < ndiag; i++) {
+			seenPaths_[i].clear();
+		}
+		// clear each of the per-column sets
+		if(sawcell_.size() < rflen) {
+			int isz = sawcell_.size();
+			sawcell_.resize(rflen);
+			for(int i = isz; i < rflen; i++) {
+				sawcell_[i].setCat(6);
+			}
+		}
+		for(int i = 0; i < rflen; i++) {
+			sawcell_[i].setCat(6);
+			sawcell_[i].clear(); // clear the set
+		}
+  }
+  
+  public void initBt(
+		  TAlScore       escore, // in: alignment score
+			size_t         row,    // in: start in this row
+			size_t         col,    // in: start in this column
+			bool           fill,   // in: use mini-filling?
+			bool           usecp,  // in: use checkpointing?
+			bool           doTri,  // in: triangle-shaped mini-fills?
+			RandomSource&  rnd)    // in: random gen, to choose among equal paths
+  {
+	  prob_.initBt(row, col, fill, usecp, escore);
+		Edit e; e.reset();
+		unsorted_.clear();
+		solutions_.clear();
+		sorted1_.clear();
+		sorted2_.clear();
+		cur_ = 0;
+		nmm_ = 0;         // number of mismatches attempted
+		nnmm_ = 0;        // number of mismatches involving N attempted
+		nrdop_ = 0;       // number of read gap opens attempted
+		nrfop_ = 0;       // number of ref gap opens attempted
+		nrdex_ = 0;       // number of read gap extensions attempted
+		nrfex_ = 0;       // number of ref gap extensions attempted
+		nmmPrune_ = 0;    // number of mismatches attempted
+		nnmmPrune_ = 0;   // number of mismatches involving N attempted
+		nrdopPrune_ = 0;  // number of read gap opens attempted
+		nrfopPrune_ = 0;  // number of ref gap opens attempted
+		nrdexPrune_ = 0;  // number of read gap extensions attempted
+		nrfexPrune_ = 0;  // number of ref gap extensions attempted
+		row_ = row;
+		col_ = col;
+		doTri_ = doTri;
+		bs_.clear();
+		if(!prob_.fill_) {
+			size_t id = bs_.alloc();
+			bs_[id].init(
+				prob_,
+				0,     // parent id
+				0,     // penalty
+				0,     // starting score
+				row,   // row
+				col,   // column
+				e,
+				0,
+			    true,  // this is the root
+				true); // this should be extend with exact matches
+			if(bs_[id].isSolution(prob_)) {
+				addSolution(id);
+			} else {
+				add(id);
+			}
+		} else {
+			int64_t row = row_, col = col_;
+			TAlScore targsc = prob_.targ_;
+			int hef = 0;
+			bool done = false, abort = false;
+			size_t depth = 0;
+			while(!done && !abort) {
+				// Accumulate edits as we go.  We can do this by adding
+				// BtBranches to the bs_ structure.  Each step of the backtrace
+				// either involves an edit (thereby starting a new branch) or
+				// extends the previous branch by one more position.
+				//
+				// Note: if the BtBranches are in line, then trySolution can be
+				// used to populate the SwResult and check for various
+				// situations where we might reject the alignment (i.e. due to
+				// a cell having been visited previously).
+				if(doTri_) {
+					triangleFill(
+						row,          // row of cell to backtrace from
+						col,          // column of cell to backtrace from
+						hef,          // cell to bt from: H (0), E (1), or F (2)
+						targsc,       // score of cell to backtrace from
+						prob_.targ_,  // score of alignment we're looking for
+						rnd,          // pseudo-random generator
+						row,          // out: row we ended up in after bt
+						col,          // out: column we ended up in after bt
+						hef,          // out: H/E/F after backtrace
+						targsc,       // out: score up to cell we ended up in
+						done,         // out: finished tracing out an alignment?
+						abort);       // out: aborted b/c cell was seen before?
+				} else {
+					squareFill(
+						row,          // row of cell to backtrace from
+						col,          // column of cell to backtrace from
+						hef,          // cell to bt from: H (0), E (1), or F (2)
+						targsc,       // score of cell to backtrace from
+						prob_.targ_,  // score of alignment we're looking for
+						rnd,          // pseudo-random generator
+						row,          // out: row we ended up in after bt
+						col,          // out: column we ended up in after bt
+						hef,          // out: H/E/F after backtrace
+						targsc,       // out: score up to cell we ended up in
+						done,         // out: finished tracing out an alignment?
+						abort);       // out: aborted b/c cell was seen before?
+				}
+				if(depth >= ndep_.size()) {
+					ndep_.resize(depth+1);
+					ndep_[depth] = 1;
+				} else {
+					ndep_[depth]++;
+				}
+				depth++;
+				assert((row >= 0 && col >= 0) || done);
+			}
+		}
+  }
+  
+  public boolean nextAlignment(
+		  size_t maxiter,
+			SwResult& res,
+			size_t& off,
+			size_t& nrej,
+			size_t& niter,
+			RandomSource& rnd)
+  {
+    
+  }
+  
+  public boolean inited() {
+	  return prob_.inited();
+  }
+  
+  public Boolean doTri() {
+  
+  }
+  
+  public void triangleFill(
+		  int64_t rw,          // row of cell to backtrace from
+			int64_t cl,          // column of cell to backtrace from
+			int hef,             // cell to backtrace from is H (0), E (1), or F (2)
+			TAlScore targ,       // score of cell to backtrace from
+			TAlScore targ_final, // score of alignment we're looking for
+			RandomSource& rnd,   // pseudo-random generator
+			int64_t& row_new,    // out: row we ended up in after backtrace
+			int64_t& col_new,    // out: column we ended up in after backtrace
+			int& hef_new,        // out: H/E/F after backtrace
+			TAlScore& targ_new,  // out: score up to cell we ended up in
+			bool& done,          // out: finished tracing out an alignment?
+			bool& abort)        // out: aborted b/c cell was seen before?
+  {
+	  if(prob_.fill_) {
+			return nextAlignmentFill(
+				maxiter,
+				res,
+				off,
+				nrej,
+				niter,
+				rnd);
+		} else {
+			return nextAlignmentBacktrace(
+				maxiter,
+				res,
+				off,
+				nrej,
+				niter,
+				rnd);
+		}
+  }
+  
+  public void squareFill(
+		  int64_t rw,          // row of cell to backtrace from
+			int64_t cl,          // column of cell to backtrace from
+			int hef,             // cell to backtrace from is H (0), E (1), or F (2)
+			TAlScore targ,       // score of cell to backtrace from
+			TAlScore targ_final, // score of alignment we're looking for
+			RandomSource& rnd,   // pseudo-random generator
+			int64_t& row_new,    // out: row we ended up in after backtrace
+			int64_t& col_new,    // out: column we ended up in after backtrace
+			int& hef_new,        // out: H/E/F after backtrace
+			TAlScore& targ_new,  // out: score up to cell we ended up in
+			bool& done,          // out: finished tracing out an alignment?
+			bool& abort)        // out: aborted b/c cell was seen before?
+  {
+  
+  }
+  
+  protected Boolean nextAlignmentBacktrace(
+		  size_t maxiter,
+			SwResult& res,
+			size_t& off,
+			size_t& nrej,
+			size_t& niter,
+			RandomSource& rnd)
+  {
+	  bool result = false;
+		niter = 0;
+		while(!empty()) {
+			if(trySolutions(true, res, off, nrej, rnd, result)) {
+				return result;
+			}
+			if(niter++ >= maxiter) {
+				break;
+			}
+			size_t brid = best(rnd); // put best branch in 'br'
+			assert(!seen_.contains(brid));
+			ASSERT_ONLY(seen_.insert(brid));
+	#if 0
+			BtBranch *br = &bs_[brid];
+			cerr << brid
+			     << ": targ:" << prob_.targ_
+			     << ", sc:" << br->score_st_
+			     << ", row:" << br->uppermostRow()
+				 << ", nmm:" << nmm_
+				 << ", nnmm:" << nnmm_
+				 << ", nrdop:" << nrdop_
+				 << ", nrfop:" << nrfop_
+				 << ", nrdex:" << nrdex_
+				 << ", nrfex:" << nrfex_
+				 << ", nrdop_pr: " << nrdopPrune_
+				 << ", nrfop_pr: " << nrfopPrune_
+				 << ", nrdex_pr: " << nrdexPrune_
+				 << ", nrfex_pr: " << nrfexPrune_
+				 << endl;
+	#endif
+			addOffshoots(brid);
+		}
+		if(trySolutions(true, res, off, nrej, rnd, result)) {
+			return result;
+		}
+		return false;
+  }
+  
+  protected Boolean nextAlignmentFill(
+		  size_t maxiter,
+			SwResult& res,
+			size_t& off,
+			size_t& nrej,
+			size_t& niter,
+			RandomSource& rnd)
+  {
+	  bool result = false;
+		if(trySolutions(false, res, off, nrej, rnd, result)) {
+			return result;
+		}
+		return false;
+  }
+  
+  protected Boolean trySolutions(
+		  bool lookForOlap,
+			SwResult& res,
+			size_t& off,
+			size_t& nrej,
+			RandomSource& rnd,
+			bool& success)
+  {
+	  if(solutions_.size() > 0) {
+			for(size_t i = 0; i < solutions_.size(); i++) {
+				int ret = trySolution(solutions_[i], lookForOlap, res, off, nrej, rnd);
+				if(ret == BT_FOUND) {
+					success = true;
+					return true; // there were solutions and one was good
+				}
+			}
+			solutions_.clear();
+			success = false;
+			return true; // there were solutions but none were good
+		}
+		return false; // there were no solutions to check
+  }
+  
+  protected int trySolution(
+		  size_t id,
+			bool lookForOlap,
+			SwResult& res,
+			size_t& off,
+			size_t& nrej,
+			RandomSource& rnd)
+  {
+	  AlnScore score;
+		BtBranch *br = &bs_[id];
+		// 'br' corresponds to the leftmost edit in a right-to-left
+		// chain of edits.  
+		EList<Edit>& ned = res.alres.ned();
+		const BtBranch *cur = br, *prev = NULL;
+		size_t ns = 0, nrefns = 0;
+		size_t ngap = 0;
+		while(true) {
+			if(cur->e_.inited()) {
+				if(cur->e_.isMismatch()) {
+					if(cur->e_.qchr == 'N' || cur->e_.chr == 'N') {
+						ns++;
+					}
+				} else if(cur->e_.isGap()) {
+					ngap++;
+				}
+				if(cur->e_.chr == 'N') {
+					nrefns++;
+				}
+				ned.push_back(cur->e_);
+			}
+			if(cur->root_) {
+				break;
+			}
+			cur = &bs_[cur->parentId_];
+		}
+		if(ns > prob_.nceil_) {
+			// Alignment has too many Ns in it!
+			res.reset();
+			assert(res.alres.ned().empty());
+			nrej++;
+			return BT_REJECTED_N;
+		}
+		// Update 'seenPaths_'
+		cur = br;
+		bool rejSeen = false; // set =true if we overlap prev path
+		bool rejCore = true; // set =true if we don't touch core diag
+		while(true) {
+			// Consider row, col, len, then do something
+			int64_t row = cur->row_, col = cur->col_;
+			assert_lt(row, (int64_t)prob_.qrylen_);
+			size_t fromend = prob_.qrylen_ - row - 1;
+			size_t diag = fromend + col;
+			// Calculate the diagonal within the *trimmed* rectangle,
+			// i.e. the rectangle we dealt with in align, gather and
+			// backtrack.
+			int64_t diagi = col - row;
+			// Now adjust to the diagonal within the *untrimmed*
+			// rectangle by adding on the amount trimmed from the left.
+			diagi += prob_.rect_->triml;
+			assert_lt(diag, seenPaths_.size());
+			// Does it overlap a core diagonal?
+			if(diagi >= 0) {
+				size_t diag = (size_t)diagi;
+				if(diag >= prob_.rect_->corel &&
+				   diag <= prob_.rect_->corer)
+				{
+					// Yes it does - it's OK
+					rejCore = false;
+				}
+			}
+			if(lookForOlap) {
+				int64_t newlo, newhi;
+				if(cur->len_ == 0) {
+					if(prev != NULL && prev->len_ > 0) {
+						// If there's a gap at the base of a non-0 length branch, the
+						// gap will appear to overlap the branch if we give it length 1.
+						newhi = newlo = 0;
+					} else {
+						// Read or ref gap with no matches coming off of it
+						newlo = row;
+						newhi = row + 1;
+					}
+				} else {
+					// Diagonal with matches
+					newlo = row - (cur->len_ - 1);
+					newhi = row + 1;
+				}
+				assert_geq(newlo, 0);
+				assert_geq(newhi, 0);
+				// Does the diagonal cover cells?
+				if(newhi > newlo) {
+					// Check whether there is any overlap with previously traversed
+					// cells
+					bool added = false;
+					const size_t sz = seenPaths_[diag].size();
+					for(size_t i = 0; i < sz; i++) {
+						// Does the new interval overlap this already-seen
+						// interval?  Also of interest: does it abut this
+						// already-seen interval?  If so, we should merge them.
+						size_t lo = seenPaths_[diag][i].first;
+						size_t hi = seenPaths_[diag][i].second;
+						assert_lt(lo, hi);
+						size_t lo_sm = newlo, hi_sm = newhi;
+						if(hi - lo < hi_sm - lo_sm) {
+							swap(lo, lo_sm);
+							swap(hi, hi_sm);
+						}
+						if((lo <= lo_sm && hi > lo_sm) ||
+						   (lo <  hi_sm && hi >= hi_sm))
+						{
+							// One or both of the shorter interval's end points
+							// are contained in the longer interval - so they
+							// overlap.
+							rejSeen = true;
+							// Merge them into one longer interval
+							seenPaths_[diag][i].first = min(lo, lo_sm);
+							seenPaths_[diag][i].second = max(hi, hi_sm);
+	#ifndef NDEBUG
+							for(int64_t ii = seenPaths_[diag][i].first;
+								ii < (int64_t)seenPaths_[diag][i].second;
+								ii++)
+							{
+								//cerr << "trySolution rejected (" << ii << ", " << (ii + col - row) << ")" << endl;
+							}
+	#endif
+							added = true;
+							break;
+						} else if(hi == lo_sm || lo == hi_sm) {
+							// Merge them into one longer interval
+							seenPaths_[diag][i].first = min(lo, lo_sm);
+							seenPaths_[diag][i].second = max(hi, hi_sm);
+	#ifndef NDEBUG
+							for(int64_t ii = seenPaths_[diag][i].first;
+								ii < (int64_t)seenPaths_[diag][i].second;
+								ii++)
+							{
+								//cerr << "trySolution rejected (" << ii << ", " << (ii + col - row) << ")" << endl;
+							}
+	#endif
+							added = true;
+							// Keep going in case it overlaps one of the other
+							// intervals
+						}
+					}
+					if(!added) {
+						seenPaths_[diag].push_back(make_pair(newlo, newhi));
+					}
+				}
+			}
+			// After the merging that may have occurred above, it's no
+			// longer guarnateed that all the overlapping intervals in
+			// the list have been merged.  That's OK though.  We'll
+			// still get correct answers to overlap queries.
+			if(cur->root_) {
+				assert_eq(0, cur->parentId_);
+				break;
+			}
+			prev = cur;
+			cur = &bs_[cur->parentId_];
+		} // while(cur->e_.inited())
+		if(rejSeen) {
+			res.reset();
+			assert(res.alres.ned().empty());
+			nrej++;
+			return BT_NOT_FOUND;
+		}
+		if(rejCore) {
+			res.reset();
+			assert(res.alres.ned().empty());
+			nrej++;
+			return BT_REJECTED_CORE_DIAG;
+		}
+		off = br->leftmostCol();
+		size_t trimBeg = br->uppermostRow();
+		size_t trimEnd = prob_.qrylen_ - prob_.row_ - 1;
+		score.score_ = prob_.targ_;
+		score.basesAligned_ = (int)(prob_.qrylen_ - trimBeg - trimEnd - ned.size());
+		score.edits_ = (int)ned.size();
+		score.ns_    = ns;
+		score.gaps_  = ngap;
+		res.alres.setScore(score);
+		res.alres.setRefNs(nrefns);
+		assert_leq(trimBeg, prob_.qrylen_);
+		assert_leq(trimEnd, prob_.qrylen_);
+		TRefOff refoff = off + prob_.refoff_ + prob_.rect_->refl;
+		res.alres.setShape(
+			prob_.refid_,                   // ref id
+			refoff,                         // 0-based ref offset
+			prob_.treflen(),                // ref length
+			prob_.fw_,                      // aligned to Watson?
+			prob_.qrylen_,                  // read length
+			true,                           // pretrim soft?
+			0,                              // pretrim 5' end
+			0,                              // pretrim 3' end
+			true,                           // alignment trim soft?
+			prob_.fw_ ? trimBeg : trimEnd,  // alignment trim 5' end
+			prob_.fw_ ? trimEnd : trimBeg); // alignment trim 3' end
+		return BT_FOUND;
+  }
+}

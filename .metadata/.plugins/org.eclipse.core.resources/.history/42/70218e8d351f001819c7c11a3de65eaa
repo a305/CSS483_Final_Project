@@ -1,0 +1,139 @@
+package com.uwb.bt2j.aligner;
+class BtBranch {
+
+  protected double parentId_;
+  protected double penalty_;
+  protected double score_st_;
+  protected double score_en_;
+  protected double len_;
+  protected long row_;
+  protected long col_;
+  protected Edit e_;
+  
+  protected boolean root_;
+  protected boolean curtailed_;
+  
+  public enum BTStatus {
+	  BT_NOT_FOUND(1),      // could not obtain the backtrace because it
+              // overlapped a previous solution
+	  BT_FOUND(2),              // obtained a valid backtrace
+	  BT_REJECTED_N(3),         // backtrace rejected because it had too many Ns
+	  BT_REJECTED_CORE_DIAG(4);  // backtrace rejected because it failed to overlap a
+              // core diagonal
+	  private int x;
+	  BTStatus(int y){x = y;}
+  }
+  
+  public BtBranch() {
+	  reset();
+  }
+  
+  public BtBranch(
+		  const BtBranchProblem& prob,
+			size_t parentId,
+			TAlScore penalty,
+			TAlScore score_en,
+			int64_t row,
+			int64_t col,
+			Edit e,
+			int hef,
+			bool root,
+			bool extend){
+	  init(prob, parentId, penalty, score_en, row, col, e, hef, root, extend);
+  }
+  
+  public void reset() {
+	  	parentId_ = 0;
+		score_st_ = score_en_ = len_ = row_ = col_ = 0;
+		curtailed_ = false;
+		e_.reset();
+  }
+  
+  public void init(
+		  const BtBranchProblem& prob,
+			size_t parentId,
+			TAlScore penalty,
+			TAlScore score_en,
+			int64_t row,
+			int64_t col,
+			Edit e,
+			int hef,
+			bool root,
+			bool extend)
+  {
+    
+  }
+  
+  public boolean isSolution(BtBranchProblem prob) {
+	  	const bool end2end = prob.sc_->monotone;
+		return score_st_ == prob.targ_ && (!end2end || endsInFirstRow());
+  }
+  
+  public boolean isValid(BtBranchProblem prob) {
+	  int64_t scoreFloor = prob.sc_->monotone ? MIN_I64 : 0;
+		if(score_st_ < scoreFloor) {
+			// Dipped below the score floor
+			return false;
+		}
+		if(isSolution(prob)) {
+			// It's a solution, so it's also valid
+			return true;
+		}
+		if((int64_t)len_ > row_) {
+			// Went all the way to the top row
+			//assert_leq(score_st_, prob.targ_);
+			return score_st_ == prob.targ_;
+		} else {
+			int64_t match = prob.sc_->match();
+			int64_t bonusLeft = (row_ + 1 - len_) * match;
+			return score_st_ + bonusLeft >= prob.targ_;
+		}
+  }
+  
+  public boolean overlap(BtBranchProblem prob, BtBranch bt) {
+	// Calculate this branch's diagonal
+			assert_lt(row_, (int64_t)prob.qrylen_);
+			size_t fromend = prob.qrylen_ - row_ - 1;
+			size_t diag = fromend + col_;
+			int64_t lo = 0, hi = row_ + 1;
+			if(len_ == 0) {
+				lo = row_;
+			} else {
+				lo = row_ - (len_ - 1);
+			}
+			// Calculate other branch's diagonal
+			assert_lt(bt.row_, (int64_t)prob.qrylen_);
+			size_t ofromend = prob.qrylen_ - bt.row_ - 1;
+			size_t odiag = ofromend + bt.col_;
+			if(diag != odiag) {
+				return false;
+			}
+			int64_t olo = 0, ohi = bt.row_ + 1;
+			if(bt.len_ == 0) {
+				olo = bt.row_;
+			} else {
+				olo = bt.row_ - (bt.len_ - 1);
+			}
+			int64_t losm = olo, hism = ohi;
+			if(hi - lo < ohi - olo) {
+				swap(lo, losm);
+				swap(hi, hism);
+			}
+			if((lo <= losm && hi > losm) || (lo <  hism && hi >= hism)) {
+				return true;
+			}
+			return false;
+  }
+  
+  public boolean endsInFirstRow() {
+	  	return (int64_t)len_ == row_+1;
+  }
+  
+  public double uppermostRow() {
+	  	return row_ + 1 - (int64_t)len_;
+  }
+  
+  public boolean leftmostCol() {
+	  return col_ + 1 - (int64_t)len_;
+  }
+}

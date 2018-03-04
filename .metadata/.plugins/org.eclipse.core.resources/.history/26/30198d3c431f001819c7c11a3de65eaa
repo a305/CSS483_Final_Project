@@ -1,0 +1,134 @@
+package com.uwb.bt2j.aligner.cache;
+
+import com.uwb.bt2j.util.IndexTypes;
+
+class AlignmentCache {
+  public static final int CACHE_PAGE_SZ = 16 * 1024;
+  
+  protected Pool pool_;
+  protected RedBlack<QKey, QVal> qmap_;
+  protected TQList qlist_;
+  protected RedBlack<QKey, SAVal> samap_;
+  protected TSAList salist_;
+  protected Boolean shared_;
+  protected double version;
+  
+  public AlignmentCache() {
+    
+  }
+  
+  public void queryQVal() {
+    
+  }
+  
+  public final Boolean empty() {
+  
+  }
+  
+  public QVal add() {
+    
+  }
+  
+  public boolean addOnTheFly(
+		  QVal qv,         // qval that points to the range of reference substrings
+			SAKey sak, // the key holding the reference substring
+			long topf,    // top range elt in BWT index
+			long botf,    // bottom range elt in BWT index
+			long topb,    // top range elt in BWT' index
+			long botb,    // bottom range elt in BWT' index
+			boolean getLock){
+	  if(shared_ && getLock) {
+			return addOnTheFlyImpl(qv, sak, topf, botf, topb, botb);
+		} else {
+			return addOnTheFlyImpl(qv, sak, topf, botf, topb, botb);
+		}
+  }
+  
+  public void clear() {
+    
+  }
+  
+  public double qNumKeys() {
+    
+  }
+  
+  public double saNumKeys() {
+    
+  }
+  
+  public double qSize() {
+    
+  }
+  
+  public double saSize() {
+    
+  }
+  
+  public Pool pool() {
+    
+  }
+  
+  public Mutex lock() {
+  
+  }
+  
+  public Boolean shared() {
+    
+  }
+  
+  public double version() {
+  
+  }
+  
+  private void queryQvalImpl() {
+    
+  }
+  
+  public boolean addOnTheFlyImpl(
+		  	QVal qv,         // qval that points to the range of reference substrings
+			SAKey sak, // the key holding the reference substring
+			long topf,    // top range elt in BWT index
+			long botf,    // bottom range elt in BWT index
+			long topb,    // top range elt in BWT' index
+			long botb)    // bottom range elt in BWT' index
+  {
+	  boolean added = true;
+		// If this is the first reference sequence we're associating with
+		// the query sequence, initialize the QVal.
+		if(!qv.valid()) {
+			qv.init((int)qlist_.size(), 0, 0);
+		}
+		qv.addRange(botf-topf); // update tally for # ranges and # elts
+		if(!qlist_.add(pool(), sak)) {
+			return false; // Exhausted pool memory
+		}
+
+		assert_eq(qv.offset() + qv.numRanges(), qlist_.size());
+		SANode s = samap_.add(pool(), sak, &added);
+		if(s == null) {
+			return false; // Exhausted pool memory
+		}
+		assert(s.key.repOk());
+		if(added) {
+			s.payload.i = (long)salist_.size();
+			s.payload.len = botf - topf;
+			s.payload.topf = topf;
+			s.payload.topb = topb;
+			for(int j = 0; j < (botf-topf); j++) {
+				if(!salist_.add(pool(), IndexTypes.OFF_MASK)) {
+					// Change the payload's len field
+					s.payload.len = (long)j;
+					return false; // Exhausted pool memory
+				}
+			}
+		}
+		// Now that we know all allocations have succeeded, we can do a few final
+		// updates
+		
+		return true; 
+  }
+  
+  private QVal addImpl() {
+    
+  }
+}

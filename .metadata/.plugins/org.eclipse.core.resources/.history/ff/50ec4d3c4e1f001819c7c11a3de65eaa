@@ -1,0 +1,32 @@
+package com.uwb.bt2j.indexer;
+
+public class Indexer {
+	public static void main(String[] args) {
+		if(argc > 2 && strcmp(argv[1], "-A") == 0) {
+			String file = args[2];
+			ifstream in;
+			in.open(file);
+			String buf;
+			int lastret = -1;
+			while(in.getline(buf, 4095)) {
+				EList<String> args = new EList(9);
+				args.push_back(string(argv[0]));
+				tokenize(buf, " \t", args);
+				const char **myargs = (const char**)malloc(sizeof(char*)*args.size());
+				for(size_t i = 0; i < args.size(); i++) {
+					myargs[i] = args[i].c_str();
+				}
+				if(args.size() == 1) continue;
+				lastret = bowtie_build((int)args.size(), myargs);
+				free(myargs);
+			}
+			if(lastret == -1) {
+				cerr << "Warning: No arg strings parsed from " << file << endl;
+				return 0;
+			}
+			return lastret;
+		} else {
+			return bowtie_build(argc, argv);
+		}
+	}
+}

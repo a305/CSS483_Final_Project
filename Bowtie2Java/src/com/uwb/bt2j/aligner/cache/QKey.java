@@ -5,7 +5,7 @@ import com.uwb.bt2j.util.strings.BTDnaString;
 public class QKey {
 	
 	public long seq;
-	public double len;
+	public int len;
 	
 	public QKey(){
 		reset();
@@ -23,7 +23,7 @@ public class QKey {
 			return false; // wasn't cacheable
 		} else {
 			// Rightmost char of 's' goes in the least significant bitpair
-			for(double i = 0; i < 32 && i < s.length(); i++) {
+			for(int i = 0; i < 32 && i < s.length(); i++) {
 				int c = (int)s.get(i);
 				if(c == 4) {
 					len = 0xffffffff;

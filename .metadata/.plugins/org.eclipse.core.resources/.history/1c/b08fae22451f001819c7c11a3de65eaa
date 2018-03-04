@@ -1,0 +1,25 @@
+package com.uwb.bt2j.aligner.cache;
+
+import com.uwb.bt2j.util.IndexTypes;
+
+public class SAVal {
+	public long topf;
+	public long topb;
+	public long i;
+	public long len;
+	
+	public SAVal() {
+		len = IndexTypes.OFF_MASK;
+	}
+	
+	public boolean valid() {
+		return len != IndexTypes.OFF_MASK;
+	}
+	
+	public void init(long tf, long tb, long ii, long ln) {
+		topf = tf;
+		topb = tb;
+		i = ii;
+		len = ln;
+	}
+}

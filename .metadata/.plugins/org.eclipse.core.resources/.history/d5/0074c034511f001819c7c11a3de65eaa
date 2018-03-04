@@ -1,0 +1,160 @@
+package com.uwb.bt2j.indexer;
+
+import java.io.OutputStream;
+
+import com.uwb.bt2j.util.Formats.FileFormat;
+import com.uwb.bt2j.util.IndexTypes;
+import com.uwb.bt2j.util.Tokenize;
+import com.uwb.bt2j.util.types.EList;
+
+public class Indexer <T> {
+	
+	// Build parameters
+	public int verbose;
+	public static int sanityCheck;
+	public static FileFormat format;
+	public static long bmax;
+	public static long bmaxMultSqrt;
+	public static int bmaxDivN;
+	public static int dcv;
+	public static int noDc;
+	public static int entireSA;
+	public static int seed;
+	public static int showVersion;
+	//   Ebwt parameters
+	public static int lineRate;
+	public static int linesPerSide;
+	public static int offRate;
+	public static int ftabChars;
+	public static int  bigEndian;
+	public static boolean nsToAs;    // convert Ns to As
+	public static boolean doSaFile;  // make a file with just the suffix array in it
+	public static boolean doBwtFile; // make a file with just the BWT string in it
+	public static boolean autoMem;
+	public static boolean packed;
+	public static boolean writeRef;
+	public static boolean justRef;
+	public static boolean reverseEach;
+	public static int nthreads;
+	public static String wrapper;
+	public static final String short_options = "qraph?nscfl:i:o:t:h:3C";;
+	
+	public enum GetOpts {
+		ARG_BMAX(256),
+		ARG_BMAX_MULT(257),
+		ARG_BMAX_DIV(258),
+		ARG_DCV(259),
+		ARG_SEED(260),
+		ARG_CUTOFF(261),
+		ARG_PMAP(262),
+		ARG_NTOA(263),
+		ARG_USAGE(264),
+		ARG_REVERSE_EACH(265),
+		ARG_SA(266),
+		ARG_THREADS(267),
+		ARG_WRAPPER(268);
+		private int x;
+		GetOpts(int y){x = y;}
+	}
+	
+	public static void main(String[] args) {
+		if(argc > 2 && strcmp(argv[1], "-A") == 0) {
+			String file = args[2];
+			ifstream in;
+			in.open(file);
+			String buf;
+			int lastret = -1;
+			while(in.getline(buf, 4095)) {
+				EList<String> argz = new EList(9);
+				argz.push_back(args[0]);
+				buf = Tokenize.tokenize(" \t", args);
+				for(int i = 0; i < args.length; i++) {
+					argz.insert(args[i],i);
+				}
+				if(args.length == 1) continue;
+				lastret = bowtie_build((int)args.length,argz);
+			}
+			if(lastret == -1) {
+				System.err.println( "Warning: No arg strings parsed from " + file);
+			}
+		}
+		bowtie_build(argc, argv);
+	}
+	
+	public static void resetOptions() {
+		verbose      = true;  // be talkative (default)
+		sanityCheck  = 0;     // do slow sanity checks
+		format       = FileFormat.FASTA; // input sequence format
+		bmax         = IndexTypes.OFF_MASK; // max blockwise SA bucket size
+		bmaxMultSqrt = IndexTypes.OFF_MASK; // same, as multplier of sqrt(n)
+		bmaxDivN     = 4;          // same, as divisor of n
+		dcv          = 1024;  // bwise SA difference-cover sample sz
+		noDc         = 0;     // disable difference-cover sample
+		entireSA     = 0;     // 1 = disable blockwise SA
+		seed         = 0;     // srandom seed
+		showVersion  = 0;     // just print version and quit?
+		//   Ebwt parameters
+		lineRate     = Ebwt.default_lineRate; // a "line" is 64 or 128 bytes
+		linesPerSide = 1;  // 1 64-byte line on a side
+		offRate      = 4;  // sample 1 out of 16 SA elts
+		ftabChars    = 10; // 10 chars in initial lookup table
+		bigEndian    = 0;  // little endian
+		nsToAs       = false; // convert reference Ns to As prior to indexing
+		doSaFile     = false; // make a file with just the suffix array in it
+		doBwtFile    = false; // make a file with just the BWT string in it
+		autoMem      = true;  // automatically adjust memory usage parameters
+		packed       = false; //
+		writeRef     = true;  // write compact reference to .3.gEbwt_ext/.4.gEbwt_ext
+		justRef      = false; // *just* write compact reference, don't index
+		reverseEach  = false;
+	    nthreads     = 1;
+		wrapper = "";
+	}
+	
+	public static void printUsage(OutputStream out) {
+		out.write(( "Bowtie 2 version " + string(BOWTIE2_VERSION) + " by Ben Langmead (langmea@cs.jhu.edu, www.cs.jhu.edu/~langmea)" + "\n").getBytes());
+			String tool_name = "bowtie2-build-s";
+			if(wrapper == "basic-0") {
+				tool_name = "bowtie2-build";
+			}
+			
+			//               1         2         3         4         5         6         7         8
+			//      12345678901234567890123456789012345678901234567890123456789012345678901234567890
+			out.write(( "Usage: " + tool_name + " [options]* <reference_in> <bt2_index_base>" + "\n"
+			    + "    reference_in            comma-separated list of files with ref sequences" + "\n"
+			    + "    bt2_index_base          write " + IndexTypes.gEbwt_ext + " data to files with this dir/basename" + "\n"
+				+ "*** Bowtie 2 indexes work only with v2 (not v1).  Likewise for v1 indexes. ***" + "\n"
+			    + "Options:" + "\n"
+			    + "    -f                      reference files are Fasta (default)" + "\n"
+			    + "    -c                      reference sequences given on cmd line (as" + "\n"
+				+ "                            <reference_in>)" + "\n").getBytes());
+			if(wrapper == "basic-0") {
+			out.write(( "    --large-index           force generated index to be 'large', even if ref" + "\n"
+				+ "                            has fewer than 4 billion nucleotides" + "\n").getBytes());
+			}
+			out.write(( "    -a/--noauto             disable automatic -p/--bmax/--dcv memory-fitting" + "\n"
+			    + "    -p/--packed             use packed strings internally; slower, less memory" + "\n"
+			    + "    --bmax <int>            max bucket sz for blockwise suffix-array builder" + "\n"
+			    + "    --bmaxdivn <int>        max bucket sz as divisor of ref len (default: 4)" + "\n"
+			    + "    --dcv <int>             diff-cover period for blockwise (default: 1024)" + "\n"
+			    + "    --nodc                  disable diff-cover (algorithm becomes quadratic)" + "\n"
+			    + "    -r/--noref              don't build .3/.4 index files" + "\n"
+			    + "    -3/--justref            just build .3/.4 index files" + "\n"
+			    + "    -o/--offrate <int>      SA is sampled every 2^<int> BWT chars (default: 5)" + "\n"
+			    + "    -t/--ftabchars <int>    # of chars consumed in initial lookup (default: 10)" + "\n"
+		        + "    --threads <int>         # of threads" + "\n"
+			    + "    --seed <int>            seed for random number generator" + "\n"
+			    + "    -q/--quiet              verbose output (for debugging)" + "\n"
+			    + "    -h/--help               print detailed description of tool and its options" + "\n"
+			    + "    --usage                 print this usage message" + "\n"
+			    + "    --version               print version information and quit" + "\n").getBytes());
+			    ;
+			if(wrapper.equals("")) {
+				System.err.println("\n"
+				     + "*** Warning ***" + "\n"
+					 + "'" + tool_name + "' was run directly.  It is recommended "
+					 + "that you run the wrapper script 'bowtie2-build' instead."
+					 + "\n");
+			}
+	}
+}

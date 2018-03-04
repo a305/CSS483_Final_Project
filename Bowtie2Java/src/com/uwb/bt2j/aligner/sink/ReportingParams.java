@@ -1,8 +1,12 @@
 package com.uwb.bt2j.aligner.sink;
 
 public class ReportingParams {
-	private long khits, mhits, pengap;
-	private Boolean msample, discord, mixed;
+	long khits;
+	long mhits;
+	private long pengap;
+	private Boolean msample;
+	Boolean discord;
+	Boolean mixed;
 	
 	public ReportingParams(long khits_,
 			long mhits_,

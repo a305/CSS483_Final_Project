@@ -5,6 +5,7 @@ import com.uwb.bt2j.aligner.PerReadMetrics;
 import com.uwb.bt2j.aligner.Read;
 import com.uwb.bt2j.aligner.Scoring;
 import com.uwb.bt2j.aligner.cache.QKey;
+import com.uwb.bt2j.aligner.cache.QVal;
 import com.uwb.bt2j.indexer.Ebwt;
 import com.uwb.bt2j.indexer.SideLocus;
 import com.uwb.bt2j.util.strings.BTDnaString;

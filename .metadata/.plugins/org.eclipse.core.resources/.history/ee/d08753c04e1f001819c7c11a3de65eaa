@@ -1,0 +1,33 @@
+package com.uwb.bt2j.indexer;
+
+import com.uwb.bt2j.util.Tokenize;
+import com.uwb.bt2j.util.types.EList;
+
+public class Indexer {
+	public static void main(String[] args) {
+		if(argc > 2 && strcmp(argv[1], "-A") == 0) {
+			String file = args[2];
+			ifstream in;
+			in.open(file);
+			String buf;
+			int lastret = -1;
+			while(in.getline(buf, 4095)) {
+				EList<String> argz = new EList(9);
+				argz.push_back(args[0]);
+				buf = Tokenize.tokenize(" \t", args);
+				for(int i = 0; i < args.length; i++) {
+					argz.insert(args[i],i);
+				}
+				if(args.length == 1) continue;
+				lastret = bowtie_build((int)args.length,argz);
+			}
+			if(lastret == -1) {
+				System.err.println( "Warning: No arg strings parsed from " + file);
+				return 0;
+			}
+			return lastret;
+		} else {
+			return bowtie_build(argc, argv);
+		}
+	}
+}

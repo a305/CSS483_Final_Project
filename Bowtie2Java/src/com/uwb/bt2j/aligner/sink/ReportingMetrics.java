@@ -1,27 +1,26 @@
 package com.uwb.bt2j.aligner.sink;
 
 public class ReportingMetrics {
-	private long nread;         // # reads
-	private long npaired;       // # pairs
-	private long nunpaired;     // # unpaired reads
+	long nread;         // # reads
+	long npaired;       // # pairs
+	long nunpaired;     // # unpaired reads
 	
 	// Paired
 	
 	//  Concordant
-	private long nconcord_uni;  // # pairs with unique concordant alns
-	private long nconcord_uni1; // # pairs with exactly 1 concordant alns
-	private long nconcord_uni2; // # pairs with >1 concordant aln, still unique
-	private long nconcord_rep;  // # pairs with repetitive concordant alns
-	private long nconcord_0;    // # pairs with 0 concordant alns
+	long nconcord_uni;  // # pairs with unique concordant alns
+	long nconcord_uni1; // # pairs with exactly 1 concordant alns
+	long nconcord_uni2; // # pairs with >1 concordant aln, still unique
+	long nconcord_rep;  // # pairs with repetitive concordant alns
+	long nconcord_0;    // # pairs with 0 concordant alns
 	//  Discordant
-	private long ndiscord;      // # pairs with 1 discordant aln
+	long ndiscord;      // # pairs with 1 discordant aln
 	
 	//  Unpaired from failed pairs
-	private long nunp_0_uni;    // # unique from nconcord_0_ - ndiscord_
-	private long nunp_0_uni1;   // # pairs with exactly 1 concordant alns
-	private long nunp_0_uni2;   // # pairs with >1 concordant aln, still unique
-	private long nunp_0_rep;    // # repetitive from 
-	private long nunp_0_0;      // # with 0 alignments
+	long nunp_0_uni;    // # unique from nconcord_0_ - ndiscord_
+	long nunp_0_uni1;   // # pairs with exactly 1 concordant alns
+	long nunp_0_rep;    // # repetitive from 
+	long nunp_0_0;      // # with 0 alignments
 
 	//  Unpaired from repetitive pairs
 	private long nunp_rep_uni;  // # pairs with unique concordant alns
@@ -32,11 +31,11 @@ public class ReportingMetrics {
 	
 	// Unpaired
 	
-	private long nunp_uni;      // # unique from nconcord_0_ - ndiscord_
-	private long nunp_uni1;     // # pairs with exactly 1 concordant alns
-	private long nunp_uni2;     // # pairs with >1 concordant aln, still unique
-	private long nunp_rep;      // # repetitive from 
-	private long nunp_0;        // # with 0 alignments
+	long nunp_uni;      // # unique from nconcord_0_ - ndiscord_
+	long nunp_uni1;     // # pairs with exactly 1 concordant alns
+	long nunp_uni2;     // # pairs with >1 concordant aln, still unique
+	long nunp_rep;      // # repetitive from 
+	long nunp_0;        // # with 0 alignments
 
 	
 	private long sum_best1;     // Sum of all the best alignment scores

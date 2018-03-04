@@ -2,6 +2,7 @@ package com.uwb.bt2j.aligner.seed;
 
 import com.uwb.bt2j.aligner.Edit;
 import com.uwb.bt2j.aligner.Read;
+import com.uwb.bt2j.aligner.cache.QVal;
 import com.uwb.bt2j.util.strings.BTDnaString;
 import com.uwb.bt2j.util.strings.BTString;
 import com.uwb.bt2j.util.types.EList;

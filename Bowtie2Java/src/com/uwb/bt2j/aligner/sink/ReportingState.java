@@ -299,7 +299,7 @@ public class ReportingState {
 		ndiscord_ = 1;
 	}
 	
-	protected final Boolean areDone(long cnt, Boolean done, int exit) {
+	public void areDone(long cnt, Boolean done, int exit) {
 		// Have we exceeded the -k limit?
 		if(cnt >= (long)p_.khits && !p_.mhitsSet()) {
 			done = true;
@@ -308,7 +308,6 @@ public class ReportingState {
 		// Have we exceeded the -m or -M limit?
 		else if(p_.mhitsSet() && cnt > (long)p_.mhits) {
 			done = true;
-			assert(p_.msample);
 			exit = 4;
 		}
 	}
