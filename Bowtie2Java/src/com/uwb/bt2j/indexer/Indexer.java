@@ -1,10 +1,50 @@
 package com.uwb.bt2j.indexer;
 
+import java.io.File;
 import java.io.OutputStream;
 
 import com.uwb.bt2j.indexer.Formats.FileFormat;
 
 public class Indexer <T> {
+	
+	public enum EbwtFlags {
+		EBWT_COLOR(2),
+		EBWT_ENTIRE_REV(4);
+		private int x;
+		EbwtFlags(int y){x = y;}
+	}
+	
+	public static long fileSize(String name) {
+		File f = new File(name);
+		return f.length();
+	}
+	
+	public static int pop32(long x) {
+		// Lots of cache misses on following lines (>10K)
+		x = x - ((x >> 1) & 0x55555555);
+		x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
+		x = (x + (x >> 4)) & 0x0F0F0F0F;
+		x = x + (x >> 8);
+		x = x + (x >> 16);
+		x = x + (x >> 32);
+		return (int)(x & 0x3F);
+	}
+	
+	public static int countInU64(int c, long dw) {
+		long c_table[] = {
+				0xffffffff,
+				0xaaaaaaaa,
+				0x55555555,
+				0x00000000
+		};
+		long c0 = c_table[c];
+		long x0 = dw ^ c0;
+		long x1 = (x0 >> 1);
+		long x2 = x1 & (0x55555555);
+		long x3 = x0 & x2;
+	    long tmp = pop32(x3);
+		return (int) tmp;
+	}
 	
 	// Build parameters
 	public int verbose;
@@ -18,6 +58,7 @@ public class Indexer <T> {
 	public static int entireSA;
 	public static int seed;
 	public static int showVersion;
+	
 	//   Ebwt parameters
 	public static int lineRate;
 	public static int linesPerSide;
@@ -34,6 +75,7 @@ public class Indexer <T> {
 	public static boolean reverseEach;
 	public static int nthreads;
 	public static String wrapper;
+	public static String gLastIOErrMsg;
 	public static final String short_options = "qraph?nscfl:i:o:t:h:3C";
 	public EList<String> filesWritten;
 	
@@ -90,19 +132,19 @@ public class Indexer <T> {
 			}
 			argv0 = argv[0];
 			if(showVersion) {
-				cout << argv0 << " version " << string(BOWTIE2_VERSION).c_str() << endl;
+				System.out.println( argv0 << " version " << string(BOWTIE2_VERSION).c_str() << endl;
 				if(sizeof(void*) == 4) {
-					cout << "32-bit" << endl;
+					System.out.println( "32-bit" << endl;
 				} else if(sizeof(void*) == 8) {
-					cout << "64-bit" << endl;
+					System.out.println( "64-bit" << endl;
 				} else {
-					cout << "Neither 32- nor 64-bit: sizeof(void*) = " << sizeof(void*) << endl;
+					System.out.println( "Neither 32- nor 64-bit: sizeof(void*) = " << sizeof(void*) << endl;
 				}
-				cout << "Built on " << BUILD_HOST << endl;
-				cout << BUILD_TIME << endl;
-				cout << "Compiler: " << COMPILER_VERSION << endl;
-				cout << "Options: " << COMPILER_OPTIONS << endl;
-				cout << "Sizeof {int, long, long long, void*, size_t, off_t}: {"
+				System.out.println( "Built on " << BUILD_HOST << endl;
+				System.out.println( BUILD_TIME << endl;
+				System.out.println( "Compiler: " << COMPILER_VERSION << endl;
+				System.out.println( "Options: " << COMPILER_OPTIONS << endl;
+				System.out.println( "Sizeof {int, long, long long, void*, size_t, off_t}: {"
 					 << sizeof(int)
 					 << ", " << sizeof(long) << ", " << sizeof(long long)
 					 << ", " << sizeof(void *) << ", " << sizeof(size_t)
@@ -135,7 +177,7 @@ public class Indexer <T> {
 
 			// Optionally summarize
 			if(verbose) {
-				cout << "Settings:" << endl
+				System.out.println( "Settings:" << endl
 					 << "  Output files: \"" << outfile.c_str() << ".*." + gEbwt_ext + "\"" << endl
 					 << "  Line rate: " << lineRate << " (line is " << (1<<lineRate) << " bytes)" << endl
 					 << "  Lines per side: " << linesPerSide << " (side is " << ((1<<lineRate)*linesPerSide) << " bytes)" << endl
@@ -144,34 +186,34 @@ public class Indexer <T> {
 					 << "  Strings: " << (packed? "packed" : "unpacked") << endl
 					 ;
 				if(bmax == OFF_MASK) {
-					cout << "  Max bucket size: default" << endl;
+					System.out.println( "  Max bucket size: default" << endl;
 				} else {
-					cout << "  Max bucket size: " << bmax << endl;
+					System.out.println( "  Max bucket size: " << bmax << endl;
 				}
 				if(bmaxMultSqrt == OFF_MASK) {
-					cout << "  Max bucket size, sqrt multiplier: default" << endl;
+					System.out.println( "  Max bucket size, sqrt multiplier: default" << endl;
 				} else {
-					cout << "  Max bucket size, sqrt multiplier: " << bmaxMultSqrt << endl;
+					System.out.println( "  Max bucket size, sqrt multiplier: " << bmaxMultSqrt << endl;
 				}
 				if(bmaxDivN == 0xffffffff) {
-					cout << "  Max bucket size, len divisor: default" << endl;
+					System.out.println( "  Max bucket size, len divisor: default" << endl;
 				} else {
-					cout << "  Max bucket size, len divisor: " << bmaxDivN << endl;
+					System.out.println( "  Max bucket size, len divisor: " << bmaxDivN << endl;
 				}
-				cout << "  Difference-cover sample period: " << dcv << endl;
-				cout << "  Endianness: " << (bigEndian? "big":"little") << endl
+				System.out.println( "  Difference-cover sample period: " << dcv << endl;
+				System.out.println( "  Endianness: " << (bigEndian? "big":"little") << endl
 					 << "  Actual local endianness: " << (currentlyBigEndian()? "big":"little") << endl
 					 << "  Sanity checking: " << (sanityCheck? "enabled":"disabled") << endl;
 		#ifdef NDEBUG
-				cout << "  Assertions: disabled" << endl;
+				System.out.println( "  Assertions: disabled" << endl;
 		#else
-				cout << "  Assertions: enabled" << endl;
+				System.out.println( "  Assertions: enabled" << endl;
 		#endif
-				cout << "  Random seed: " << seed << endl;
-				cout << "  Sizeofs: void*:" << sizeof(void*) << ", int:" << sizeof(int) << ", long:" << sizeof(long) << ", size_t:" << sizeof(size_t) << endl;
-				cout << "Input files DNA, " << file_format_names[format].c_str() << ":" << endl;
+				System.out.println( "  Random seed: " << seed << endl;
+				System.out.println( "  Sizeofs: void*:" << sizeof(void*) << ", int:" << sizeof(int) << ", long:" << sizeof(long) << ", size_t:" << sizeof(size_t) << endl;
+				System.out.println( "Input files DNA, " << file_format_names[format].c_str() << ":" << endl;
 				for(size_t i = 0; i < infiles.size(); i++) {
-					cout << "  " << infiles[i].c_str() << endl;
+					System.out.println( "  " << infiles[i].c_str() << endl;
 				}
 			}
 			// Seed random number generator
@@ -485,7 +527,7 @@ public class Indexer <T> {
 		EList<RefRecord> szs(MISC_CAT);
 		std::pair<size_t, size_t> sztot;
 		{
-			if(verbose) cout << "Reading reference sizes" << endl;
+			if(verbose) System.out.println( "Reading reference sizes" << endl;
 			Timer _t(cout, "  Time reading reference sizes: ", verbose);
 			if(!reverse && (writeRef || justRef)) {
 				filesWritten.push_back(outfile + ".3." + gEbwt_ext);
@@ -560,16 +602,48 @@ public class Indexer <T> {
 				if(refparams.reverse == REF_READ_REVERSE) {
 					joinedss.reverse();
 				}
-				assert_eq(joinedss.length(), s2.length());
-				assert(sstr_eq(joinedss, s2));
 			}
 			if(verbose) {
 				if(s2.length() < 1000) {
-					cout << "Passed restore check: " << s2.toZBuf() << endl;
+					System.out.println( "Passed restore check: " + s2.toZBuf());
 				} else {
-					cout << "Passed restore check: (" << s2.length() << " chars)" << endl;
+					System.out.println( "Passed restore check: (" + s2.length() + " chars)" );
 				}
 			}
 		}
+	}
+	
+	public void readEbwtRefNames(File fin, EList<String> refnames) {
+		
+	}
+	
+	public void readEbwtRefNames(String instr, EList<String> refnames) {
+		
+	}
+	
+	public boolean readEbwtColor(String instr) {
+		
+	}
+	
+	public boolean readEntireReverse(String instr) {
+		
+	}
+	
+	public String adjustEbwtBase(String cmdline, String ebwtFileBase, boolean verbose) {
+		String str = ebwtFileBase;
+		File in = new File((str + ".1." + gEbwt_ext));
+		
+		if(verbose) System.out.println( "Trying " + str);
+		if(!in.exists())
+			if(verbose) System.out.println( "  didn't work" );
+			if(System.getenv("BOWTIE2_INDEXES") != null) {
+				str = System.getenv("BOWTIE2_INDEXES") + "/" + ebwtFileBase;
+				if(verbose) System.out.println( "Trying " + str);
+				in=new File((str + ".1." + gEbwt_ext));
+			}
+		if(!in.exists()) {
+			System.err.println("Could not locate a Bowtie index corresponding to basename \"" + ebwtFileBase + "\"" );
+		}
+		return str;
 	}
 }

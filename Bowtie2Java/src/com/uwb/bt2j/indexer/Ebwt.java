@@ -2,12 +2,12 @@ package com.uwb.bt2j.indexer;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
 public class Ebwt <TStr>{
 	public static final String gEbwt_ext = "bt2";
-	public String gLastIOErrMsg;
 	public boolean       _toBigEndian;
 	public int    _overrideOffRate;
 	public boolean       _verbose;
@@ -51,8 +51,8 @@ public class Ebwt <TStr>{
 	public EbwtParams _eh;
 	public boolean packed_;
 
-	public static final long default_bmax = IndexTypes.OFF_MASK;
-	public static final long default_bmaxMultSqrt = IndexTypes.OFF_MASK;
+	public static final long default_bmax = IndexTypes.IndexTypes.OFF_MASK;
+	public static final long default_bmaxMultSqrt = IndexTypes.IndexTypes.OFF_MASK;
 	public static final long default_bmaxDivN = 4;
 	public static final int      default_dcv = 1024;
 	public static final boolean     default_noDc = false;
@@ -76,6 +76,7 @@ public class Ebwt <TStr>{
 	}
 	
 	public Ebwt(
+			String in,
 			 int color,
 			 int needEntireReverse,
 		     boolean fw,
@@ -100,7 +101,7 @@ public class Ebwt <TStr>{
 		_in2Str = in + ".2." + gEbwt_ext;
 		readIntoMemory(
 			color,       // expect index to be colorspace?
-			fw ? -1 : needEntireReverse, // need REF_READ_REVERSE
+			fw ? -1 : needEntireReverse, // need ReadDir.REF_READ_REVERSE
 			loadSASamp,  // load the SA sample portion?
 			loadFtab,    // load the ftab & eftab?
 			loadRstarts, // load the rstarts array?
@@ -145,52 +146,30 @@ public class Ebwt <TStr>{
 			boolean verbose,
 			boolean passMemExc,
 			boolean sanityCheck) {
+		Ebwt_INITS();
 		_eh(
 				joinedLen(szs),
 				lineRate,
 				offRate,
 				ftabChars,
 				color,
-				refparams.reverse == REF_READ_REVERSE);
-		Ebwt_INITS();
+				refparams.reverse == ReadDir.REF_READ_REVERSE);
 		_in1Str = file + ".1." + gEbwt_ext;
 		_in2Str = file + ".2." + gEbwt_ext;
 		packed_ = packed;
 		// Open output files
-		ofstream fout1(_in1Str.c_str(), ios::binary);
-		if(!fout1.good()) {
-			cerr << "Could not open index file for writing: \"" << _in1Str.c_str() << "\"" + "\n");
-			     << "Please make sure the directory exists and that permissions allow writing by" + "\n");
-			     << "Bowtie." + "\n");;
-			throw 1;
-		}
-		ofstream fout2(_in2Str.c_str(), ios::binary);
-		if(!fout2.good()) {
-			cerr << "Could not open index file for writing: \"" << _in2Str.c_str() << "\"" + "\n");
-			     << "Please make sure the directory exists and that permissions allow writing by" + "\n");
-			     << "Bowtie." + "\n");;
-			throw 1;
-		}
+		FileOutputStream fout1 = new FileOutputStream(_in1Str);
+
+		FileOutputStream fout2 = new FileOutputStream(_in2Str);
+
 		_inSaStr = file + ".sa";
 		_inBwtStr = file + ".bwt";
-		ofstream *saOut = null, *bwtOut = null;
+		FileOutputStream saOut = null, bwtOut = null;
 		if(doSaFile) {
-			saOut = new ofstream(_inSaStr.c_str(), ios::binary);
-			if(!saOut.good()) {
-				cerr << "Could not open suffix-array file for writing: \"" << _inSaStr.c_str() << "\"" + "\n");
-			         << "Please make sure the directory exists and that permissions allow writing by" + "\n");
-			         << "Bowtie." + "\n");;
-				throw 1;
-			}
+			saOut = new FileOutputStream(_inSaStr);
 		}
 		if(doBwtFile) {
-			bwtOut = new ofstream(_inBwtStr.c_str(), ios::binary);
-			if(!bwtOut.good()) {
-				cerr << "Could not open suffix-array file for writing: \"" << _inBwtStr.c_str() << "\"" + "\n");
-			         << "Please make sure the directory exists and that permissions allow writing by" + "\n");
-			         << "Bowtie." + "\n");;
-				throw 1;
-			}
+			bwtOut = new FileOutputStream(_inBwtStr);
 		}
 		// Build SA(T) and BWT(T) block by block
 		initFromVector<TStr>(
@@ -200,7 +179,7 @@ public class Ebwt <TStr>{
 		    refparams,
 		    fout1,
 		    fout2,
-                             file,
+            file,
 			saOut,
 			bwtOut,
             nthreads,
@@ -211,63 +190,82 @@ public class Ebwt <TStr>{
 		    dcv,
 		    seed,
 		    verbose);
+		
 		// Close output files
 		fout1.flush();
 		
-		int64_t tellpSz1 = (int64_t)fout1.tellp();
-		VMSG_NL("Wrote " << fout1.tellp() << " bytes to primary EBWT file: " << _in1Str.c_str());
+		long tellpSz1 = (long)fout1.getChannel().position();
+		if(this.verbose()) {
+			String tmp = "Wrote " + fout1.getChannel().position() + " bytes to primary EBWT file: " + _in1Str + '\n';
+			this.verbose(tmp);
+		}
+		
 		fout1.close();
-		bool err = false;
-		if(tellpSz1 > fileSize(_in1Str.c_str())) {
+		boolean err = false;
+		if(tellpSz1 > Indexer.fileSize(_in1Str)) {
 			err = true;
-			cerr << "Index is corrupt: File size for " << _in1Str.c_str() << " should have been " << tellpSz1
-			     << " but is actually " << fileSize(_in1Str.c_str()) << "." + "\n");;
+			System.err.println( "Index is corrupt: File size for " + _in1Str + " should have been " + tellpSz1
+			     + " but is actually " + Indexer.Indexer.fileSize(_in1Str) + "." + "\n");
 		}
 		fout2.flush();
 		
-		int64_t tellpSz2 = (int64_t)fout2.tellp();
-		VMSG_NL("Wrote " << fout2.tellp() << " bytes to secondary EBWT file: " << _in2Str.c_str());
+		long tellpSz2 = (long)fout2.getChannel().position();
+		if(this.verbose()) {
+			String tmp = "Wrote " + fout2.getChannel().position() + " bytes to secondary EBWT file: " + _in2Str;
+			this.verbose(tmp);
+		}
 		fout2.close();
-		if(tellpSz2 > fileSize(_in2Str.c_str())) {
+		if(tellpSz2 > Indexer.fileSize(_in2Str)) {
 			err = true;
-			cerr << "Index is corrupt: File size for " << _in2Str.c_str() << " should have been " << tellpSz2
-			     << " but is actually " << fileSize(_in2Str.c_str()) << "." + "\n");;
+			System.err.println( "Index is corrupt: File size for " + _in2Str + " should have been " + tellpSz2
+			     + " but is actually " + Indexer.fileSize(_in2Str) + "." + "\n");
 		}
 		
 		if(saOut != null) {
 			// Check on suffix array output file size
-			int64_t tellpSzSa = (int64_t)saOut.tellp();
-			VMSG_NL("Wrote " << tellpSzSa << " bytes to suffix-array file: " << _inSaStr.c_str());
+			long tellpSzSa = (long)saOut.getChannel().position();
+			if(this.verbose()) {
+				String tmp = "Wrote " + tellpSzSa + " bytes to suffix-array file: " + _inSaStr;
+				this.verbose(tmp);
+			}
 			saOut.close();
-			if(tellpSzSa > fileSize(_inSaStr.c_str())) {
+			if(tellpSzSa > Indexer.fileSize(_inSaStr)) {
 				err = true;
-				cerr << "Index is corrupt: File size for " << _inSaStr.c_str() << " should have been " << tellpSzSa
-					 << " but is actually " << fileSize(_inSaStr.c_str()) << "." + "\n");;
+				System.err.println( "Index is corrupt: File size for " + _inSaStr + " should have been " + tellpSzSa
+					 + " but is actually " + Indexer.fileSize(_inSaStr) + "." + "\n");
 			}
 		}
 
 		if(bwtOut != null) {
 			// Check on suffix array output file size
-			int64_t tellpSzBwt = (int64_t)bwtOut.tellp();
-			VMSG_NL("Wrote " << tellpSzBwt << " bytes to BWT file: " << _inBwtStr.c_str());
+			long tellpSzBwt = (long)bwtOut.getChannel().position();
+			if(this.verbose()) {
+				String tmp = "Wrote " + tellpSzBwt + " bytes to BWT file: " + _inBwtStr;
+				this.verbose(tmp);
+			}
 			bwtOut.close();
-			if(tellpSzBwt > fileSize(_inBwtStr.c_str())) {
+			if(tellpSzBwt > Indexer.fileSize(_inBwtStr)) {
 				err = true;
-				cerr << "Index is corrupt: File size for " << _inBwtStr.c_str() << " should have been " << tellpSzBwt
-					 << " but is actually " << fileSize(_inBwtStr.c_str()) << "." + "\n");;
+				System.err.println( "Index is corrupt: File size for " + _inBwtStr + " should have been " + tellpSzBwt
+					 + " but is actually " + Indexer.fileSize(_inBwtStr) + "." + "\n");
 			}
 		}
 		
 		if(err) {
-			cerr << "Please check if there is a problem with the disk or if disk is full." + "\n");;
-			throw 1;
+			System.err.println( "Please check if there is a problem with the disk or if disk is full." + "\n");
 		}
 		
 		// Reopen as input streams
-		VMSG_NL("Re-opening _in1 and _in2 as input streams");
+		if(this.verbose()) {
+			String tmp = "Re-opening _in1 and _in2 as input streams";
+			this.verbose(tmp);
+		}
+		
 		if(_sanity) {
-			VMSG_NL("Sanity-checking Bt2");
-			assert(!isInMemory());
+			if(this.verbose()) {
+				String tmp = "Sanity-checking Bt2";
+				this.verbose(tmp);
+			}
 			readIntoMemory(
 				color,                       // colorspace?
 				fw ? -1 : needEntireReverse, // 1 . need the reverse to be reverse-of-concat
@@ -281,27 +279,449 @@ public class Ebwt <TStr>{
 				false);                      // verbose startup?
 			sanityCheckAll(refparams.reverse);
 			evictFromMemory();
-			assert(!isInMemory());
 		}
-		VMSG_NL("Returning from Ebwt constructor");
+		if(this.verbose()) {
+			String tmp = "Returning from Ebwt constructor";
+			this.verbose(tmp);
+		}
 	}
-  
-	public String adjustEbwtBase(String cmdline, String ebwtFileBase, boolean verbose) {
-		String str = ebwtFileBase;
-		File in = new File((str + ".1." + gEbwt_ext));
-		
-		if(verbose) System.out.println( "Trying " + str);
-		if(!in.exists())
-			if(verbose) System.out.println( "  didn't work" );
-			if(System.getenv("BOWTIE2_INDEXES") != null) {
-				str = System.getenv("BOWTIE2_INDEXES") + "/" + ebwtFileBase;
-				if(verbose) System.out.println( "Trying " + str);
-				in=new File((str + ".1." + gEbwt_ext));
-			}
-		if(!in.exists()) {
-			System.err.println("Could not locate a Bowtie index corresponding to basename \"" + ebwtFileBase + "\"" );
+	
+	public static Pair<Ebwt, Ebwt> fromString(
+			String str,
+			boolean packed,
+			int color,
+			int reverse,
+			boolean bigEndian,
+			int lineRate,
+			int offRate,
+			int ftabChars,
+			String file,
+			boolean useBlockwise,
+			long bmax,
+			long bmaxSqrtMult,
+			long bmaxDivN,
+			int dcv,
+			int seed,
+			boolean verbose,
+			boolean autoMem,
+			boolean sanity){
+		EList<String> strs = new EList(1);
+		strs.push_back(str);
+		return fromStrings<TStr>(
+			strs,
+			packed,
+			color,
+			reverse,
+			bigEndian,
+			lineRate,
+			offRate,
+			ftabChars,
+			file,
+			useBlockwise,
+			bmax,
+			bmaxSqrtMult,
+			bmaxDivN,
+			dcv,
+			seed,
+			verbose,
+			autoMem,
+			sanity);
+	}
+	public static Pair<Ebwt, Ebwt> fromStrings(
+			String strs,
+			boolean packed,
+			int color,
+			int reverse,
+			boolean bigEndian,
+			int lineRate,
+			int offRate,
+			int ftabChars,
+			String file,
+			boolean useBlockwise,
+			long bmax,
+			long bmaxSqrtMult,
+			long bmaxDivN,
+			int dcv,
+			int seed,
+			boolean verbose,
+			boolean autoMem,
+			boolean sanity){
+		EList<FileBuf> is = new EList(1);
+		RefReadInParams refparams = new RefReadInParams(color, ReadDir.REF_READ_FORWARD, false, false);
+		String ss = "";
+		for(int i = 0; i < strs.size(); i++) {
+			ss += ">" + i + "\n" + strs[i] + "\n";
 		}
-		return str;
+		FileBuf fb = new FileBuf(ss.get());
+		is.push_back(fb.get());
+		
+		// Vector for the ordered list of "records" comprising the input
+		// sequences.  A record represents a stretch of unambiguous
+		// characters in one of the input sequences.
+		EList<RefRecord> szs = new EList(1);
+		Pair<Long, Long> sztot;
+		sztot = BitPairReference.szsFromFasta(is, file, bigEndian, refparams, szs, sanity);
+		
+		// Construct Ebwt from input strings and parameters
+		Ebwt ebwtFw = new Ebwt(
+			TStr,
+			packed,
+			refparams.color ? 1 : 0,
+			-1,           // fw
+			lineRate,
+			offRate,      // suffix-array sampling rate
+			ftabChars,    // number of chars in initial arrow-pair calc
+			file,         // basename for .?.ebwt files
+			true,         // fw?
+			useBlockwise, // useBlockwise
+			bmax,         // block size for blockwise SA builder
+			bmaxSqrtMult, // block size as multiplier of sqrt(len)
+			bmaxDivN,     // block size as divisor of len
+			dcv,          // difference-cover period
+			is,           // list of input streams
+			szs,          // list of reference sizes
+			sztot.first,  // total size of all unambiguous ref chars
+			refparams,    // reference read-in parameters
+			seed,         // pseudo-random number generator seed
+			-1,           // override offRate
+			verbose,      // be talkative
+			autoMem,      // pass exceptions up to the toplevel so that we can adjust memory settings automatically
+			sanity);      // verify results and internal consistency
+		refparams.reverse = reverse;
+		szs.clear();
+		sztot = BitPairReference.szsFromFasta(is, file, bigEndian, refparams, szs, sanity);
+		// Construct Ebwt from input strings and parameters
+		Ebwt ebwtBw = new Ebwt(
+			TStr(),
+			packed,
+			refparams.color ? 1 : 0,
+			reverse == ReadDir.REF_READ_REVERSE,
+			lineRate,
+			offRate,      // suffix-array sampling rate
+			ftabChars,    // number of chars in initial arrow-pair calc
+			file + ".rev",// basename for .?.ebwt files
+			false,        // fw?
+			useBlockwise, // useBlockwise
+			bmax,         // block size for blockwise SA builder
+			bmaxSqrtMult, // block size as multiplier of sqrt(len)
+			bmaxDivN,     // block size as divisor of len
+			dcv,          // difference-cover period
+			is,           // list of input streams
+			szs,          // list of reference sizes
+			sztot.first,  // total size of all unambiguous ref chars
+			refparams,    // reference read-in parameters
+			seed,         // pseudo-random number generator seed
+			-1,           // override offRate
+			verbose,      // be talkative
+			autoMem,      // pass exceptions up to the toplevel so that we can adjust memory settings automatically
+			sanity);      // verify results and internal consistency
+		return new Pair(ebwtFw, ebwtBw);
+	}
+	
+	public boolean isPacked() {
+		return packed_;
+	}
+	
+	public void szsToDisk(EList<RefRecord> szs, OutputStream os, int reverse) {
+		
+	}
+	
+	public void initFromVector(
+			EList<FileBuf> is,
+            EList<RefRecord> szs,
+            long sztot,
+            RefReadInParams refparams,
+            FileOutputStream out1,
+            FileOutputStream out2,
+            String outfile,
+            FileOutputStream saOut,
+            FileOutputStream bwtOut,
+            int nthreads,
+            boolean useBlockwise,
+            long bmax,
+            long bmaxSqrtMult,
+            long bmaxDivN,
+            int dcv,
+            int seed,
+            boolean verbose){
+		// Compose text strings into single string
+			if(this.verbose()) {
+				String tmp = "Calculating joined length" + '\n';
+				this.verbose(tmp);
+			}
+				TStr s; // holds the entire joined reference after call to joinToDisk
+				long jlen;
+				jlen = joinedLen(szs);
+				VMSG_NL("Writing header");
+				writeFromMemory(true, out1, out2);
+				try {
+					if(this.verbose()) {
+						String tmp = "Reserving space for joined string" + '\n';
+						this.verbose(tmp);
+					}
+					s.resize(jlen);
+					if(this.verbose()) {
+						String tmp = "Joining reference sequences" + '\n';
+						this.verbose(tmp);
+					}
+					if(refparams.reverse == ReadDir.REF_READ_REVERSE) {
+						{
+							joinToDisk(is, szs, sztot, refparams, s, out1, out2);
+						} {
+							EList<RefRecord> tmp = new EList(1);
+							s.reverse();
+							reverseRefRecords(szs, tmp, false, verbose);
+							szsToDisk(tmp, out1, refparams.reverse);
+						}
+					} else {
+						joinToDisk(is, szs, sztot, refparams, s, out1, out2);
+						szsToDisk(szs, out1, refparams.reverse);
+					}
+					// Joined reference sequence now in 's'
+				} catch(Exception e) {
+					// If we throw an allocation exception in the try block,
+					// that means that the joined version of the reference
+					// string itself is too larger to fit in memory.  The only
+					// alternatives are to tell the user to give us more memory
+					// or to try again with a packed representation of the
+					// reference (if we haven't tried that already).
+					System.err.println( "Could not allocate space for a joined string of " + jlen + " elements." + "\n");
+					if(!isPacked() && _passMemExc) {
+						// Pass the exception up so that we can retry using a
+						// packed string representation
+						throw e;
+					}
+					// There's no point passing this exception on.  The fact
+					// that we couldn't allocate the joined string means that
+					// --bmax is irrelevant - the user should re-run with
+					// ebwt-build-packed
+					if(isPacked()) {
+						System.err.println( "Please try running bowtie-build on a computer with more memory." + "\n");
+					} else {
+						System.err.println( "Please try running bowtie-build in packed mode (-p/--packed) or in automatic" + "\n"
+						     + "mode (-a/--auto), or try again on a computer with more memory." + "\n");
+					}
+				}
+				// Succesfully obtained joined reference string
+				if(bmax != IndexTypes.OFF_MASK) {
+					if(this.verbose()) {
+						String tmp = "bmax according to bmax setting: " + bmax + '\n';
+						this.verbose(tmp);
+					}
+				}
+				else if(bmaxSqrtMult != IndexTypes.OFF_MASK) {
+					bmax *= bmaxSqrtMult;
+					if(this.verbose()) {
+						String tmp = "bmax according to bmaxSqrtMult setting: " + bmax + '\n';
+						this.verbose(tmp);
+					}
+				}
+				else if(bmaxDivN != IndexTypes.OFF_MASK) {
+					bmax = Long.max(jlen / bmaxDivN, 1);
+					if(this.verbose()) {
+						String tmp = "bmax according to bmaxDivN setting: " + bmax + '\n';
+						this.verbose(tmp);
+					}
+				}
+				else {
+					bmax = (long)Math.sqrt(s.length());
+					if(this.verbose()) {
+						String tmp = "bmax defaulted to: " + bmax + '\n';
+						this.verbose(tmp);
+					}
+				}
+				int iter = 0;
+				boolean first = true;
+				long out1pos = out1.getChannel().position();
+				long out2pos = out2.getChannel().position();
+				// Look for bmax/dcv parameters that work.
+				while(true) {
+					if(!first && bmax < 40 && _passMemExc) {
+						System.err.println( "Could not find approrpiate bmax/dcv settings for building this index." + "\n");;
+						System.err.println( "Already tried a packed string representation." + "\n");;
+						System.err.println( "Please try indexing this reference on a computer with more memory." + "\n");;
+					}
+					if(!first) {
+						out1.getChannel().position(out1pos);
+						out2.getChannel().position(out2pos);
+					}
+					if(dcv > 4096) dcv = 4096;
+					if((iter % 6) == 5 && dcv < 4096 && dcv != 0) {
+						dcv <<= 1; // double difference-cover period
+					} else {
+						bmax -= (bmax >> 2); // reduce by 25%
+					}
+					if(this.verbose()) {
+						String tmp = "Using parameters --bmax " + bmax + '\n';
+						this.verbose(tmp);
+					}
+					if(dcv == 0) {
+						if(this.verbose()) {
+							String tmp = " and *no difference cover*" + '\n';
+							this.verbose(tmp);
+						}
+					} else {
+						if(this.verbose()) {
+							String tmp = " --dcv " << dcv + '\n';
+							this.verbose(tmp);
+						}
+					}
+					iter++;
+					try {
+						{
+							if(this.verbose()) {
+								String tmp = "  Doing ahead-of-time memory usage test" + '\n';
+								this.verbose(tmp);
+							}
+							// Make a quick-and-dirty attempt to force a bad_alloc iff
+							// we would have thrown one eventually as part of
+							// constructing the DifferenceCoverSample
+							dcv <<= 1;
+							long sz = (long)DifferenceCoverSample<TStr>.simulateAllocs(s, dcv >> 1);
+		                    if(nthreads > 1) sz *= (nthreads + 1);
+							char[] tmp;
+							dcv >>= 1;
+							// Likewise with the KarkkainenBlockwiseSA
+							sz = (long)KarkkainenBlockwiseSA<TStr>.simulateAllocs(s, bmax);
+							char[] tmp2;
+							// Now throw in the 'ftab' and 'isaSample' structures
+							// that we'll eventually allocate in buildToDisk
+							long[] ftab;
+							char[] side;
+							// Grab another 20 MB out of caution
+							int[] extra;
+							// If we made it here without throwing bad_alloc, then we
+							// passed the memory-usage stress test
+							if(this.verbose()) {
+								String tmp = "  Passed!  Constructing with these parameters: --bmax " + bmax + " --dcv " + dcv + '\n';
+								this.verbose(tmp);
+							}
+							if(isPacked()) {
+								if(this.verbose()) {
+									String tmp = " --packed" + '\n';
+									this.verbose(tmp);
+								}
+							}
+							if(this.verbose()) {
+								String tmp = "" + '\n';
+								this.verbose(tmp);
+							}
+						}
+						if(this.verbose()) {
+							String tmp = "Constructing suffix-array element generator" + '\n';
+							this.verbose(tmp);
+						}
+						KarkkainenBlockwiseSA<TStr> bsa = new KarkkainenBlockwiseSA(s, bmax, nthreads, dcv, seed, _sanity, _passMemExc, _verbose, outfile);
+						if(this.verbose()) {
+							String tmp = "Converting suffix-array elements to index image" + '\n';
+							this.verbose(tmp);
+						}
+						buildToDisk(bsa, s, out1, out2, saOut, bwtOut);
+						out1.flush(); out2.flush();
+						boolean failed = out1.fail() || out2.fail();
+						if(saOut != null) {
+							saOut.flush();
+							failed = failed || saOut.fail();
+						}
+						if(bwtOut != null) {
+							bwtOut.flush();
+							failed = failed || bwtOut.fail();
+						}
+						if(failed) {
+							System.err.println( "An error occurred writing the index to disk.  Please check if the disk is full." + "\n");;
+						}
+						break;
+					} catch(Exception e) {
+						if(_passMemExc) {
+							if(this.verbose()) {
+								String tmp = "  Ran out of memory; automatically trying more memory-economical parameters." + '\n';
+								this.verbose(tmp);
+							}
+						} else {
+							System.err.println( "Out of memory while constructing suffix array.  Please try using a smaller" + "\n"
+								 + "number of blocks by specifying a smaller --bmax or a larger --bmaxdivn" + "\n");
+						}
+					}
+					first = false;
+				}
+				for(int i = 0; i < this._refnames.size(); i++) {
+					out1.write(this._refnames.get(i) + "\n");;
+				}
+				out1 .write('\0');
+				out1.flush(); out2.flush();
+				if(out1.fail() || out2.fail()) {
+					System.err.println( "An error occurred writing the index to disk.  Please check if the disk is full." + "\n");;
+				}
+				if(this.verbose()) {
+					String tmp = "Returning from initFromVector" + '\n';
+					this.verbose(tmp);
+				}
+	}
+	
+	public long joinedLen(EList<RefRecord> szs) {
+		long ret = 0;
+		for(int i = 0; i < szs.size();i++) {
+			ret += szs.get(i).len;
+		}
+		return ret;
+	}
+	
+	public boolean contains(BTDnaString str, long otop, long obot) {
+		SideLocus tloc, bloc;
+		if(str.empty()) {
+			if(otop != null && obot != null) otop = obot = 0;
+			return true;
+		}
+		int c = str[str.length()-1];
+		long top = 0, bot = 0;
+		if(c < 4) {
+			top = fchr()[c];
+			bot = fchr()[c+1];
+		} else {
+			boolean set = false;
+			for(int i = 0; i < 4; i++) {
+				if(fchr()[c] < fchr()[c+1]) {
+					if(set) {
+						return false;
+					} else {
+						set = true;
+						top = fchr()[c];
+						bot = fchr()[c+1];
+					}
+				}
+			}
+		}
+		tloc.initFromRow(top, eh(), ebwt());
+		bloc.initFromRow(bot, eh(), ebwt());
+		for(long i = (long)str.length()-2; i >= 0; i--) {
+			c = str[i];
+			if(c <= 3) {
+				top = mapLF(tloc, c);
+				bot = mapLF(bloc, c);
+			} else {
+				long sz = bot - top;
+				int c1 = mapLF1(top, tloc);
+				bot = mapLF(bloc, c1);
+				if(bot - top < sz) {
+					// Encountered an N and could not proceed through it because
+					// there was more than one possible nucleotide we could replace
+					// it with
+					return false;
+				}
+			}
+			if(i > 0) {
+				tloc.initFromRow(top, eh(), ebwt());
+				bloc.initFromRow(bot, eh(), ebwt());
+			}
+		}
+		if(otop != null && obot != null) {
+			otop = top; obot = bot;
+		}
+		return bot > top;
+	}
+	
+	public boolean contains(String str, long top, long bot) {
+		return contains(new BTDnaString(str, true), top, bot);
 	}
 	
 	public TStr join(EList<TStr> l, int seed) {
@@ -348,14 +768,6 @@ public class Ebwt <TStr>{
 		return ret;
 	}
 	
-	public long joinedLen(EList<RefRecord> szs) {
-		long ret = 0;
-		for(int i = 0; i < szs.size();i++) {
-			ret += szs.get(i).len;
-		}
-		return ret;
-	}
-	
 	public void joinToDisk(
 			EList<FileBuf> l,
 			EList<RefRecord> szs,
@@ -382,7 +794,7 @@ public class Ebwt <TStr>{
 		try {
 			this._plen.init(new long[this._nPat], this._nPat);
 		} catch(bad_alloc& e) {
-			cerr << "Out of memory allocating plen[] in Ebwt::join()"
+			System.err.println( "Out of memory allocating plen[] in Ebwt::join()"
 			     << " at " << __FILE__ << ":" << __LINE__ + "\n");;
 			throw e;
 		}
@@ -474,7 +886,7 @@ public class Ebwt <TStr>{
 		long ebwtTotSz = eh._ebwtTotSz;
 		long fchr[] = {0, 0, 0, 0, 0};
 		EList<long> ftab(EBWT_CAT);
-		long zOff = OFF_MASK;
+		long zOff = IndexTypes.OFF_MASK;
 
 		// Save # of occurrences of each character as we walk along the bwt
 		long occ[4] = {0, 0, 0, 0};
@@ -492,7 +904,7 @@ public class Ebwt <TStr>{
 			absorbFtab.resize(ftabLen);
 			absorbFtab.fillZero();
 		} catch(bad_alloc &e) {
-			cerr << "Out of memory allocating ftab[] or absorbFtab[] "
+			System.err.println( "Out of memory allocating ftab[] or absorbFtab[] "
 			     << "in Ebwt::buildToDisk() at " << __FILE__ << ":"
 			     << __LINE__ + "\n");;
 			throw e;
@@ -501,7 +913,7 @@ public class Ebwt <TStr>{
 		// Allocate the side buffer; holds a single side as its being
 		// constructed and then written to disk.  Reused across all sides.
 	#ifdef SIXTY4_FORMAT
-		EList<uint64_t> ebwtSide(EBWT_CAT);
+		EList<ulong> ebwtSide(EBWT_CAT);
 	#else
 		EList<uint8_t> ebwtSide(EBWT_CAT);
 	#endif
@@ -512,7 +924,7 @@ public class Ebwt <TStr>{
 			ebwtSide.resize(sideSz);
 	#endif
 		} catch(bad_alloc &e) {
-			cerr << "Out of memory allocating ebwtSide[] in "
+			System.err.println( "Out of memory allocating ebwtSide[] in "
 			     << "Ebwt::buildToDisk() at " << __FILE__ << ":"
 			     << __LINE__ + "\n");;
 			throw e;
@@ -523,21 +935,21 @@ public class Ebwt <TStr>{
 		long side = 0;
 
 		// Whether we're assembling a forward or a reverse bucket
-		bool fw;
+		boolean fw;
 		long sideCur = 0;
 		fw = true;
 
 		// Have we skipped the '$' in the last column yet?
-		ASSERT_ONLY(bool dollarSkipped = false);
+		ASSERT_ONLY(boolean dollarSkipped = false);
 
 		long si = 0;   // string offset (chars)
 		ASSERT_ONLY(long lastSufInt = 0);
-		ASSERT_ONLY(bool inSA = true); // true iff saI still points inside suffix
+		ASSERT_ONLY(boolean inSA = true); // true iff saI still points inside suffix
 		                               // array (as opposed to the padding at the
 		                               // end)
 		// Iterate over packed bwt bytes
 		VMSG_NL("Entering Ebwt loop");
-		ASSERT_ONLY(long beforeEbwtOff = (long)out1.tellp()); // @double-check - pos_type, std::streampos 
+		ASSERT_ONLY(long beforeEbwtOff = (long)out1.getChannel().position()); // @double-check - pos_type, std::streampos 
 		
 		// First integer in the suffix-array output file is the length of the
 		// array, including $
@@ -567,7 +979,7 @@ public class Ebwt <TStr>{
 	#endif
 			{
 				int bwtChar;
-				bool count = true;
+				boolean count = true;
 				if(si <= len) {
 					// Still in the SA; extract the bwtChar
 					long saElt = sa.nextSuffix();
@@ -657,7 +1069,7 @@ public class Ebwt <TStr>{
 				if(fw) {
 					// Forward bucket: fill from least to most
 	#ifdef SIXTY4_FORMAT
-					ebwtSide[sideCur] |= ((uint64_t)bwtChar << (bpi << 1));
+					ebwtSide[sideCur] |= ((ulong)bwtChar << (bpi << 1));
 					if(bwtChar > 0) assert_gt(ebwtSide[sideCur], 0);
 	#else
 					pack_2b_in_8b(bwtChar, ebwtSide[sideCur], bpi);
@@ -666,7 +1078,7 @@ public class Ebwt <TStr>{
 				} else {
 					// Backward bucket: fill from most to least
 	#ifdef SIXTY4_FORMAT
-					ebwtSide[sideCur] |= ((uint64_t)bwtChar << ((31 - bpi) << 1));
+					ebwtSide[sideCur] |= ((ulong)bwtChar << ((31 - bpi) << 1));
 					if(bwtChar > 0) assert_gt(ebwtSide[sideCur], 0);
 	#else
 					pack_2b_in_8b(bwtChar, ebwtSide[sideCur], 3-bpi);
@@ -708,7 +1120,7 @@ public class Ebwt <TStr>{
 			}
 		}
 		VMSG_NL("Exited Ebwt loop");
-		assert_neq(zOff, OFF_MASK);
+		assert_neq(zOff, IndexTypes.OFF_MASK);
 		if(absorbCnt > 0) {
 			// Absorb any trailing, as-yet-unabsorbed short suffixes into
 			// the last element of ftab
@@ -717,7 +1129,7 @@ public class Ebwt <TStr>{
 		// Assert that our loop counter got incremented right to the end
 		assert_eq(side, eh._ebwtTotSz);
 		// Assert that we wrote the expected amount to out1
-		assert_eq(((long)out1.tellp() - beforeEbwtOff), eh._ebwtTotSz); // @double-check - pos_type
+		assert_eq(((long)out1.getChannel().position() - beforeEbwtOff), eh._ebwtTotSz); // @double-check - pos_type
 		// assert that the last thing we did was write a forward bucket
 
 		//
@@ -763,7 +1175,7 @@ public class Ebwt <TStr>{
 			eftab.resize(eftabLen);
 			eftab.fillZero();
 		} catch(bad_alloc &e) {
-			cerr << "Out of memory allocating eftab[] "
+			System.err.println( "Out of memory allocating eftab[] "
 			     << "in Ebwt::buildToDisk() at " << __FILE__ << ":"
 			     << __LINE__ + "\n");;
 			throw e;
@@ -777,7 +1189,7 @@ public class Ebwt <TStr>{
 				assert_lt(eftabCur*2+1, eftabLen);
 				eftab[eftabCur*2] = lo;
 				eftab[eftabCur*2+1] = hi;
-				ftab[i] = (eftabCur++) ^ OFF_MASK; // insert pointer into eftab
+				ftab[i] = (eftabCur++) ^ IndexTypes.OFF_MASK; // insert pointer into eftab
 				assert_eq(lo, Ebwt::ftabLo(ftab.ptr(), eftab.ptr(), len, ftabLen, eftabLen, i));
 				assert_eq(hi, Ebwt::ftabHi(ftab.ptr(), eftab.ptr(), len, ftabLen, eftabLen, i));
 			} else {
@@ -810,7 +1222,7 @@ public class Ebwt <TStr>{
 			boolean straddled){
 		long top = 0;
 		long bot = _nFrag; // 1 greater than largest addressable element
-		long elt = IndexTypes.OFF_MASK;
+		long elt = IndexTypes.IndexTypes.OFF_MASK;
 		// Begin binary search
 		while(true) {
 			elt = top + ((bot - top) >> 1);
@@ -829,7 +1241,7 @@ public class Ebwt <TStr>{
 						straddled = true;
 						if(rejectStraddle) {
 							// it falls off; signal no-go and return
-							tidx = IndexTypes.OFF_MASK;
+							tidx = IndexTypes.IndexTypes.OFF_MASK;
 							return;
 						}
 					}
@@ -867,7 +1279,7 @@ public class Ebwt <TStr>{
 		SideLocus l;
 		if(steps > 0) l.initFromRow(row, _eh, ebwt());
 		while(steps > 0) {
-			if(row == _zOff) return IndexTypes.OFF_MASK;
+			if(row == _zOff) return IndexTypes.IndexTypes.OFF_MASK;
 			long newrow = this.mapLF(l);
 			row = newrow;
 			steps--;
@@ -1003,7 +1415,7 @@ public class Ebwt <TStr>{
 		return ret;
 	}
 	
-	public void countBt2SideRange(SideLocus l, long num, long[] cntsUpto, long[] cntsIn, EList<Boolean> masks) {
+	public void countBt2SideRange(SideLocus l, long num, long[] cntsUpto, long[] cntsIn, EList<boolean> masks) {
 		countUpToEx(l, cntsUpto);
 		WITHIN_FCHR_DOLLARA(cntsUpto);
 		WITHIN_BWT_LEN(cntsUpto);
@@ -1049,7 +1461,7 @@ public class Ebwt <TStr>{
 			boolean startAtLocus,
 			long num,
 			long[] arrs,
-			EList<Boolean> masks,
+			EList<boolean> masks,
 			long maskOff){
 		long nm = 0; // number of nucleotides tallied so far
 		int iby = 0;      // initial byte offset
@@ -1173,64 +1585,6 @@ public class Ebwt <TStr>{
 		}
 	}
 	
-	public boolean contains(BTDnaString str, long otop, long obot) {
-		SideLocus tloc, bloc;
-		if(str.empty()) {
-			if(otop != null && obot != null) otop = obot = 0;
-			return true;
-		}
-		int c = str[str.length()-1];
-		long top = 0, bot = 0;
-		if(c < 4) {
-			top = fchr()[c];
-			bot = fchr()[c+1];
-		} else {
-			boolean set = false;
-			for(int i = 0; i < 4; i++) {
-				if(fchr()[c] < fchr()[c+1]) {
-					if(set) {
-						return false;
-					} else {
-						set = true;
-						top = fchr()[c];
-						bot = fchr()[c+1];
-					}
-				}
-			}
-		}
-		tloc.initFromRow(top, eh(), ebwt());
-		bloc.initFromRow(bot, eh(), ebwt());
-		for(long i = (long)str.length()-2; i >= 0; i--) {
-			c = str[i];
-			if(c <= 3) {
-				top = mapLF(tloc, c);
-				bot = mapLF(bloc, c);
-			} else {
-				long sz = bot - top;
-				int c1 = mapLF1(top, tloc);
-				bot = mapLF(bloc, c1);
-				if(bot - top < sz) {
-					// Encountered an N and could not proceed through it because
-					// there was more than one possible nucleotide we could replace
-					// it with
-					return false;
-				}
-			}
-			if(i > 0) {
-				tloc.initFromRow(top, eh(), ebwt());
-				bloc.initFromRow(bot, eh(), ebwt());
-			}
-		}
-		if(otop != null && obot != null) {
-			otop = top; obot = bot;
-		}
-		return bot > top;
-	}
-	
-	public boolean contains(String str, long top, long bot) {
-		return contains(new BTDnaString(str, true), top, bot);
-	}
-	
 	public boolean isInMemory() {
 		if(ebwt() != null) {
 			return true;
@@ -1264,49 +1618,8 @@ public class Ebwt <TStr>{
 	}
 	
 	public void evictFromMemory() {
-		_fchr.free();
-		_ftab.free();
-		_eftab.free();
-		_rstarts.free();
-		_offs.free(); // might not be under control of APtrWrap
-		_ebwt.free(); // might not be under control of APtrWrap
-		// Keep plen; it's small and the client may want to seq it
-		// even when the others are evicted.
-		//_plen  = null;
-		_zEbwtByteOff = IndexTypes.OFF_MASK;
+		_zEbwtByteOff = IndexTypes.IndexTypes.OFF_MASK;
 		_zEbwtBpOff = -1;
-	}
-	
-	public static long fileSize(String name) {
-		File f = new File(name);
-		return f.length();
-	}
-	
-	public static int pop32(long x) {
-		// Lots of cache misses on following lines (>10K)
-		x = x - ((x >> 1) & 0x55555555);
-		x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
-		x = (x + (x >> 4)) & 0x0F0F0F0F;
-		x = x + (x >> 8);
-		x = x + (x >> 16);
-		x = x + (x >> 32);
-		return (int)(x & 0x3F);
-	}
-	
-	public static int countInU64(int c, long dw) {
-		long c_table[] = {
-				0xffffffff,
-				0xaaaaaaaa,
-				0x55555555,
-				0x00000000
-		};
-		long c0 = c_table[c];
-		long x0 = dw ^ c0;
-		long x1 = (x0 >> 1);
-		long x2 = x1 & (0x55555555);
-		long x3 = x0 & x2;
-	    long tmp = pop32(x3);
-		return (int) tmp;
 	}
 	
 	public EbwtParams eh() {
@@ -1357,7 +1670,7 @@ public class Ebwt <TStr>{
 		if(ftab[i] <= len) {
 			return ftab[i];
 		} else {
-			long efIdx = ftab[i] ^ IndexTypes.OFF_MASK;
+			long efIdx = ftab[i] ^ IndexTypes.IndexTypes.OFF_MASK;
 			return eftab[efIdx*2+1];
 		}
 	}
@@ -1372,7 +1685,7 @@ public class Ebwt <TStr>{
 		if(ftab[i] <= len) {
 			return ftab[i];
 		} else {
-			long efIdx = ftab[i] ^ OFF_MASK;
+			long efIdx = ftab[i] ^ IndexTypes.OFF_MASK;
 			return eftab[efIdx*2];
 		}
 	}
@@ -1406,350 +1719,6 @@ public class Ebwt <TStr>{
 		bot = ftabLo(fi+1);
 		return true;
 	}
-			
-	public static Pair<Ebwt, Ebwt> fromString(
-			String str,
-			boolean packed,
-			int color,
-			int reverse,
-			boolean bigEndian,
-			int lineRate,
-			int offRate,
-			int ftabChars,
-			String file,
-			boolean useBlockwise,
-			long bmax,
-			long bmaxSqrtMult,
-			long bmaxDivN,
-			int dcv,
-			int seed,
-			boolean verbose,
-			boolean autoMem,
-			boolean sanity){
-		EList<String> strs = new EList(EBWT_CAT);
-		strs.push_back(str);
-		return fromStrings<TStr>(
-			strs,
-			packed,
-			color,
-			reverse,
-			bigEndian,
-			lineRate,
-			offRate,
-			ftabChars,
-			file,
-			useBlockwise,
-			bmax,
-			bmaxSqrtMult,
-			bmaxDivN,
-			dcv,
-			seed,
-			verbose,
-			autoMem,
-			sanity);
-	}
-	public static Pair<Ebwt, Ebwt> fromStrings(
-			String strs,
-			boolean packed,
-			int color,
-			int reverse,
-			boolean bigEndian,
-			int lineRate,
-			int offRate,
-			int ftabChars,
-			String file,
-			boolean useBlockwise,
-			long bmax,
-			long bmaxSqrtMult,
-			long bmaxDivN,
-			int dcv,
-			int seed,
-			boolean verbose,
-			boolean autoMem,
-			boolean sanity){
-		EList<FileBuf> is = new EList(EBWT_CAT);
-		RefReadInParams refparams = new RefReadInParams(color, REF_READ_FORWARD, false, false);
-		String ss = "";
-		for(long i = 0; i < strs.size(); i++) {
-			ss += ">" + i + "\n" + strs[i] + "\n";
-		}
-		auto_ptr<FileBuf> fb(new FileBuf(ss.get()));
-		is.push_back(fb.get());
-		// Vector for the ordered list of "records" comprising the input
-		// sequences.  A record represents a stretch of unambiguous
-		// characters in one of the input sequences.
-		EList<RefRecord> szs = new EList(EBWT_CAT);
-		Pair<Long, Long> sztot;
-		sztot = BitPairReference::szsFromFasta(is, file, bigEndian, refparams, szs, sanity);
-		// Construct Ebwt from input strings and parameters
-		Ebwt ebwtFw = new Ebwt(
-			TStr,
-			packed,
-			refparams.color ? 1 : 0,
-			-1,           // fw
-			lineRate,
-			offRate,      // suffix-array sampling rate
-			ftabChars,    // number of chars in initial arrow-pair calc
-			file,         // basename for .?.ebwt files
-			true,         // fw?
-			useBlockwise, // useBlockwise
-			bmax,         // block size for blockwise SA builder
-			bmaxSqrtMult, // block size as multiplier of sqrt(len)
-			bmaxDivN,     // block size as divisor of len
-			dcv,          // difference-cover period
-			is,           // list of input streams
-			szs,          // list of reference sizes
-			sztot.first,  // total size of all unambiguous ref chars
-			refparams,    // reference read-in parameters
-			seed,         // pseudo-random number generator seed
-			-1,           // override offRate
-			verbose,      // be talkative
-			autoMem,      // pass exceptions up to the toplevel so that we can adjust memory settings automatically
-			sanity);      // verify results and internal consistency
-		refparams.reverse = reverse;
-		szs.clear();
-		sztot = BitPairReference.szsFromFasta(is, file, bigEndian, refparams, szs, sanity);
-		// Construct Ebwt from input strings and parameters
-		Ebwt ebwtBw = new Ebwt(
-			TStr(),
-			packed,
-			refparams.color ? 1 : 0,
-			reverse == REF_READ_REVERSE,
-			lineRate,
-			offRate,      // suffix-array sampling rate
-			ftabChars,    // number of chars in initial arrow-pair calc
-			file + ".rev",// basename for .?.ebwt files
-			false,        // fw?
-			useBlockwise, // useBlockwise
-			bmax,         // block size for blockwise SA builder
-			bmaxSqrtMult, // block size as multiplier of sqrt(len)
-			bmaxDivN,     // block size as divisor of len
-			dcv,          // difference-cover period
-			is,           // list of input streams
-			szs,          // list of reference sizes
-			sztot.first,  // total size of all unambiguous ref chars
-			refparams,    // reference read-in parameters
-			seed,         // pseudo-random number generator seed
-			-1,           // override offRate
-			verbose,      // be talkative
-			autoMem,      // pass exceptions up to the toplevel so that we can adjust memory settings automatically
-			sanity);      // verify results and internal consistency
-		return new Pair(ebwtFw, ebwtBw);
-	}
-	
-	public boolean isPacked() {
-		return packed_;
-	}
-	
-	public void szsToDisk(EList<RefRecord> szs, OutputStream os, int reverse) {
-		
-	}
-	
-	public void initFromVector(
-			EList<FileBuf> is,
-            EList<RefRecord> szs,
-            long sztot,
-            RefReadInParams refparams,
-            FileOutputStream out1,
-            FileOutputStream out2,
-            String outfile,
-            FileOutputStream saOut,
-            FileOutputStream bwtOut,
-            int nthreads,
-            boolean useBlockwise,
-            long bmax,
-            long bmaxSqrtMult,
-            long bmaxDivN,
-            int dcv,
-            int seed,
-            boolean verbose){
-		// Compose text strings into single string
-				VMSG_NL("Calculating joined length");
-				TStr s; // holds the entire joined reference after call to joinToDisk
-				long jlen;
-				jlen = joinedLen(szs);
-				assert_geq(jlen, sztot);
-				VMSG_NL("Writing header");
-				writeFromMemory(true, out1, out2);
-				try {
-					VMSG_NL("Reserving space for joined string");
-					s.resize(jlen);
-					VMSG_NL("Joining reference sequences");
-					if(refparams.reverse == REF_READ_REVERSE) {
-						{
-							Timer timer(cout, "  Time to join reference sequences: ", _verbose);
-							joinToDisk(is, szs, sztot, refparams, s, out1, out2);
-						} {
-							Timer timer(cout, "  Time to reverse reference sequence: ", _verbose);
-							EList<RefRecord> tmp(EBWT_CAT);
-							s.reverse();
-							reverseRefRecords(szs, tmp, false, verbose);
-							szsToDisk(tmp, out1, refparams.reverse);
-						}
-					} else {
-						Timer timer(cout, "  Time to join reference sequences: ", _verbose);
-						joinToDisk(is, szs, sztot, refparams, s, out1, out2);
-						szsToDisk(szs, out1, refparams.reverse);
-					}
-					// Joined reference sequence now in 's'
-				} catch(bad_alloc& e) {
-					// If we throw an allocation exception in the try block,
-					// that means that the joined version of the reference
-					// string itself is too larger to fit in memory.  The only
-					// alternatives are to tell the user to give us more memory
-					// or to try again with a packed representation of the
-					// reference (if we haven't tried that already).
-					cerr << "Could not allocate space for a joined string of " << jlen << " elements." + "\n");;
-					if(!isPacked() && _passMemExc) {
-						// Pass the exception up so that we can retry using a
-						// packed string representation
-						throw e;
-					}
-					// There's no point passing this exception on.  The fact
-					// that we couldn't allocate the joined string means that
-					// --bmax is irrelevant - the user should re-run with
-					// ebwt-build-packed
-					if(isPacked()) {
-						cerr << "Please try running bowtie-build on a computer with more memory." + "\n");;
-					} else {
-						cerr << "Please try running bowtie-build in packed mode (-p/--packed) or in automatic" + "\n");
-						     << "mode (-a/--auto), or try again on a computer with more memory." + "\n");;
-					}
-					if(sizeof(void*) == 4) {
-						cerr << "If this computer has more than 4 GB of memory, try using a 64-bit executable;" + "\n");
-						     << "this executable is 32-bit." + "\n");;
-					}
-					throw 1;
-				}
-				// Succesfully obtained joined reference string
-				if(bmax != OFF_MASK) {
-					VMSG_NL("bmax according to bmax setting: " << bmax);
-				}
-				else if(bmaxSqrtMult != OFF_MASK) {
-					bmax *= bmaxSqrtMult;
-					VMSG_NL("bmax according to bmaxSqrtMult setting: " << bmax);
-				}
-				else if(bmaxDivN != OFF_MASK) {
-					bmax = max<long>(jlen / bmaxDivN, 1);
-					VMSG_NL("bmax according to bmaxDivN setting: " << bmax);
-				}
-				else {
-					bmax = (long)sqrt(s.length());
-					VMSG_NL("bmax defaulted to: " << bmax);
-				}
-				int iter = 0;
-				bool first = true;
-				streampos out1pos = out1.tellp();
-				streampos out2pos = out2.tellp();
-				// Look for bmax/dcv parameters that work.
-				while(true) {
-					if(!first && bmax < 40 && _passMemExc) {
-						cerr << "Could not find approrpiate bmax/dcv settings for building this index." + "\n");;
-						if(!isPacked()) {
-							// Throw an exception exception so that we can
-							// retry using a packed string representation
-							throw bad_alloc();
-						} else {
-							cerr << "Already tried a packed string representation." + "\n");;
-						}
-						cerr << "Please try indexing this reference on a computer with more memory." + "\n");;
-						if(sizeof(void*) == 4) {
-							cerr << "If this computer has more than 4 GB of memory, try using a 64-bit executable;" + "\n");
-								 << "this executable is 32-bit." + "\n");;
-						}
-						throw 1;
-					}
-					if(!first) {
-						out1.seekp(out1pos);
-						out2.seekp(out2pos);
-					}
-					if(dcv > 4096) dcv = 4096;
-					if((iter % 6) == 5 && dcv < 4096 && dcv != 0) {
-						dcv <<= 1; // double difference-cover period
-					} else {
-						bmax -= (bmax >> 2); // reduce by 25%
-					}
-					VMSG("Using parameters --bmax " << bmax);
-					if(dcv == 0) {
-						VMSG_NL(" and *no difference cover*");
-					} else {
-						VMSG_NL(" --dcv " << dcv);
-					}
-					iter++;
-					try {
-						{
-							VMSG_NL("  Doing ahead-of-time memory usage test");
-							// Make a quick-and-dirty attempt to force a bad_alloc iff
-							// we would have thrown one eventually as part of
-							// constructing the DifferenceCoverSample
-							dcv <<= 1;
-							long sz = (long)DifferenceCoverSample<TStr>::simulateAllocs(s, dcv >> 1);
-		                    if(nthreads > 1) sz *= (nthreads + 1);
-							AutoArray<uint8_t> tmp(sz, EBWT_CAT);
-							dcv >>= 1;
-							// Likewise with the KarkkainenBlockwiseSA
-							sz = (long)KarkkainenBlockwiseSA<TStr>::simulateAllocs(s, bmax);
-							AutoArray<uint8_t> tmp2(sz, EBWT_CAT);
-							// Now throw in the 'ftab' and 'isaSample' structures
-							// that we'll eventually allocate in buildToDisk
-							AutoArray<long> ftab(_eh._ftabLen * 2, EBWT_CAT);
-							AutoArray<uint8_t> side(_eh._sideSz, EBWT_CAT);
-							// Grab another 20 MB out of caution
-							AutoArray<uint32_t> extra(20*1024*1024, EBWT_CAT);
-							// If we made it here without throwing bad_alloc, then we
-							// passed the memory-usage stress test
-							VMSG("  Passed!  Constructing with these parameters: --bmax " << bmax << " --dcv " << dcv);
-							if(isPacked()) {
-								VMSG(" --packed");
-							}
-							VMSG_NL("");
-						}
-						VMSG_NL("Constructing suffix-array element generator");
-						KarkkainenBlockwiseSA<TStr> bsa(s, bmax, nthreads, dcv, seed, _sanity, _passMemExc, _verbose, outfile);
-						assert(bsa.suffixItrIsReset());
-						assert_eq(bsa.size(), s.length()+1);
-						VMSG_NL("Converting suffix-array elements to index image");
-						buildToDisk(bsa, s, out1, out2, saOut, bwtOut);
-						out1.flush(); out2.flush();
-						bool failed = out1.fail() || out2.fail();
-						if(saOut != null) {
-							saOut.flush();
-							failed = failed || saOut.fail();
-						}
-						if(bwtOut != null) {
-							bwtOut.flush();
-							failed = failed || bwtOut.fail();
-						}
-						if(failed) {
-							cerr << "An error occurred writing the index to disk.  Please check if the disk is full." + "\n");;
-							throw 1;
-						}
-						break;
-					} catch(bad_alloc& e) {
-						if(_passMemExc) {
-							VMSG_NL("  Ran out of memory; automatically trying more memory-economical parameters.");
-						} else {
-							cerr << "Out of memory while constructing suffix array.  Please try using a smaller" + "\n");
-								 << "number of blocks by specifying a smaller --bmax or a larger --bmaxdivn" + "\n");;
-							throw 1;
-						}
-					}
-					first = false;
-				}
-				assert(repOk());
-				// Now write reference sequence names on the end
-				assert_eq(this._refnames.size(), this._nPat);
-				for(long i = 0; i < this._refnames.size(); i++) {
-					out1 << this._refnames[i].c_str() + "\n");;
-				}
-				out1 << '\0';
-				out1.flush(); out2.flush();
-				if(out1.fail() || out2.fail()) {
-					cerr << "An error occurred writing the index to disk.  Please check if the disk is full." + "\n");;
-					throw 1;
-				}
-				VMSG_NL("Returning from initFromVector");
-	}
 	
 	public long tryOffset(long elt) {
 		if(elt == _zOff) return 0;
@@ -1759,13 +1728,13 @@ public class Ebwt <TStr>{
 			return off;
 		} else {
 			// Try looking at zoff
-			return IndexTypes.OFF_MASK;
+			return IndexTypes.IndexTypes.OFF_MASK;
 		}
 	}
 	
 	public long tryOffset(long elt, boolean fw, long hitlen) {
 		long off = tryOffset(elt);
-		if(off != IndexTypes.OFF_MASK && !fw) {
+		if(off != IndexTypes.IndexTypes.OFF_MASK && !fw) {
 			off = _eh._len - off - 1;
 			off -= (hitlen-1);
 		}
@@ -1788,7 +1757,7 @@ public class Ebwt <TStr>{
 		return false;
 	}
 			
-	public long fchr() {
+	public long[] fchr() {
 		return _fchr.get();
 	}
 	
@@ -1804,7 +1773,7 @@ public class Ebwt <TStr>{
 	}
 	
 	public long mapLF1(long row, SideLocus l, int c) {
-		if(rowL(l) != c || row == _zOff) return IndexTypes.OFF_MASK;
+		if(rowL(l) != c || row == _zOff) return IndexTypes.IndexTypes.OFF_MASK;
 		long ret = countBt2Side(l, c);
 		return ret;
 	}

@@ -4,42 +4,39 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class EbwtParams {
-	long _len;
-	long _bwtLen;
-	long _sz;
-	long _bwtSz;
-	int  _lineRate;
-	int  _origOffRate;
-	int  _offRate;
-	long _offMask;
-	int  _ftabChars;
-	int _eftabLen;
-	int _eftabSz;
-	long _ftabLen; 
-	long _ftabSz; 
-	long _offsLen;
-	long _offsSz;
-	int _lineSz; 
+	public long _len;
+	public long _bwtLen;
+	public long _sz;
+	public long _bwtSz;
+	public int  _lineRate;
+	public int  _origOffRate;
+	public int  _offRate;
+	public long _offMask;
+	public int  _ftabChars;
+	public int _eftabLen;
+	public int _eftabSz;
+	public long _ftabLen; 
+	public long _ftabSz; 
+	public long _offsLen;
+	public long _offsSz;
+	public int _lineSz; 
 	public int _sideSz; 
-	int _sideBwtSz; 
+	public int _sideBwtSz; 
 	public int _sideBwtLen; 
-	long _numSides;
-	long _numLines;
-	long _ebwtTotLen;
-	long _ebwtTotSz;
-	boolean     _color;
-	boolean     _entireReverse;
-	public EbwtParams() {
-		
-	}
+	public long _numSides;
+	public long _numLines;
+	public long _ebwtTotLen;
+	public long _ebwtTotSz;
+	public boolean     _color;
+	public boolean     _entireReverse;
 	
 	public EbwtParams(
-			long len,
-			int lineRate,
-			int offRate,
-			int ftabChars,
-			boolean color,
-			boolean entireReverse){
+		long len,
+		int lineRate,
+		int offRate,
+		int ftabChars,
+		boolean color,
+		boolean entireReverse){
 		init(len, lineRate, offRate, ftabChars, color, entireReverse);
 	}
 	
@@ -82,32 +79,32 @@ public class EbwtParams {
 		_ebwtTotSz = _ebwtTotLen;
 	}
 	
-	public 	long len()           { return _len; }
-	public long lenNucs()       { return _len + (_color ? 1 : 0); }
-	public long bwtLen()        { return _bwtLen; }
-	public long sz()            { return _sz; }
-	public long bwtSz()         { return _bwtSz; }
-	public int   lineRate()      { return _lineRate; }
-	public int   origOffRate()   { return _origOffRate; }
-	public int   offRate()       { return _offRate; }
-	public long offMask()       { return _offMask; }
-	public int   ftabChars()     { return _ftabChars; }
-	public int eftabLen()      { return _eftabLen; } 
-	public int eftabSz()       { return _eftabSz; } 
-	public long ftabLen()       { return _ftabLen; }
-	public long ftabSz()        { return _ftabSz; }
-	public long offsLen()       { return _offsLen; }
-	public long offsSz()        { return _offsSz; }
-	public int lineSz()        { return _lineSz; } 
-	public int sideSz()        { return _sideSz; } 
-	public int sideBwtSz()     { return _sideBwtSz; } 
-	public int sideBwtLen()    { return _sideBwtLen; } 
-	public long numSides()      { return _numSides; }
-	public long numLines()      { return _numLines; }
-	public long ebwtTotLen()    { return _ebwtTotLen; }
-	public long ebwtTotSz()     { return _ebwtTotSz; }
-	public boolean color()             { return _color; }
-	public boolean entireReverse()     { return _entireReverse; }
+	public long len()           	{ return _len; }
+	public long lenNucs()   	    { return _len + (_color ? 1 : 0); }
+	public long bwtLen()        	{ return _bwtLen; }
+	public long sz()           		{ return _sz; }
+	public long bwtSz()         	{ return _bwtSz; }
+	public int  lineRate()      	{ return _lineRate; }
+	public int  origOffRate()   	{ return _origOffRate; }
+	public int  offRate()       	{ return _offRate; }
+	public long offMask()       	{ return _offMask; }
+	public int  ftabChars()     	{ return _ftabChars; }
+	public int  eftabLen()      	{ return _eftabLen; } 
+	public int  eftabSz()       	{ return _eftabSz; } 
+	public long ftabLen()       	{ return _ftabLen; }
+	public long ftabSz()        	{ return _ftabSz; }
+	public long offsLen()       	{ return _offsLen; }
+	public long offsSz()        	{ return _offsSz; }
+	public int  lineSz()        	{ return _lineSz; } 
+	public int  sideSz()        	{ return _sideSz; } 
+	public int  sideBwtSz()     	{ return _sideBwtSz; } 
+	public int  sideBwtLen()    	{ return _sideBwtLen; } 
+	public long numSides()     		{ return _numSides; }
+	public long numLines()      	{ return _numLines; }
+	public long ebwtTotLen()    	{ return _ebwtTotLen; }
+	public long ebwtTotSz()     	{ return _ebwtTotSz; }
+	public boolean color()          { return _color; }
+	public boolean entireReverse()  { return _entireReverse; }
 	
 	public void setOffRate(int __offRate) {
 		_offRate = __offRate;
