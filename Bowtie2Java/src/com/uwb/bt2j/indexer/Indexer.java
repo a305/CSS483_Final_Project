@@ -118,13 +118,13 @@ public class Indexer <T> {
 				System.err.println( "Warning: No arg strings parsed from " + file);
 			}
 		}
-		string outfile;
+		String outfile;
 		try {
 			// Reset all global state, including getopt state
 			opterr = optind = 1;
 			resetOptions();
 
-			string infile;
+			String infile;
 			EList<string> infiles(MISC_CAT);
 
 			if(parseOptions(argc, argv)) {
@@ -162,7 +162,7 @@ public class Indexer <T> {
 
 			// Get output filename
 			if(optind >= argc) {
-				cerr << "No output file specified!" << endl;
+				System.err.println("No output file specified!");
 				printUsage(cerr);
 				return 1;
 			}
@@ -170,50 +170,50 @@ public class Indexer <T> {
 
 			tokenize(infile, ",", infiles);
 			if(infiles.size() < 1) {
-				cerr << "Tokenized input file list was empty!" << endl;
+				System.err.println("Tokenized input file list was empty!");
 				printUsage(cerr);
 				return 1;
 			}
 
 			// Optionally summarize
 			if(verbose) {
-				System.out.println( "Settings:" << endl
-					 << "  Output files: \"" << outfile.c_str() << ".*." + gEbwt_ext + "\"" << endl
-					 << "  Line rate: " << lineRate << " (line is " << (1<<lineRate) << " bytes)" << endl
-					 << "  Lines per side: " << linesPerSide << " (side is " << ((1<<lineRate)*linesPerSide) << " bytes)" << endl
-					 << "  Offset rate: " << offRate << " (one in " << (1<<offRate) << ")" << endl
-					 << "  FTable chars: " << ftabChars << endl
-					 << "  Strings: " << (packed? "packed" : "unpacked") << endl
+				System.out.println( "Settings:\n" +
+					 "  Output files: \"" + outfile + ".*." + gEbwt_ext + "\"" + "\n"
+					 + "  Line rate: " + lineRate + " (line is " + (1<<lineRate) + " bytes)" + "\n"
+					 + "  Lines per side: " + linesPerSide + " (side is " + ((1<<lineRate)*linesPerSide) + " bytes)" + "\n"
+					 + "  Offset rate: " + offRate + " (one in " + (1<<offRate) + ")" + "\n"
+					 + "  FTable chars: " + ftabChars + "\n"
+					 + "  Strings: " + (packed? "packed" : "unpacked"))
 					 ;
 				if(bmax == OFF_MASK) {
-					System.out.println( "  Max bucket size: default" << endl;
+					System.out.println( "  Max bucket size: default");
 				} else {
-					System.out.println( "  Max bucket size: " << bmax << endl;
+					System.out.println( "  Max bucket size: " + bmax);
 				}
 				if(bmaxMultSqrt == OFF_MASK) {
-					System.out.println( "  Max bucket size, sqrt multiplier: default" << endl;
+					System.out.println( "  Max bucket size, sqrt multiplier: default");
 				} else {
-					System.out.println( "  Max bucket size, sqrt multiplier: " << bmaxMultSqrt << endl;
+					System.out.println( "  Max bucket size, sqrt multiplier: " + bmaxMultSqrt);
 				}
 				if(bmaxDivN == 0xffffffff) {
-					System.out.println( "  Max bucket size, len divisor: default" << endl;
+					System.out.println( "  Max bucket size, len divisor: default");
 				} else {
-					System.out.println( "  Max bucket size, len divisor: " << bmaxDivN << endl;
+					System.out.println( "  Max bucket size, len divisor: " + bmaxDivN);
 				}
-				System.out.println( "  Difference-cover sample period: " << dcv << endl;
-				System.out.println( "  Endianness: " << (bigEndian? "big":"little") << endl
-					 << "  Actual local endianness: " << (currentlyBigEndian()? "big":"little") << endl
-					 << "  Sanity checking: " << (sanityCheck? "enabled":"disabled") << endl;
-		#ifdef NDEBUG
-				System.out.println( "  Assertions: disabled" << endl;
-		#else
-				System.out.println( "  Assertions: enabled" << endl;
-		#endif
-				System.out.println( "  Random seed: " << seed << endl;
-				System.out.println( "  Sizeofs: void*:" << sizeof(void*) << ", int:" << sizeof(int) << ", long:" << sizeof(long) << ", size_t:" << sizeof(size_t) << endl;
-				System.out.println( "Input files DNA, " << file_format_names[format].c_str() << ":" << endl;
-				for(size_t i = 0; i < infiles.size(); i++) {
-					System.out.println( "  " << infiles[i].c_str() << endl;
+				System.out.println( "  Difference-cover sample period: " + dcv);
+				System.out.println( "  Endianness: " + (bigEndian? "big":"little") + "\n"
+					 + "  Actual local endianness: " + (currentlyBigEndian()? "big":"little") + "\n"
+					 + "  Sanity checking: " + (sanityCheck? "enabled":"disabled"));
+		//#ifdef NDEBUG
+				System.out.println( "  Assertions: disabled");
+		//#else
+				System.out.println( "  Assertions: enabled");
+		//#endif
+				System.out.println( "  Random seed: " + seed);
+				//System.out.println( "  Sizeofs: void*:" + sizeof(void*) + ", int:" + sizeof(int) + ", long:" + sizeof(long) + ", size_t:" + sizeof(int));
+				System.out.println( "Input files DNA, " + file_format_names[format] + ":");
+				for(int i = 0; i < infiles.size(); i++) {
+					System.out.println( "  " + infiles[i]);
 				}
 			}
 			// Seed random number generator
@@ -305,7 +305,7 @@ public class Indexer <T> {
 	}
 	
 	public static void printUsage(OutputStream out) {
-		out.write(( "Bowtie 2 version " + string(BOWTIE2_VERSION) + " by Ben Langmead (langmea@cs.jhu.edu, www.cs.jhu.edu/~langmea)" + "\n").getBytes());
+		out.write(( "Bowtie 2 version " + BOWTIE2_VERSION + " by Ben Langmead (langmea@cs.jhu.edu, www.cs.jhu.edu/~langmea)" + "\n").getBytes());
 			String tool_name = "bowtie2-build-s";
 			if(wrapper == "basic-0") {
 				tool_name = "bowtie2-build";
@@ -458,7 +458,7 @@ public class Indexer <T> {
 	}
 	
 	public static void driver(String infile, EList<String> infiles, String outfile, boolean packed, int reverse) {
-		EList<FileBuf*> is(MISC_CAT);
+		EList<FileBuf> is = (MISC_CAT);
 		bool bisulfite = false;
 		RefReadInParams refparams(false, reverse, nsToAs, bisulfite);
 		assert_gt(infiles.size(), 0);
