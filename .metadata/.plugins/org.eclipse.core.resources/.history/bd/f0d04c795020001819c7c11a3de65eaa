@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
 
-import com.uwb.bt2j.indexer.WordIO;
-
 public class RefRecord {
 	public long off;
 	public long len;

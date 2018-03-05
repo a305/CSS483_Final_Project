@@ -6,7 +6,7 @@ import com.uwb.bt2j.indexer.types.EList;
 
 class FASTAParser<T, U, V> {
   public static void parseFastaLens(
-		  String infile,   // filename
+		  T infile,   // filename
 			EList<Double> namelens, // destination for fasta name lengths
 			EList<Double> seqlens
 		  ) {
@@ -16,8 +16,8 @@ class FASTAParser<T, U, V> {
 		}
 		FileBuf fb = new FileBuf(in);
 		while(!fb.eof()) {
-			namelens.expand(); namelens.insert(0, namelens.back());
-			seqlens.expand();  seqlens.insert(0, seqlens.back());
+			namelens.expand(); namelens.back() = 0;
+			seqlens.expand();  seqlens.back() = 0;
 			fb.parseFastaRecordLength(namelens.back(), seqlens.back());
 			if(seqlens.back() == 0) {
 				// Couldn't read a record.  We're probably done with this file.
@@ -30,7 +30,7 @@ class FASTAParser<T, U, V> {
   }
   
   public static void parseFasta(
-		  String    infile,   // filename
+		  T    infile,   // filename
 			EList<U> names,    // destination for fasta names
 			EList<Double>   namelens, // destination for fasta name lengths
 			EList<V>  seqs,     // destination for fasta sequences
@@ -38,7 +38,7 @@ class FASTAParser<T, U, V> {
 		  ) {
 	  double cur = namelens.size();
 		parseFastaLens(infile, namelens, seqlens);
-		File in = new File(infile);
+		File in = fopen(sstr_to_cstr(infile), "r");
 		if(in == null) {
 			System.err.println("Could not open sequence file");
 			throw 1;

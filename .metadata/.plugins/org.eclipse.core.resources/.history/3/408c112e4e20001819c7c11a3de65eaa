@@ -2,13 +2,11 @@ package com.uwb.bt2j.indexer;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Scanner;
 
 import com.uwb.bt2j.indexer.types.EList;
-import com.uwb.bt2j.indexer.types.RefRecord;
 import com.uwb.bt2j.indexer.types.SideLocus;
 
 public abstract class EBWT <TStr>{
@@ -30,13 +28,24 @@ public abstract class EBWT <TStr>{
 	public long   _zEbwtBpOff;
 	public long  _nPat;  /// number of reference texts
 	public long  _nFrag; /// number of fragments
+	
 	long _plen;
-	long _rstarts;
+	long _rstarts; // starting offset of fragments / text indexes
+	// _fchr, _ftab and _eftab are expected to be relatively small
+	// (usually < 1MB, perhaps a few MB if _fchr is particularly large
+	// - like, say, 11).  For this reason, we don't bother with writing
+	// them to disk through separate output streams; we
 	long _fchr;
 	long _ftab;
-	long _eftab;
+	long _eftab; // "extended" entries for _ftab
+	// _offs may be extremely large.  E.g. for DNA w/ offRate=4 (one
+	// offset every 16 rows), the total size of _offs is the same as
+	// the total size of the input sequence
 	long _offs;
+	// _ebwt is the Extended Burrows-Wheeler Transform itself, and thus
+	// is at least as large as the input sequence.
 	byte _ebwt;
+	
 	public boolean       _useMm;        /// use memory-mapped files to hold the index
 	public boolean       useShmem_;     /// use shared memory to hold large parts of the index
 	public EList<String> _refnames; /// names of the reference sequences
@@ -44,6 +53,7 @@ public abstract class EBWT <TStr>{
 	public String mmFile2_;
 	public EbwtParams _eh;
 	public boolean packed_;
+	
 	public static final long default_bmax = IndexTypes.OFF_MASK;
 	public static final long default_bmaxMultSqrt = IndexTypes.OFF_MASK;
 	public static final long default_bmaxDivN = 4;
@@ -192,17 +202,19 @@ public abstract class EBWT <TStr>{
 		_in2Str = file + ".2." + gEbwt_ext;
 		packed_ = packed;
 		// Open output files
-		FileOutputStream fout1 = new FileOutputStream(_in1Str);
-		if(!fout1.getChannel().isOpen()) {
+		//ofstream fout1(_in1Str, ios::binary);
+		if(!fout1.good()) {
 			System.err.println("Could not open index file for writing: \"" + _in1Str + "\n" +
 					+ "Please make sure the directory exists and that permissions allow writing by" +
 					+ "Bowtie.");
+			throw 1;
 		}
-		FileOutputstream fout2 = new FileOutputStream(_in2Str);
-		if(!fout2.getChannel().isOpen()) {
+		//ofstream fout2(_in2Str, ios::binary);
+		if(!fout2.good()) {
 			System.err.println("Could not open index file for writing: \"" + _in2Str + "\"" + "\n" +
 					+ "Please make sure the directory exists and that permissions allow writing by" + "\n"
 					+ "Bowtie." + "\n");
+			throw 1;
 		}
 		_inSaStr = file + ".sa";
 		_inBwtStr = file + ".bwt";
@@ -211,6 +223,7 @@ public abstract class EBWT <TStr>{
 			saOut = new FileInputStream(_inSaStr);
 			if(saOut.available() <= 0) {
 				System.err.println("Could not open suffix-array file for writing: \"" + _inSaStr + "Please make sure the directory exists and that permissions allow writing by Bowtie.");
+				throw 1;
 			}
 		}
 		if(doBwtFile) {
@@ -219,6 +232,7 @@ public abstract class EBWT <TStr>{
 				System.err.println("Could not open suffix-array file for writing: \"" + _inBwtStr + "\"" + "\n" +
 						+ "Please make sure the directory exists and that permissions allow writing by" + "\n" +
 						+ "Bowtie.");
+				throw 1;
 			}
 		}
 		// Build SA(T) and BWT(T) block by block
@@ -1605,24 +1619,15 @@ public abstract class EBWT <TStr>{
 			int seed,
 			boolean verbose){
 		// Compose text strings into single String
-		if(this.verbose()) {
-			String tmp = "Calculating joined length";
-			this.verbose(tmp);
-		}
+		VMSG_NL("Calculating joined length");
 		TStr s; // holds the entire joined reference after call to joinToDisk
 		long jlen;
 		jlen = joinedLen(szs);
 		////assert_geq(jlen, sztot);
-		if(this.verbose()) {
-			String tmp = "Writing header";
-			this.verbose(tmp);
-		}
+		VMSG_NL("Writing header");
 		writeFromMemory(true, out1, out2);
 		try {
-			if(this.verbose()) {
-				String tmp = "Reserving space for joined String";
-				this.verbose(tmp);
-			}
+			VMSG_NL("Reserving space for joined String");
 			s.resize(jlen);
 			VMSG_NL("Joining reference sequences");
 			if(refparams.reverse == REF_READ_REVERSE) {

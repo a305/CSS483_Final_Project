@@ -2,14 +2,16 @@ package com.uwb.bt2j.indexer;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Scanner;
 
 import com.uwb.bt2j.indexer.types.EList;
+import com.uwb.bt2j.indexer.types.RefRecord;
 import com.uwb.bt2j.indexer.types.SideLocus;
 
-public class EBWT <TStr>{
+public abstract class EBWT <TStr>{
 	public static final String gEbwt_ext = "bt2";
 	public String gLastIOErrMsg;
 	public int    _overrideOffRate;
@@ -28,24 +30,13 @@ public class EBWT <TStr>{
 	public long   _zEbwtBpOff;
 	public long  _nPat;  /// number of reference texts
 	public long  _nFrag; /// number of fragments
-	
 	long _plen;
-	long _rstarts; // starting offset of fragments / text indexes
-	// _fchr, _ftab and _eftab are expected to be relatively small
-	// (usually < 1MB, perhaps a few MB if _fchr is particularly large
-	// - like, say, 11).  For this reason, we don't bother with writing
-	// them to disk through separate output streams; we
+	long _rstarts;
 	long _fchr;
 	long _ftab;
-	long _eftab; // "extended" entries for _ftab
-	// _offs may be extremely large.  E.g. for DNA w/ offRate=4 (one
-	// offset every 16 rows), the total size of _offs is the same as
-	// the total size of the input sequence
+	long _eftab;
 	long _offs;
-	// _ebwt is the Extended Burrows-Wheeler Transform itself, and thus
-	// is at least as large as the input sequence.
 	byte _ebwt;
-	
 	public boolean       _useMm;        /// use memory-mapped files to hold the index
 	public boolean       useShmem_;     /// use shared memory to hold large parts of the index
 	public EList<String> _refnames; /// names of the reference sequences
@@ -53,7 +44,6 @@ public class EBWT <TStr>{
 	public String mmFile2_;
 	public EbwtParams _eh;
 	public boolean packed_;
-	
 	public static final long default_bmax = IndexTypes.OFF_MASK;
 	public static final long default_bmaxMultSqrt = IndexTypes.OFF_MASK;
 	public static final long default_bmaxDivN = 4;
@@ -202,19 +192,17 @@ public class EBWT <TStr>{
 		_in2Str = file + ".2." + gEbwt_ext;
 		packed_ = packed;
 		// Open output files
-		//ofstream fout1(_in1Str.c_str(), ios::binary);
-		if(!fout1.good()) {
-			System.err.println("Could not open index file for writing: \"" + _in1Str.c_str() + "\n" +
+		FileOutputStream fout1 = new FileOutputStream(_in1Str);
+		if(!fout1.getChannel().isOpen()) {
+			System.err.println("Could not open index file for writing: \"" + _in1Str + "\n" +
 					+ "Please make sure the directory exists and that permissions allow writing by" +
 					+ "Bowtie.");
-			throw 1;
 		}
-		//ofstream fout2(_in2Str.c_str(), ios::binary);
-		if(!fout2.good()) {
-			System.err.println("Could not open index file for writing: \"" + _in2Str.c_str() + "\"" + "\n" +
+		FileOutputstream fout2 = new FileOutputStream(_in2Str);
+		if(!fout2.getChannel().isOpen()) {
+			System.err.println("Could not open index file for writing: \"" + _in2Str + "\"" + "\n" +
 					+ "Please make sure the directory exists and that permissions allow writing by" + "\n"
 					+ "Bowtie." + "\n");
-			throw 1;
 		}
 		_inSaStr = file + ".sa";
 		_inBwtStr = file + ".bwt";
@@ -223,16 +211,14 @@ public class EBWT <TStr>{
 			saOut = new FileInputStream(_inSaStr);
 			if(saOut.available() <= 0) {
 				System.err.println("Could not open suffix-array file for writing: \"" + _inSaStr + "Please make sure the directory exists and that permissions allow writing by Bowtie.");
-				throw 1;
 			}
 		}
 		if(doBwtFile) {
-			bwtOut = new ofstream(_inBwtStr.c_str(), ios::binary);
+			bwtOut = new ofstream(_inBwtStr, ios::binary);
 			if(bwtOut.available() <= 0) {
-				System.err.println("Could not open suffix-array file for writing: \"" + _inBwtStr.c_str() + "\"" + "\n" +
+				System.err.println("Could not open suffix-array file for writing: \"" + _inBwtStr + "\"" + "\n" +
 						+ "Please make sure the directory exists and that permissions allow writing by" + "\n" +
 						+ "Bowtie.");
-				throw 1;
 			}
 		}
 		// Build SA(T) and BWT(T) block by block
@@ -258,46 +244,46 @@ public class EBWT <TStr>{
 		fout1.flush();
 		
 		long tellpSz1 = (long)fout1.tellp();
-		VMSG_NL("Wrote " + fout1.tellp() + " bytes to primary EBWT file: " + _in1Str.c_str());
+		VMSG_NL("Wrote " + fout1.tellp() + " bytes to primary EBWT file: " + _in1Str);
 		fout1.close();
 		boolean err = false;
-		if(tellpSz1 > fileSize(_in1Str.c_str())) {
+		if(tellpSz1 > fileSize(_in1Str)) {
 			err = true;
-			cerr + "Index is corrupt: File size for " + _in1Str.c_str() + " should have been " + tellpSz1
-					+ " but is actually " + fileSize(_in1Str.c_str()) + "." + "\n");;
+			cerr + "Index is corrupt: File size for " + _in1Str + " should have been " + tellpSz1
+					+ " but is actually " + fileSize(_in1Str) + "." + "\n");;
 		}
 		fout2.flush();
 		
 		long tellpSz2 = (long)fout2.tellp();
-		VMSG_NL("Wrote " + fout2.tellp() + " bytes to secondary EBWT file: " + _in2Str.c_str());
+		VMSG_NL("Wrote " + fout2.tellp() + " bytes to secondary EBWT file: " + _in2Str);
 		fout2.close();
-		if(tellpSz2 > fileSize(_in2Str.c_str())) {
+		if(tellpSz2 > fileSize(_in2Str)) {
 			err = true;
-			cerr + "Index is corrupt: File size for " + _in2Str.c_str() + " should have been " + tellpSz2
-					+ " but is actually " + fileSize(_in2Str.c_str()) + "." + "\n");;
+			cerr + "Index is corrupt: File size for " + _in2Str + " should have been " + tellpSz2
+					+ " but is actually " + fileSize(_in2Str) + "." + "\n");;
 		}
 		
 		if(saOut != null) {
 			// Check on suffix array output file size
 			long tellpSzSa = (long)saOut.tellp();
-			VMSG_NL("Wrote " + tellpSzSa + " bytes to suffix-array file: " + _inSaStr.c_str());
+			VMSG_NL("Wrote " + tellpSzSa + " bytes to suffix-array file: " + _inSaStr);
 			saOut.close();
-			if(tellpSzSa > fileSize(_inSaStr.c_str())) {
+			if(tellpSzSa > fileSize(_inSaStr)) {
 				err = true;
-				cerr + "Index is corrupt: File size for " + _inSaStr.c_str() + " should have been " + tellpSzSa
-						+ " but is actually " + fileSize(_inSaStr.c_str()) + "." + "\n");;
+				cerr + "Index is corrupt: File size for " + _inSaStr + " should have been " + tellpSzSa
+						+ " but is actually " + fileSize(_inSaStr) + "." + "\n");;
 			}
 		}
 		
 		if(bwtOut != null) {
 			// Check on suffix array output file size
 			long tellpSzBwt = (long)bwtOut.tellp();
-			VMSG_NL("Wrote " + tellpSzBwt + " bytes to BWT file: " + _inBwtStr.c_str());
+			VMSG_NL("Wrote " + tellpSzBwt + " bytes to BWT file: " + _inBwtStr);
 			bwtOut.close();
-			if(tellpSzBwt > fileSize(_inBwtStr.c_str())) {
+			if(tellpSzBwt > fileSize(_inBwtStr)) {
 				err = true;
-				cerr + "Index is corrupt: File size for " + _inBwtStr.c_str() + " should have been " + tellpSzBwt
-						+ " but is actually " + fileSize(_inBwtStr.c_str()) + "." + "\n");;
+				cerr + "Index is corrupt: File size for " + _inBwtStr + " should have been " + tellpSzBwt
+						+ " but is actually " + fileSize(_inBwtStr) + "." + "\n");;
 			}
 		}
 		
@@ -853,7 +839,7 @@ public class EBWT <TStr>{
 			boolean straddled){
 		long top = 0;
 		long bot = _nFrag; // 1 greater than largest addressable element
-		long elt = IndexTypes.IndexTypes.OFF_MASK;
+		long elt = IndexTypes.OFF_MASK;
 		// Begin binary search
 		while(true) {
 			elt = top + ((bot - top) >> 1);
@@ -910,7 +896,7 @@ public class EBWT <TStr>{
 		SideLocus l;
 		if(steps > 0) l.initFromRow(row, _eh, ebwt());
 		while(steps > 0) {
-			if(row == _zOff) return IndexTypes.IndexTypes.OFF_MASK;
+			if(row == _zOff) return IndexTypes.OFF_MASK;
 			long newrow = this.mapLF(l);
 			row = newrow;
 			steps--;
@@ -952,15 +938,27 @@ public class EBWT <TStr>{
 	public long    zEbwtBpOff()   { return _zEbwtBpOff; }
 	public long    nPat()         { return _nPat; }
 	public long    nFrag()        { return _nFrag; }
-	public long   ftab()              { return _ftab.get(); }
-	public long   eftab()             { return _eftab.get(); }
-	public long   offs()              { return _offs.get(); }
-	public long   plen()              { return _plen.get(); }
-	public long   rstarts()           { return _rstarts.get(); }
+	public long   ftab()              { return _ftab; }
+	public long   eftab()             { return _eftab; }
+	public long   offs()              { return _offs; }
+	public long   plen()              { return _plen; }
+	public long   rstarts()           { return _rstarts; }
 	public boolean        toBe()         { return _toBigEndian; }
 	public boolean        sanityCheck()  { return _sanity; }
 	public EList<String> refnames()        { return _refnames; }
 	public boolean        fw()           { return fw_; }
+	
+	public abstract void readIntoMemory(
+			int color,
+			int needEntireRev,
+			boolean loadSASamp, 
+			boolean loadFtab,
+			boolean loadRstarts,
+			boolean justHeader, 
+			EbwtParams params,
+			boolean mmSweep, 
+			boolean loadNames, 
+			boolean startVerbose);
 	
 	public static int readFlags(String instr) {
 	
@@ -1607,15 +1605,24 @@ public class EBWT <TStr>{
 			int seed,
 			boolean verbose){
 		// Compose text strings into single String
-		VMSG_NL("Calculating joined length");
+		if(this.verbose()) {
+			String tmp = "Calculating joined length";
+			this.verbose(tmp);
+		}
 		TStr s; // holds the entire joined reference after call to joinToDisk
 		long jlen;
 		jlen = joinedLen(szs);
 		////assert_geq(jlen, sztot);
-		VMSG_NL("Writing header");
+		if(this.verbose()) {
+			String tmp = "Writing header";
+			this.verbose(tmp);
+		}
 		writeFromMemory(true, out1, out2);
 		try {
-			VMSG_NL("Reserving space for joined String");
+			if(this.verbose()) {
+				String tmp = "Reserving space for joined String";
+				this.verbose(tmp);
+			}
 			s.resize(jlen);
 			VMSG_NL("Joining reference sequences");
 			if(refparams.reverse == REF_READ_REVERSE) {
@@ -1780,7 +1787,7 @@ public class EBWT <TStr>{
 		// Now write reference sequence names on the end
 		////assert_eq(this._refnames.size(), this._nPat);
 		for(long i = 0; i < this._refnames.size(); i++) {
-			out1 + this._refnames[i].c_str() + "\n");;
+			out1 + this._refnames[i] + "\n");;
 		}
 		out1 + '\0';
 		out1.flush(); out2.flush();
@@ -1863,235 +1870,6 @@ public class EBWT <TStr>{
 			log().flush();
 		}
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	void joinedToTextOff(
-			long qlen,
-			long off,
-			long tidx,
-			long textoff,
-			long tlen,
-			Boolean rejectStraddle,
-			Boolean straddled)
-	{
-		long top = 0;
-		long bot = _nFrag; // 1 greater than largest addressable element
-		long elt = IndexTypes.OFF_MASK;
-		// Begin binary search
-		while(true) {
-			elt = top + ((bot - top) >> 1);
-			long lower = rstarts()[elt*3];
-			long upper;
-			if(elt == _nFrag-1) {
-				upper = _eh._len;
-			} else {
-				upper = rstarts()[((elt+1)*3)];
-			}
-			long fraglen = upper - lower;
-			if(lower <= off) {
-				if(upper > off) { // not last element, but it's within
-					// off is in this range; check if it falls off
-					if(off + qlen > upper) {
-						straddled = true;
-						if(rejectStraddle) {
-							// it falls off; signal no-go and return
-							tidx = IndexTypes.OFF_MASK;
-							return;
-						}
-					}
-					// This is the correct text idx whether the index is
-					// forward or reverse
-					tidx = rstarts()[(elt*3)+1];
-					// it doesn't fall off; now calculate textoff.
-					// Initially it's the number of characters that precede
-					// the alignment in the fragment
-					long fragoff = off - rstarts()[(elt*3)];
-					if(!this->fw_) {
-						fragoff = fraglen - fragoff - 1;
-						fragoff -= (qlen-1);
-					}
-					// Add the alignment's offset into the fragment
-					// ('fragoff') to the fragment's offset within the text
-					textoff = fragoff + rstarts()[(elt*3)+2];
-					break; // done with binary search
-				} else {
-					// 'off' belongs somewhere in the region between elt
-					// and bot
-					top = elt;
-				}
-			} else {
-				// 'off' belongs somewhere in the region between top and
-				// elt
-				bot = elt;
-			}
-			// continue with binary search
-		}
-		tlen = this->plen()[tidx];
-	}
-	
-	/**
-	 * Walk 'steps' steps to the left and return the row arrived at.  If we
-	 * walk through the dollar sign, return max value.
-	 */
-	long walkLeft(long row, long steps) {
-		SideLocus l;
-		if(steps > 0) l.initFromRow(row, _eh, ebwt());
-		while(steps > 0) {
-			if(row == _zOff) return IndexTypes.OFF_MASK;
-			long newrow = this->mapLF(l ASSERT_ONLY(, false));
-			row = newrow;
-			steps--;
-			if(steps > 0) l.initFromRow(row, _eh, ebwt());
-		}
-		return row;
-	}
-	
-	/**
-	 * Resolve the reference offset of the BW element 'elt'.
-	 */
-	long getOffset(long row) {
-		if(row == _zOff) return 0;
-		if((row & _eh._offMask) == row) return this->offs()[row >> _eh._offRate];
-		long jumps = 0;
-		SideLocus l;
-		l.initFromRow(row, _eh, ebwt());
-		while(true) {
-			long newrow = this->mapLF(l ASSERT_ONLY(, false));
-			jumps++;
-			row = newrow;
-			if(row == _zOff) {
-				return jumps;
-			} else if((row & _eh._offMask) == row) {
-				return jumps + this->offs()[row >> _eh._offRate];
-			}
-			l.initFromRow(row, _eh, ebwt());
-		}
-	}
-	
-	/**
-	 * Resolve the reference offset of the BW element 'elt' such that
-	 * the offset returned is at the right-hand side of the forward
-	 * reference substring involved in the hit.
-	 */
-	long getOffset(
-			long elt,
-			Boolean fw,
-			long hitlen)
-	{
-		long off = getOffset(elt);
-		if(!fw) {
-			off = _eh._len - off - 1;
-			off -= (hitlen-1);
-		}
-		return off;
-	}
-	
-	/**
-	 * Returns true iff the index contains the given String (exactly).  The given
-	 * String must contain only unambiguous characters.  TODO: support ambiguous
-	 * characters in 'str'.
-	 */
-	Boolean contains(
-			BTDnaString str,
-			long otop,
-			long obot)
-	{
-		assert(isInMemory());
-		SideLocus tloc, bloc;
-		if(str.empty()) {
-			if(otop != null && obot != null) *otop = *obot = 0;
-			return true;
-		}
-		int c = str[str.length()-1];
-		long top = 0, bot = 0;
-		if(c < 4) {
-			top = fchr()[c];
-			bot = fchr()[c+1];
-		} else {
-			Boolean set = false;
-			for(int i = 0; i < 4; i++) {
-				if(fchr()[c] < fchr()[c+1]) {
-					if(set) {
-						return false;
-					} else {
-						set = true;
-						top = fchr()[c];
-						bot = fchr()[c+1];
-					}
-				}
-			}
-		}
-		tloc.initFromRow(top, eh(), ebwt());
-		bloc.initFromRow(bot, eh(), ebwt());
-		for(long i = (long)str.length()-2; i >= 0; i--) {
-			c = str[i];
-			if(c <= 3) {
-				top = mapLF(tloc, c);
-				bot = mapLF(bloc, c);
-			} else {
-				long sz = bot - top;
-				int c1 = mapLF1(top, tloc, c);
-				bot = mapLF(bloc, c1);
-				if(bot - top < sz) {
-					// Encountered an N and could not proceed through it because
-					// there was more than one possible nucleotide we could replace
-					// it with
-					return false;
-				}
-			}
-			if(i > 0) {
-				tloc.initFromRow(top, eh(), ebwt());
-				bloc.initFromRow(bot, eh(), ebwt());
-			}
-		}
-		if(otop != null && obot != null) {
-			otop = top; obot = bot;
-		}
-		return bot > top;
-	}
-	
-	/**
-	 * Try to find the Bowtie index specified by the user.  First try the
-	 * exact path given by the user.  Then try the user-provided String
-	 * appended onto the path of the "indexes" subdirectory below this
-	 * executable, then try the provided String appended onto
-	 * "$BOWTIE2_INDEXES/".
-	 */
-	String adjustEbwtBase(String cmdline, String ebwtFileBase, Boolean verbose)
-	{
-		String str = ebwtFileBase;
-		Scanner in = new Scanner(System.in);
-		if(verbose) System.out.println("Trying " + str);
-		in.next(str);
-		if(!in.hasNext()) {
-			if(verbose) System.out.println("  didn't work");
-			in.close();
-			if(System.getenv("BOWTIE2_INDEXES") != null) {
-				str = (String)System.getenv("BOWTIE2_INDEXES") + "/" + ebwtFileBase;
-				if(verbose) System.out.println("Trying " + str);
-				in.next((str + ".1." + gEbwt_ext));
-				if(!in.hasNext()) {
-					if(verbose) System.out.println(   "didn't work");
-					in.close();
-				} else {
-					if(verbose) System.out.println("   worked");
-				}
-			}
-		}
-		if(!in.hasNext()) {
-			System.out.println("Could not locate a Bowtie index corresponding to basename " + ebwtFileBase);
-		}
-		return str;
-	}	
 }
 
 

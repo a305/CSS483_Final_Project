@@ -1,8 +1,5 @@
 package com.uwb.bt2j.indexer;
 
-import com.uwb.bt2j.indexer.types.EList;
-import com.uwb.bt2j.indexer.types.Pool;
-
 public class RedBlack <K, P>{
 	public int keys_;
 	public int cur_;
@@ -206,7 +203,7 @@ public class RedBlack <K, P>{
 	}
 	
 	public RedBlackNode addPage(Pool p) {
-		RedBlackNode n = new RedBlackNode();
+		RedBlackNode n = (RedBlackNode)p.alloc();
 		if(n != null) {
 			pages_.push_back(n);
 		}
