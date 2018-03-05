@@ -1,6 +1,7 @@
 package com.uwb.bt2j.indexer;
 
 import java.io.File;
+import java.nio.file.Files;
 
 public class BitpairOutFileBuf {
 	private static final double BUF_SZ = 1024 * 128;
@@ -24,7 +25,7 @@ public class BitpairOutFileBuf {
 			cur_++;
 			if(cur_ == BUF_SZ) {
 				// Flush the buffer
-				if(!out_.canWrite()) {
+				if(!fwrite(buf_, BUF_SZ, 1, out_)) {
 					System.err.println("Error writing to the reference index file (.4.ebwt)");
 				}
 				// Reset to beginning of the buffer
@@ -40,9 +41,10 @@ public class BitpairOutFileBuf {
 	public void close() {
 		if(cur_ > 0 || bpPtr_ > 0) {
 			if(bpPtr_ == 0) cur_--;
-			if(!out_.canWrite()) {
+			if(!fwrite(buf_, cur_ + 1, 1, out_)) {
 				System.err.println("Error writing to the reference index file (.4.ebwt)");
 			}
 		}
+		out_.close();
 	}
 }

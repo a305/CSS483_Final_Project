@@ -1,28 +1,22 @@
 package com.uwb.bt2j.indexer;
 
-import java.io.IOException;
-
 import org.omg.CORBA_2_3.portable.OutputStream;
-
-import com.uwb.bt2j.indexer.types.EList;
+import java.io.IOException;
 
 public class BlockwiseSA <TStr> {
 	
-	protected TStr      _text;        /// original string
+	protected String      _text;        /// original string
 	protected long   _bucketSz;    /// target maximum bucket size
 	protected boolean       _sanityCheck; /// whether to perform sanity checks
 	protected boolean       _passMemExc;  /// true -> pass on memory exceptions
 	protected boolean       _verbose;     /// be talkative
 	protected EList<Long>  _itrBucket;   /// current bucket
-	protected long _itrBucketIdx;
-	protected EList<Long> _sampleSuffs;
 	protected long         _itrBucketPos;/// offset into current bucket
 	protected long         _itrPushedBackSuffix; /// temporary slot for lookahead
 	protected OutputStream        _logger;      /// write log messages here
-	protected long _cur;
 	
 	public BlockwiseSA(
-			TStr __text,
+			String __text,
             long __bucketSz,
             boolean __sanityCheck,
             boolean __passMemExc,
@@ -59,37 +53,38 @@ public class BlockwiseSA <TStr> {
 			       isReset();
 	}
 	
-	public TStr text() {
+	public String text() {
 		return _text;
 	}
-	
 	public long bucketSz() { return _bucketSz; }
 	public boolean sanityCheck()  { return _sanityCheck; }
 	public boolean verbose()      { return _verbose; }
 	public OutputStream log()      { return _logger; }
-	public int size()       { return _text.length()+1; }
+	public int size()       { return _text.length() + 1; }
 	
 	protected void reset() {
 		
+	}
+	
+	protected boolean isReset() {
+		return true;
 	}
 	
 	protected void nextBlock(int cur_block, int tid) {
 		
 	}
 	
-	public 
-
 	protected boolean hasMoreBlocks() {
-		return this._itrBucketIdx <= _sampleSuffs.size();
+		return true;
 	}
 	
-	protected boolean isReset() {
-		return _cur == 0;
+	protected long nextSuffix() {
+		return 1;
 	}
 	
 	protected void verbose(String s) throws IOException {
 		if(this.verbose()) {
-			this.log().write(s.getBytes());
+			this.log().write_string(s);
 			this.log().flush();
 		}
 	}
