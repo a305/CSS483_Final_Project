@@ -21,7 +21,7 @@ public class FileBuf <TNameStr, TSeqStr> {
 	}
 	
 	public static boolean isspace_notnl(int c) {
-		return c != ' ' && !isnewline(c);
+		return isspace(c) && !isnewline(c);
 	}
 	
 	public FileBuf() {
