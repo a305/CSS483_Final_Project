@@ -1,5 +1,8 @@
 package com.uwb.bt2j.indexer;
 
+import com.uwb.bt2j.indexer.types.EList;
+import com.uwb.bt2j.indexer.types.S2bDnaString;
+
 public class MultikeyQSort <TStr, TPos, THost, T> {
     public void swap(TStr s, int slen, TPos a, TPos b) {
         swap(s[a],s[b]);

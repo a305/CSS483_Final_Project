@@ -1,14 +1,17 @@
 package com.uwb.bt2j.indexer;
 
+import com.uwb.bt2j.indexer.types.EList;
+import com.uwb.bt2j.indexer.types.Pool;
+
 public class PList<T> {
 	protected int cur_;
 	protected int curPage_;
-	protected EList<T> pages_;
+	protected EList<Integer> pages_;
 	
 	public PList(int cat) {
 		cur_ = 0;
 		curPage_ = 0;
-		pages_ = cat;
+		pages_ = new EList(cat);
 	}
 	
 	public boolean add(Pool p, T o) {
@@ -17,7 +20,7 @@ public class PList<T> {
 			cur_ = 0;
 			curPage_++;
 		}
-		pages_[curPage_][cur_++] = o;
+		pages_.insert(0,cur_++);
 		return true;
 	}
 	
@@ -28,7 +31,7 @@ public class PList<T> {
 				cur_ = 0;
 				curPage_++;
 			}
-			pages_[curPage_][cur_++] = os[i];
+			pages_.insert((Integer)os.get(i),cur_++);
 		}
 		return true;
 	}
@@ -40,7 +43,7 @@ public class PList<T> {
 				cur_ = 0;
 				curPage_++;
 			}
-			pages_[curPage_][cur_++] = src[i];
+			pages_.insert((Integer)src.get(i),cur_++);
 		}
 		return true;
 	}
@@ -52,7 +55,7 @@ public class PList<T> {
 				cur_ = 0;
 				curPage_++;
 			}
-			pages_[curPage_][cur_++] = o;
+			pages_.insert((Integer)o,cur_++);
 		}
 		return true;
 	}
@@ -73,20 +76,20 @@ public class PList<T> {
 	public T get(int i) {
 		int page = i / PLIST_PER_PAGE;
 		int elt = i % PLIST_PER_PAGE;
-		return pages_[page][elt];
+		return (T) pages_.get(elt);
 	}
 	
 	public T back() {
 		int page = (size()-1) / PLIST_PER_PAGE;
 		int elt = (size()-1) % PLIST_PER_PAGE;
-		return pages_[page][elt];
+		return (T) pages_.get(elt);
 	}
 	
 	public T last() {
 		if(cur_ == 0) {
-			return pages_[pages_.size()-2][PLIST_PER_PAGE-1];
+			return (T) pages_.get(PLIST_PER_PAGE-1);
 		} else {
-			return pages_.back()[cur_-1];
+			return (T) pages_.get(cur_-1);
 		}
 	}
 	
@@ -112,11 +115,11 @@ public class PList<T> {
 	}
 	
 	protected T expand(Pool p) {
-		T newpage = (T)p.alloc();
+		T newpage = new T();
 		if(newpage == null) {
 			return null;
 		}
 		pages_.push_back(newpage);
-		return pages_.back();
+		return pages_.get(pages_.back());
 	}
 }

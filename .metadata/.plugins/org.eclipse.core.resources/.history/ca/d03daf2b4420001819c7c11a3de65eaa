@@ -1,0 +1,566 @@
+package com.uwb.bt2j.indexer;
+
+import java.io.File;
+import java.io.FileOutputStream;
+
+import com.uwb.bt2j.indexer.types.EList;
+import com.uwb.bt2j.indexer.types.RefRecord;
+import com.uwb.bt2j.indexer.types.SString;
+import com.uwb.bt2j.indexer.types.SStringExpandable;
+
+import javafx.util.Pair;
+
+public class BitPairReference {
+  protected double byteToU32_[];
+  protected EList<RefRecord> recs_;
+  protected EList<Integer> cumUnambig_;
+  protected EList<Integer> cumRefOff_;
+  protected EList<Integer> refLens_;
+  protected EList<Integer> refOffs_;
+  protected EList<Integer> refRecOffs_;
+  protected byte buf_;
+  protected byte sanityBuf_;
+  protected double bufSz_;
+  protected double bufAllocSz_;
+  protected double nrefs_;
+  protected boolean loaded_;
+  protected boolean sanity_;
+  protected boolean useMm_;
+  protected boolean useShmem_;
+  protected boolean verbose_;  
+
+  public BitPairReference(
+		  String in,
+			boolean color,
+			boolean sanity,
+			EList<String> infiles,
+			EList<SString<Character> > origs,
+			boolean infilesSeq,
+			boolean useMm,
+			boolean useShmem,
+			boolean mmSweep,
+			boolean verbose,
+			boolean startVerbose
+		  ) {
+    loaded_ = true;
+    sanity_ = sanity;
+    useMm_ = useMm;
+    useShmem_ = useShmem;
+    verbose_ = verbose;
+    String s3 = in + ".3." + IndexTypes.gEbwt_ext;
+	String s4 = in + ".4." + IndexTypes.gEbwt_ext;
+	
+	File f3, f4;
+	if((f3 = new File(s3)) == null) {
+	    System.err.println("Could not open reference-string index file " + s3 + " for reading.");
+		System.err.println("This is most likely because your index was built with an older version" + "\n"
+		+ "(<= 0.9.8.1) of bowtie-build.  Please re-run bowtie-build to generate a new" + "\n"
+		+ "index (or download one from the Bowtie website) and try again.");
+		loaded_ = false;
+		return;
+	}
+    if((f4 = new File(s4))  == null) {
+        System.err.println("Could not open reference-string index file " + s4 + " for reading.");
+		loaded_ = false;
+		return;
+	}
+////ifdef BOWTIE_MM
+	if(useMm_) {
+		if(verbose_ || startVerbose) {
+			System.err.println("  Memory-mapping reference index file " + s4 + ": ");
+		}
+		//class stat sbuf;
+		if (stat(s4, sbuf) == -1) {
+			System.err.println("stat");
+			System.err.println("Error: Could not stat index file " + s4 + " prior to memory-mapping");
+		}
+		mmFile = (char)mmap((void )0, (double)sbuf.st_size,
+				     PROT_READ, MAP_SHARED, fileno(f4), 0);
+		if(mmFile == (void)(-1) || mmFile == null) {
+			perror("mmap");
+			System.err.println("Error: Could not memory-map the index file " + s4);
+		}
+		if(mmSweep) {
+			long sum = 0;
+			for(int i = 0; i < sbuf.st_size; i += 1024) {
+				sum += (long) mmFile.get(i);
+			}
+			if(startVerbose) {
+				System.err.println("  Swept the memory-mapped ref index file; checksum: " + sum + ": ");
+			}
+		}
+	}
+////endif
+	
+	// Read endianness sentinel, set 'swap'
+	int one;
+	boolean swap = false;
+	one = readU<Integer>(f3, swap);
+	if(one != 1) {
+		if(useMm_) {
+			System.err.println("Error: Can't use memory-mapped files when the index is the opposite endianness");
+		}
+		swap = true; // have to endian swap U32s
+	}
+	
+	// Read // records
+	longU sz;
+	sz = readU<longU>(f3, swap);
+	if(sz == 0) {
+		System.err.println("Error: number of reference records is 0 in " + s3);
+		throw 1;
+	}
+	
+	// Read records
+	nrefs_ = 0;
+	
+	// Cumulative count of all unambiguous characters on a per-
+	// stretch 8-bit alignment (i.e. count of bytes we need to
+	// allocate in buf_)
+	longU cumsz = 0;
+	longU cumlen = 0;
+	// For each unambiguous stretch...
+	for(longU i = 0; i < sz; i++) {
+		recs_.push_back(RefRecord(f3, swap));
+		if(recs_.back().first) {
+			// This is the first record for this reference sequence (and the
+			// last record for the one before)
+			refRecOffs_.push_back((longU)recs_.size()-1);
+			// refOffs_ links each reference sequence with the total number of
+			// unambiguous characters preceding it in the pasted reference
+			refOffs_.push_back(cumsz);
+			if(nrefs_ > 0) {
+				// refLens_ links each reference sequence with the total number
+				// of ambiguous and unambiguous characters in it.
+				refLens_.push_back(cumlen);
+			}
+			cumlen = 0;
+			nrefs_++;
+		} else if(i == 0) {
+			System.err.println("First record in reference index file was not marked as "
+			     + "'first'");
+		}
+		cumUnambig_.push_back(cumsz);
+		cumRefOff_.push_back(cumlen);
+		cumsz += recs_.back().len;
+		cumlen += recs_.back().off;
+		cumlen += recs_.back().len;
+	}
+	if(verbose_ || startVerbose) {
+		System.err.println("Read " + nrefs_ + " reference strings from "
+		     + sz + " records: ");
+	}
+	// Store a cap entry for the end of the last reference seq
+	refRecOffs_.push_back(recs_.size());
+	refOffs_.push_back(cumsz);
+	refLens_.push_back(cumlen);
+	cumUnambig_.push_back(cumsz);
+	cumRefOff_.push_back(cumlen);
+	bufSz_ = cumsz;
+	if (f3 != null) fclose(f3); // done with .3.gEbwt_ext file
+	// Round cumsz up to nearest byte boundary
+	if((cumsz & 3) != 0) {
+		cumsz += (4 - (cumsz & 3));
+	}
+	bufAllocSz_ = cumsz >> 2;
+	assert_eq(0, cumsz & 3); // should be rounded up to nearest 4
+	if(useMm_) {
+////ifdef BOWTIE_MM
+		buf_ = (byte)mmFile;
+		if(sanity_) {
+			FILE ftmp = fopen(s4, "rb");
+			sanityBuf_ = new byte[cumsz >> 2];
+			double ret = fread(sanityBuf_, 1, cumsz >> 2, ftmp);
+			if(ret != (cumsz >> 2)) {
+				System.err.println("Only read " + ret + " bytes (out of " + (cumsz >> 2) + ") from reference index file " + s4);
+				throw 1;
+			}
+			fclose(ftmp);
+			for(double i = 0; i < (cumsz >> 2); i++) {
+				assert_eq(sanityBuf_.get(i), buf_.get(i));
+			}
+		}
+////else
+		System.err.println("Shouldn't be at " + __FILE__ + ":" + __LINE__ + " without BOWTIE_MM defined");
+		throw 1;
+////endif
+	} else {
+		bool shmemLeader = true;
+		if(!useShmem_) {
+			// Allocate a buffer to hold the reference string
+			try {
+				buf_ = new byte[cumsz >> 2];
+				if(buf_ == null) throw Exception;
+			} catch(Exception e) {
+				System.err.println("Error: Ran out of memory allocating space for the bitpacked reference.  Please" + "\n"
+				+ "re-run on a computer with more memory.");
+				throw 1;
+			}
+		} else {
+			shmemLeader = ALLOC_SHARED_U8(
+										  (s4 + "[ref]"), (cumsz >> 2), buf_,
+										  "ref", (verbose_ || startVerbose));
+		}
+		if(shmemLeader) {
+			// Open the bitpair-encoded reference file
+			FILE f4 = fopen(s4, "rb");
+			if(f4 == null) {
+				System.err.println("Could not open reference-string index file " + s4 + " for reading.");
+				System.err.println("This is most likely because your index was built with an older version" + "\n"
+				+ "(<= 0.9.8.1) of bowtie-build.  Please re-run bowtie-build to generate a new" + "\n"
+				+ "index (or download one from the Bowtie website) and try again.");
+				loaded_ = false;
+				return;
+			}
+			// Read the whole thing in
+			double ret = fread(buf_, 1, cumsz >> 2, f4);
+			// Didn't read all of it?
+			if(ret != (cumsz >> 2)) {
+				System.err.println("Only read " + ret + " bytes (out of " + (cumsz >> 2) + ") from reference index file " + s4);
+				throw 1;
+			}
+			// Make sure there's no more
+			char c;
+			ret = fread(c, 1, 1, f4);
+			assert_eq(0, ret); // should have failed
+			fclose(f4);
+////ifdef BOWTIE_SHARED_MEM
+			if(useShmem_) NOTIFY_SHARED(buf_, (cumsz >> 2));
+////endif
+		} else {
+////ifdef BOWTIE_SHARED_MEM
+			if(useShmem_) WAIT_SHARED(buf_, (cumsz >> 2));
+////endif
+		}
+	}
+	
+	// Populate byteToU32_
+	bool big = currentlyBigEndian();
+	for(int i = 0; i < 256; i++) {
+		uint word = 0;
+		if(big) {
+			word |= ((i >> 0) & 3) << 24;
+			word |= ((i >> 2) & 3) << 16;
+			word |= ((i >> 4) & 3) << 8;
+			word |= ((i >> 6) & 3) << 0;
+		} else {
+			word |= ((i >> 0) & 3) << 0;
+			word |= ((i >> 2) & 3) << 8;
+			word |= ((i >> 4) & 3) << 16;
+			word |= ((i >> 6) & 3) << 24;
+		}
+		byteToU32_.get(i) = word;
+	}
+	
+//ifndef NDEBUG
+	if(sanity_) {
+		// Compare the sequence we just read from the compact index
+		// file to the true reference sequence.
+		EList<SString<char> = os; // for holding references
+		EList<SString<char> = osv(DEBUG_CAT); // for holding ref seqs
+		EList<SString<char> = osn(DEBUG_CAT); // for holding ref names
+		EList<double> = osvLen(DEBUG_CAT); // for holding ref seq lens
+		EList<double> = osnLen(DEBUG_CAT); // for holding ref name lens
+		SStringExpandable<uint> tmp_destU32_;
+		if(infiles != null) {
+			if(infilesSeq) {
+				for(double i = 0; i < infiles->size(); i++) {
+					// Remove initial backslash; that's almost
+					// certainly being used to protect the first
+					// character of the sequence from getopts (e.g.,
+					// when the first char is -)
+					if((infiles).get(i).at(0) == '\\') {
+						(infiles).get(i).erase(0, 1);
+					}
+					osv.push_back(SString<char>((infiles).get(i)));
+				}
+			} else {
+				parseFastas(infiles, osn, osnLen, osv, osvLen);
+			}
+			os = osv;
+		} else {
+			assert(origs != null);
+			os = origs;
+		}
+		
+		// Go through the loaded reference files base-by-base and
+		// sanity check against what we get by calling getBase and
+		// getStretch
+		for(double i = 0; i < os->size(); i++) {
+			double olen = ((os).get(i)).length();
+			double olenU32 = (olen + 12) / 4;
+			uint buf = new uint[olenU32];
+			byte bufadj = (byte)buf;
+			bufadj += getStretch(buf, i, 0, olen, tmp_destU32_);
+			for(double j = 0; j < olen; j++) {
+				assert_eq((int)(os).get(i)[j], (int)bufadj[j]);
+				assert_eq((int)(os).get(i)[j], (int)getBase(i, j));
+			}
+			delete[] buf;
+		}
+	}
+//endif
+  }
+  
+  public int getBase(int tidx, double toff) {
+	  int reci = refRecOffs_.get(tidx);   // first record for target reference sequence
+		int recf = refRecOffs_.get(tidx+1); // last record (exclusive) for target seq
+		Double bufOff = refOffs_.get(tidx);
+		long off = 0;
+		// For all records pertaining to the target reference sequence...
+		for(int i = reci; i < recf; i++) {
+			off += recs_.get(i).off;
+			if(toff < off) {
+				return 4;
+			}
+			long recOff = off + recs_.get(i).len;
+			if(toff < recOff) {
+				toff -= off;
+				bufOff += (long)toff;
+				int bufElt = (bufOff) >> 2;
+				long shift = (bufOff & 3) << 1;
+				return ((buf_.get(bufElt) >> shift) & 3);
+			}
+			bufOff += recs_.get(i).len;
+			off = recOff;
+		} // end for loop over records
+		return 4;
+  }
+  
+  public int getStretchNaive(double destU32, double tidx, double toff, double count) {
+	  byte dest = (byte)destU32;
+		long reci = refRecOffs_[(int)tidx];   // first record for target reference sequence
+		long recf = refRecOffs_[(int)tidx+1]; // last record (exclusive) for target seq
+		long cur = 0;
+		long bufOff = refOffs_[(int)tidx];
+		long off = 0;
+		// For all records pertaining to the target reference sequence...
+		for(int i = (int)reci; i < recf; i++) {
+			off += recs_.get(i).off;
+			for(; toff < off && count > 0; toff++) {
+				dest[cur++] = 4;
+				count--;
+			}
+			if(count == 0) break;
+			if(toff < off + recs_.get(i).len) {
+				bufOff += (long)(toff - off); // move bufOff pointer forward
+			} else {
+				bufOff += recs_.get(i).len;
+			}
+			off += recs_.get(i).len;
+			for(; toff < off && count > 0; toff++) {
+				long bufElt = (bufOff) >> 2;
+				long shift = (bufOff & 3) << 1;
+				dest[cur++] = (buf_[bufElt] >> shift) & 3;
+				bufOff++;
+				count--;
+			}
+			if(count == 0) break;
+		} // end for loop over records
+		// In any chars are left after scanning all the records,
+		// they must be ambiguous
+		while(count > 0) {
+			count--;
+			dest[cur++] = 4;
+		}
+		return 0;
+  }
+  
+  public int getStretch(double destU32[], int tidx,int toff,int count) {
+	  if(count == 0) return 0;
+		byte[] dest = (byte[])destU32;
+		destU32[0] = 0x04040404; // Add Ns, which we might end up using later
+		long reci = refRecOffs_.get(tidx);   // first record for target reference sequence
+		long recf = refRecOffs_[tidx+1]; // last record (exclusive) for target seq
+		long cur = 4; // keep a cushion of 4 bases at the beginning
+		long bufOff = refOffs_[tidx];
+		long off = 0;
+		long offset = 4;
+		boolean firstStretch = true;
+		long left  = reci;
+		long right = recf;
+		long mid   = 0;
+		// For all records pertaining to the target reference sequence...
+		for(long i = reci; i < recf; i++) {
+			if (firstStretch && recf > reci + 16){
+				// binary search finds smallest i s.t. toff >= cumRefOff_.get(i)
+				while (left < right-1) {
+					mid = left + ((right - left) >> 1);
+					if (cumRefOff_[mid] <= toff)
+						left = mid;
+					else
+						right = mid;
+				}
+				off = cumRefOff_[left];
+				bufOff = cumUnambig_[left];
+				i = left;
+			}
+			off += recs_.get(i).off; // skip Ns at beginning of stretch
+			if(toff < off) {
+				double cpycnt = min((double)(off - toff), count);
+				count -= cpycnt;
+				toff += cpycnt;
+				cur += cpycnt;
+				if(count == 0) break;
+			}
+			if(toff < off + recs_.get(i).len) {
+				bufOff += toff - off; // move bufOff pointer forward
+			} else {
+				bufOff += recs_.get(i).len;
+			}
+			off += recs_.get(i).len;
+			if(toff < off) {
+				if(firstStretch) {
+					if(toff + 8 < off && count > 8) {
+						// We already added some Ns, so we have to do
+						// a fixup at the beginning of the buffer so
+						// that we can start clobbering at cur >> 2
+						if(cur & 3) {
+							offset -= (cur & 3);
+						}
+						long curU32 = cur >> 2;
+						// Do the initial few bases
+						if(bufOff & 3) {
+							long bufElt = (bufOff) >> 2;
+							long low2 = bufOff & 3;
+							// Lots of cache misses on the following line
+							destU32[curU32] = byteToU32_[buf_[bufElt]];
+							for(int j = 0; j < low2; j++) {
+								((String)(destU32[curU32]))[j] = 4;
+							}
+							curU32++;
+							offset += low2;
+							long chars = 4 - low2;
+							count -= chars;
+							bufOff += chars;
+							toff += chars;
+						}
+						long bufOffU32 = bufOff >> 2;
+						long countLim = count >> 2;
+						long offLim = ((off - (toff + 4)) >> 2);
+						long lim = min(countLim, offLim);
+						// Do the fast thing for as far as possible
+						for(long j = 0; j < lim; j++) {
+							// Lots of cache misses on the following line
+							destU32[curU32] = byteToU32_[buf_[bufOffU32++]];
+							curU32++;
+						}
+						toff += (lim << 2);
+						count -= (lim << 2);
+						bufOff = bufOffU32 << 2;
+						cur = curU32 << 2;
+					}
+					// Do the slow thing for the rest
+					for(; toff < off && count > 0; toff++) {
+						long bufElt = (bufOff) >> 2;
+						long shift = (bufOff & 3) << 1;
+						dest[cur++] = (buf_[bufElt] >> shift) & 3;
+						bufOff++;
+						count--;
+					}
+					firstStretch = false;
+				} else {
+					// Do the slow thing
+					for(; toff < off && count > 0; toff++) {
+						long bufElt = (bufOff) >> 2;
+						long shift = (bufOff & 3) << 1;
+						dest[cur++] = (buf_[bufElt] >> shift) & 3;
+						bufOff++;
+						count--;
+					}
+				}
+			}
+			if(count == 0) break;
+		} // end for loop over records
+		// In any chars are left after scanning all the records,
+		// they must be ambiguous
+		while(count > 0) {
+			count--;
+			dest[cur++] = 4;
+		}
+		return (int)offset;
+  }
+  
+  public final double numRefs() {
+	  return nrefs_;
+  }
+  
+  public final double approxLen(int elt) {
+	  return refLens_.get(elt);
+  }
+  
+  public final Boolean loaded() {
+	  return loaded_;
+  }
+  
+  public final double pastedOffset(int idx) {
+	  return refOffs_.get(idx);
+  }
+  
+  public static Pair<Double, Double> szsFromFasta(EList<FileBuf> is,
+			String outfile,
+			boolean bigEndian,
+			RefReadInParams refparams,
+			EList<RefRecord> szs,
+			boolean sanity) {
+	  RefReadInParams parms = refparams;
+		Pair<Double,Double> sztot;
+		if(!outfile.empty()) {
+			String file3 = outfile + ".3." + IndexTypes.gEbwt_ext;
+			String file4 = outfile + ".4." + IndexTypes.gEbwt_ext;
+			// Open output stream for the '.3.gEbwt_ext' file which will
+			// hold the size records.
+			FileOutputStream fout3 = new FileOutputStream(file3);
+			if(!fout3.getChannel().isOpen()) {
+				System.err.println("Could not open index file for writing: \"" + file3 + "\"" + "\n"
+					 + "Please make sure the directory exists and that permissions allow writing by" + "\n"
+					 + "Bowtie.");
+			}
+			BitpairOutFileBuf bpout = new BitpairOutFileBuf(file4);
+			// Read in the sizes of all the unambiguous stretches of the genome
+			// into a vector of RefRecords.  The input streams are reset once
+			// it's done.
+			writeU<double>(fout3, 1, bigEndian); // endianness sentinel
+			boolean color = parms.color;
+			if(color) {
+				parms.color = false;
+				// Make sure the .3.gEbwt_ext and .4.gEbwt_ext files contain
+				// nucleotides; not colors
+				long numSeqs = 0;
+				parms.color = true;
+				writeU<Long>(fout3, (long)szs.size(), bigEndian); // write // records
+				for(int i = 0; i < szs.size(); i++) {
+					szs.get(i).write(fout3, bigEndian);
+				}
+				szs.clear();
+				// Now read in the colorspace size records; these are
+				// the ones that were indexed
+				long numSeqs2 = 0;
+				sztot = fastaRefReadSizes(is, szs, parms, null, numSeqs2);
+			} else {
+				long numSeqs = 0;
+				sztot = fastaRefReadSizes(is, szs, parms, bpout, numSeqs);
+				writeU<long>(fout3, (long)szs.size(), bigEndian); // write # records
+				for(int i = 0; i < szs.size(); i++) szs.get(i).write(fout3, bigEndian);
+			}
+			if(sztot.first == 0) {
+				System.err.println("Error: No unambiguous stretches of characters in the input.  Aborting...");
+			}
+			bpout.close();
+			fout3.close();
+		} else {
+			// Read in the sizes of all the unambiguous stretches of the
+			// genome into a vector of RefRecords
+			long numSeqs = 0;
+			sztot = fastaRefReadSizes(is, szs, parms, null, numSeqs);
+			if(parms.color) {
+				parms.color = false;
+				EList<RefRecord> szs2 = new EList(2);
+				long numSeqs2 = 0;
+				// One less color than base
+				parms.color = true;
+			}
+		}
+		return sztot;
+  }
+}

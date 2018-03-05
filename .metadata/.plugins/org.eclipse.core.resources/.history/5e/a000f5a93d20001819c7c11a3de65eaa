@@ -1,0 +1,9 @@
+package com.uwb.bt2j.indexer;
+
+import java.io.OutputStream;
+
+public class WordIO <T> {
+	public void writeU(OutputStream out, T x) {
+		out.write(String)x);
+	}
+}

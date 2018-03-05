@@ -6,18 +6,12 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Scanner;
 
-import com.uwb.bt2j.aligner.RandomSource;
-import com.uwb.bt2j.util.IndexTypes;
-import com.uwb.bt2j.util.RefReadInParams;
-import com.uwb.bt2j.util.RefRecord;
-import com.uwb.bt2j.util.file.FileBuf;
-import com.uwb.bt2j.util.strings.BTDnaString;
-import com.uwb.bt2j.util.types.EList;
+import com.uwb.bt2j.indexer.types.EList;
+import com.uwb.bt2j.indexer.types.SideLocus;
 
-public class Ebwt <TStr>{
+public class EBWT <TStr>{
 	public static final String gEbwt_ext = "bt2";
 	public String gLastIOErrMsg;
-	public boolean       _toBigEndian;
 	public int    _overrideOffRate;
 	public boolean       _verbose;
 	public boolean       _passMemExc;
@@ -80,11 +74,7 @@ public class Ebwt <TStr>{
 		EbwtFlags(int y){x = y;}
 	}
 	
-	public void Ebwt_INITS() {
-	
-	}
-	
-	public Ebwt(
+	public EBWT(String in,
 			int color,
 			int needEntireReverse,
 			boolean fw,
@@ -101,7 +91,30 @@ public class Ebwt <TStr>{
 			boolean startVerbose, // = false,
 			boolean passMemExc, // = false,
 			boolean sanityCheck) {
-		Ebwt_INITS();
+		 _overrideOffRate = overrideOffRate;
+		    _verbose = verbose;
+		    _passMemExc = passMemExc;
+		    _sanity = sanityCheck;
+		    fw_ = fw;
+		    _in1 = null;
+		    _in2 = null;
+		    _zOff = IndexTypes.OFF_MASK;
+		    _zEbwtByteOff = IndexTypes.OFF_MASK;
+		    _zEbwtBpOff = -1;
+		    _nPat = 0;
+		    _nFrag = 0;
+		    _plen = 1;
+		    _rstarts = 1;
+		    _fchr = 1;
+		    _ftab = 1;
+		    _eftab = 1;
+		    _offs = 1;
+		    _ebwt = 1;
+		    _useMm = false;
+		    useShmem_ = false;
+		    _refnames = new EList(1);
+		    mmFile1_ = null;
+		    mmFile2_ = null;
 		packed_ = false;
 		_useMm = useMm;
 		useShmem_ = useShmem;
@@ -128,7 +141,7 @@ public class Ebwt <TStr>{
 		}
 	}
 	
-	public Ebwt(TStr exampleStr,
+	public EBWT(TStr exampleStr,
 				boolean packed,
 				int color,
 				int needEntireReverse,
@@ -160,8 +173,31 @@ public class Ebwt <TStr>{
 				offRate,
 				ftabChars,
 				color,
-				refparams.reverse == REF_READ_REVERSE);
-		Ebwt_INITS();
+				refparams.reverse == ReadDir.REF_READ_REVERSE);
+		 _overrideOffRate = overrideOffRate;
+		    _verbose = verbose;
+		    _passMemExc = passMemExc;
+		    _sanity = sanityCheck;
+		    fw_ = fw;
+		    _in1 = null;
+		    _in2 = null;
+		    _zOff = IndexTypes.OFF_MASK;
+		    _zEbwtByteOff = IndexTypes.OFF_MASK;
+		    _zEbwtBpOff = -1;
+		    _nPat = 0;
+		    _nFrag = 0;
+		    _plen = 1;
+		    _rstarts = 1;
+		    _fchr = 1;
+		    _ftab = 1;
+		    _eftab = 1;
+		    _offs = 1;
+		    _ebwt = 1;
+		    _useMm = false;
+		    useShmem_ = false;
+		    _refnames = 1;
+		    mmFile1_ = null;
+		    mmFile2_ = null;
 		_in1Str = file + ".1." + gEbwt_ext;
 		_in2Str = file + ".2." + gEbwt_ext;
 		packed_ = packed;
@@ -480,8 +516,8 @@ public class Ebwt <TStr>{
 		long sideSz = eh._sideSz;
 		long ebwtTotSz = eh._ebwtTotSz;
 		long fchr[] = {0, 0, 0, 0, 0};
-		EList<long> ftab(EBWT_CAT);
-		long zOff = OFF_MASK;
+		EList<long> ftab(1);
+		long zOff = IndexTypes.OFF_MASK;
 		
 		// Save # of occurrences of each character as we walk along the bwt
 		long occ[4] = {0, 0, 0, 0};
@@ -491,7 +527,7 @@ public class Ebwt <TStr>{
 		// The absorbed rows represent suffixes shorter than the ftabChars
 		// cutoff.
 		byte absorbCnt = 0;
-		EList<byte> absorbFtab(EBWT_CAT);
+		EList<byte> absorbFtab(1);
 		try {
 			VMSG_NL("Allocating ftab, absorbFtab");
 			ftab.resize(ftabLen);
@@ -508,9 +544,9 @@ public class Ebwt <TStr>{
 		// Allocate the side buffer; holds a single side as its being
 		// constructed and then written to disk.  Reused across all sides.
 	#ifdef SIXTY4_FORMAT
-		EList<long> ebwtSide(EBWT_CAT);
+		EList<long> ebwtSide(1);
 	#else
-		EList<byte> ebwtSide(EBWT_CAT);
+		EList<byte> ebwtSide(1);
 	#endif
 		try {
 	#ifdef SIXTY4_FORMAT
@@ -715,7 +751,7 @@ public class Ebwt <TStr>{
 			}
 		}
 		VMSG_NL("Exited Ebwt loop");
-		//assert_neq(zOff, OFF_MASK);
+		//assert_neq(zOff, IndexTypes.OFF_MASK);
 		if(absorbCnt > 0) {
 			// Absorb any trailing, as-yet-unabsorbed short suffixes into
 			// the last element of ftab
@@ -765,7 +801,7 @@ public class Ebwt <TStr>{
 		}
 		//assert_leq(eftabLen, (long)eh._ftabChars*2);
 		eftabLen = eh._ftabChars*2;
-		EList<long> eftab(EBWT_CAT);
+		EList<long> eftab(1);
 		try {
 			eftab.resize(eftabLen);
 			eftab.fillZero();
@@ -784,7 +820,7 @@ public class Ebwt <TStr>{
 				//assert_lt(eftabCur*2+1, eftabLen);
 				eftab[eftabCur*2] = lo;
 				eftab[eftabCur*2+1] = hi;
-				ftab[i] = (eftabCur++) ^ OFF_MASK; // insert pointer into eftab
+				ftab[i] = (eftabCur++) ^ IndexTypes.OFF_MASK; // insert pointer into eftab
 				//assert_eq(lo, Ebwt::ftabLo(ftab.ptr(), eftab.ptr(), len, ftabLen, eftabLen, i));
 				//assert_eq(hi, Ebwt::ftabHi(ftab.ptr(), eftab.ptr(), len, ftabLen, eftabLen, i));
 			} else {
@@ -817,7 +853,7 @@ public class Ebwt <TStr>{
 			boolean straddled){
 		long top = 0;
 		long bot = _nFrag; // 1 greater than largest addressable element
-		long elt = IndexTypes.OFF_MASK;
+		long elt = IndexTypes.IndexTypes.OFF_MASK;
 		// Begin binary search
 		while(true) {
 			elt = top + ((bot - top) >> 1);
@@ -836,7 +872,7 @@ public class Ebwt <TStr>{
 						straddled = true;
 						if(rejectStraddle) {
 							// it falls off; signal no-go and return
-							tidx = IndexTypes.OFF_MASK;
+							tidx = IndexTypes.IndexTypes.OFF_MASK;
 							return;
 						}
 					}
@@ -874,7 +910,7 @@ public class Ebwt <TStr>{
 		SideLocus l;
 		if(steps > 0) l.initFromRow(row, _eh, ebwt());
 		while(steps > 0) {
-			if(row == _zOff) return IndexTypes.OFF_MASK;
+			if(row == _zOff) return IndexTypes.IndexTypes.OFF_MASK;
 			long newrow = this.mapLF(l);
 			row = newrow;
 			steps--;
@@ -1280,7 +1316,7 @@ public class Ebwt <TStr>{
 		// Keep plen; it's small and the client may want to seq it
 		// even when the others are evicted.
 		//_plen  = null;
-		_zEbwtByteOff = IndexTypes.OFF_MASK;
+		_zEbwtByteOff = IndexTypes.IndexTypes.OFF_MASK;
 		_zEbwtBpOff = -1;
 	}
 	
@@ -1345,7 +1381,7 @@ public class Ebwt <TStr>{
 	}
 	
 	public long ftabHi(long i) {
-		return Ebwt.ftabHi(
+		return EBWT.ftabHi(
 				ftab(),
 				eftab(),
 				_eh._len,
@@ -1364,7 +1400,7 @@ public class Ebwt <TStr>{
 		if(ftab[i] <= len) {
 			return ftab[i];
 		} else {
-			long efIdx = ftab[i] ^ IndexTypes.OFF_MASK;
+			long efIdx = ftab[i] ^ IndexTypes.IndexTypes.OFF_MASK;
 			return eftab[efIdx*2+1];
 		}
 	}
@@ -1379,13 +1415,13 @@ public class Ebwt <TStr>{
 		if(ftab[i] <= len) {
 			return ftab[i];
 		} else {
-			long efIdx = ftab[i] ^ OFF_MASK;
+			long efIdx = ftab[i] ^ IndexTypes.OFF_MASK;
 			return eftab[efIdx*2];
 		}
 	}
 	
 	public long ftabLo(long i) {
-		return Ebwt.ftabLo(
+		return EBWT.ftabLo(
 				ftab(),
 				eftab(),
 				_eh._len,
@@ -1414,7 +1450,7 @@ public class Ebwt <TStr>{
 		return true;
 	}
 	
-	public static Pair<Ebwt, Ebwt> fromString(
+	public static Pair<EBWT, EBWT> fromString(
 			String str,
 			boolean packed,
 			int color,
@@ -1433,7 +1469,7 @@ public class Ebwt <TStr>{
 			boolean verbose,
 			boolean autoMem,
 			boolean sanity){
-		EList<String> strs = new EList(EBWT_CAT);
+		EList<String> strs = new EList(1);
 		strs.push_back(str);
 		return fromStrings<TStr>(
 				strs,
@@ -1455,7 +1491,7 @@ public class Ebwt <TStr>{
 				autoMem,
 				sanity);
 	}
-	public static Pair<Ebwt, Ebwt> fromStrings(
+	public static Pair<EBWT, EBWT> fromStrings(
 			String strs,
 			boolean packed,
 			int color,
@@ -1474,7 +1510,7 @@ public class Ebwt <TStr>{
 			boolean verbose,
 			boolean autoMem,
 			boolean sanity){
-		EList<FileBuf> is = new EList(EBWT_CAT);
+		EList<FileBuf> is = new EList(1);
 		RefReadInParams refparams = new RefReadInParams(color, REF_READ_FORWARD, false, false);
 		String ss = "";
 		for(long i = 0; i < strs.size(); i++) {
@@ -1485,7 +1521,7 @@ public class Ebwt <TStr>{
 		// Vector for the ordered list of "records" comprising the input
 		// sequences.  A record represents a stretch of unambiguous
 		// characters in one of the input sequences.
-		EList<RefRecord> szs = new EList(EBWT_CAT);
+		EList<RefRecord> szs = new EList(1);
 		Pair<long, long> sztot;
 		sztot = BitPairReference::szsFromFasta(is, file, bigEndian, refparams, szs, sanity);
 		// Construct Ebwt from input strings and parameters
@@ -1586,7 +1622,7 @@ public class Ebwt <TStr>{
 				//Timer timer(cout, "  Time to join reference sequences: ", _verbose);
 				joinToDisk(is, szs, sztot, refparams, s, out1, out2);
 				//Timer timer(cout, "  Time to reverse reference sequence: ", _verbose);
-				//EList<RefRecord> tmp(EBWT_CAT);
+				//EList<RefRecord> tmp(1);
 				s.reverse();
 				reverseRefRecords(szs, tmp, false, verbose);
 				szsToDisk(tmp, out1, refparams.reverse);
@@ -1626,14 +1662,14 @@ public class Ebwt <TStr>{
 			throw 1;
 		}
 		// Succesfully obtained joined reference String
-		if(bmax != OFF_MASK) {
+		if(bmax != IndexTypes.OFF_MASK) {
 			VMSG_NL("bmax according to bmax setting: " + bmax);
 		}
-		else if(bmaxSqrtMult != OFF_MASK) {
+		else if(bmaxSqrtMult != IndexTypes.OFF_MASK) {
 			bmax *= bmaxSqrtMult;
 			VMSG_NL("bmax according to bmaxSqrtMult setting: " + bmax);
 		}
-		else if(bmaxDivN != OFF_MASK) {
+		else if(bmaxDivN != IndexTypes.OFF_MASK) {
 			bmax = max<long>(jlen / bmaxDivN, 1);
 			VMSG_NL("bmax according to bmaxDivN setting: " + bmax);
 		}
@@ -1689,17 +1725,17 @@ public class Ebwt <TStr>{
 					dcv += 1;
 					long sz = (long)DifferenceCoverSample<TStr>::simulateAllocs(s, dcv >> 1);
 					if(nthreads > 1) sz *= (nthreads + 1);
-					AutoArray<byte> tmp(sz, EBWT_CAT);
+					AutoArray<byte> tmp(sz, 1);
 					dcv >>= 1;
 					// Likewise with the KarkkainenBlockwiseSA
 					sz = (long)KarkkainenBlockwiseSA<TStr>::simulateAllocs(s, bmax);
-					AutoArray<byte> tmp2(sz, EBWT_CAT);
+					AutoArray<byte> tmp2(sz, 1);
 					// Now throw in the 'ftab' and 'isaSample' structures
 					// that we'll eventually allocate in buildToDisk
-					AutoArray<long> ftab(_eh._ftabLen * 2, EBWT_CAT);
-					AutoArray<byte> side(_eh._sideSz, EBWT_CAT);
+					AutoArray<long> ftab(_eh._ftabLen * 2, 1);
+					AutoArray<byte> side(_eh._sideSz, 1);
 					// Grab another 20 MB out of caution
-					AutoArray<int> extra(20*1024*1024, EBWT_CAT);
+					AutoArray<int> extra(20*1024*1024, 1);
 					// If we made it here without throwing bad_alloc, then we
 					// passed the memory-usage stress test
 					VMSG("  Passed!  Constructing with these parameters: --bmax " + bmax + " --dcv " + dcv);
@@ -1763,13 +1799,13 @@ public class Ebwt <TStr>{
 			return off;
 		} else {
 			// Try looking at zoff
-			return IndexTypes.OFF_MASK;
+			return IndexTypes.IndexTypes.OFF_MASK;
 		}
 	}
 	
 	public long tryOffset(long elt, boolean fw, long hitlen) {
 		long off = tryOffset(elt);
-		if(off != IndexTypes.OFF_MASK && !fw) {
+		if(off != IndexTypes.IndexTypes.OFF_MASK && !fw) {
 			off = _eh._len - off - 1;
 			off -= (hitlen-1);
 		}
@@ -1808,7 +1844,7 @@ public class Ebwt <TStr>{
 	}
 	
 	public long mapLF1(long row, SideLocus l, int c) {
-		if(rowL(l) != c || row == _zOff) return IndexTypes.OFF_MASK;
+		if(rowL(l) != c || row == _zOff) return IndexTypes.IndexTypes.OFF_MASK;
 		long ret = countBt2Side(l, c);
 		return ret;
 	}
@@ -1849,7 +1885,7 @@ public class Ebwt <TStr>{
 	{
 		long top = 0;
 		long bot = _nFrag; // 1 greater than largest addressable element
-		long elt = OFF_MASK;
+		long elt = IndexTypes.OFF_MASK;
 		// Begin binary search
 		while(true) {
 			elt = top + ((bot - top) >> 1);
@@ -1868,7 +1904,7 @@ public class Ebwt <TStr>{
 						straddled = true;
 						if(rejectStraddle) {
 							// it falls off; signal no-go and return
-							tidx = OFF_MASK;
+							tidx = IndexTypes.OFF_MASK;
 							return;
 						}
 					}
@@ -1910,7 +1946,7 @@ public class Ebwt <TStr>{
 		SideLocus l;
 		if(steps > 0) l.initFromRow(row, _eh, ebwt());
 		while(steps > 0) {
-			if(row == _zOff) return OFF_MASK;
+			if(row == _zOff) return IndexTypes.OFF_MASK;
 			long newrow = this->mapLF(l ASSERT_ONLY(, false));
 			row = newrow;
 			steps--;
@@ -2055,11 +2091,7 @@ public class Ebwt <TStr>{
 			System.out.println("Could not locate a Bowtie index corresponding to basename " + ebwtFileBase);
 		}
 		return str;
-	}
-	
-	
-	
-	
+	}	
 }
 
 

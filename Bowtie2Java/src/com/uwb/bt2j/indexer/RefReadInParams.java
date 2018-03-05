@@ -1,16 +1,21 @@
 package com.uwb.bt2j.indexer;
 
+import com.uwb.bt2j.indexer.Indexer.GetOpts;
+import com.uwb.bt2j.indexer.types.EList;
+import com.uwb.bt2j.indexer.types.RefRecord;
+import com.uwb.bt2j.indexer.types.RefRecord.ReadDir;
+
 import javafx.util.Pair;
 
 public class RefReadInParams <TStr>{
 	public boolean color;
-	public int reverse;
+	public ReadDir reverse;
 	public boolean nsToAs;
 	public boolean bisulfite;
 	
-	public RefReadInParams(boolean col, int r, boolean nsToA, boolean bisulf) {
+	public RefReadInParams(boolean col, ReadDir reverse2, boolean nsToA, boolean bisulf) {
 		color = col;
-		reverse = r;
+		reverse = reverse2;
 		nsToAs = nsToA;
 		bisulfite = bisulf;
 	}

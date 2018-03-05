@@ -1,6 +1,10 @@
 package com.uwb.bt2j.indexer;
 
+import java.io.IOException;
+
 import org.omg.CORBA_2_3.portable.OutputStream;
+
+import com.uwb.bt2j.indexer.types.EList;
 
 public class BlockwiseSA <TStr> {
 	
@@ -10,9 +14,12 @@ public class BlockwiseSA <TStr> {
 	protected boolean       _passMemExc;  /// true -> pass on memory exceptions
 	protected boolean       _verbose;     /// be talkative
 	protected EList<Long>  _itrBucket;   /// current bucket
+	protected long _itrBucketIdx;
+	protected EList<Long> _sampleSuffs;
 	protected long         _itrBucketPos;/// offset into current bucket
 	protected long         _itrPushedBackSuffix; /// temporary slot for lookahead
 	protected OutputStream        _logger;      /// write log messages here
+	protected long _cur;
 	
 	public BlockwiseSA(
 			TStr __text,
@@ -55,6 +62,7 @@ public class BlockwiseSA <TStr> {
 	public TStr text() {
 		return _text;
 	}
+	
 	public long bucketSz() { return _bucketSz; }
 	public boolean sanityCheck()  { return _sanityCheck; }
 	public boolean verbose()      { return _verbose; }
@@ -65,21 +73,23 @@ public class BlockwiseSA <TStr> {
 		
 	}
 	
-	protected boolean isReset() {
-		
-	}
-	
 	protected void nextBlock(int cur_block, int tid) {
 		
 	}
 	
+	public 
+
 	protected boolean hasMoreBlocks() {
-		
+		return this._itrBucketIdx <= _sampleSuffs.size();
 	}
 	
-	protected void verbose(String s) {
+	protected boolean isReset() {
+		return _cur == 0;
+	}
+	
+	protected void verbose(String s) throws IOException {
 		if(this.verbose()) {
-			this.log().write(s);
+			this.log().write(s.getBytes());
 			this.log().flush();
 		}
 	}

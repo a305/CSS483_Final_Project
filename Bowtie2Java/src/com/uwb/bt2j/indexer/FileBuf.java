@@ -7,7 +7,6 @@ import java.io.InputStream;
 public class FileBuf <TNameStr, TSeqStr> {
 	private static final double BUF_SZ = 1024 * 256;
 	private File _in;
-	private gzFile _zIn;
 	private FileInputStream _inf;
 	private InputStream _ins;
 	private double _cur;
@@ -32,11 +31,6 @@ public class FileBuf <TNameStr, TSeqStr> {
 	public FileBuf(File in) {
 		init();
 		_in = in;
-	}
-	
-	public FileBuf(gzFile in) {
-		init();
-		_zIn = in;
 	}
 	
 	public FileBuf(FileInputStream inf) {
@@ -238,7 +232,7 @@ public class FileBuf <TNameStr, TSeqStr> {
 		return c;
 	}
 	
-	public void parseFastaRecord(TNameStr name, TSeqStr seq, boolean gotCaret) {
+	public void parseFastaRecord(TNameStr name, TSeqStr seq) {
 		int c;
 		if(!gotCaret) {
 			// Skip over caret and non-newline whitespace
@@ -268,7 +262,7 @@ public class FileBuf <TNameStr, TSeqStr> {
 		}
 	}
 	
-	public void parseFastaRecordLength(double nameLen, double seqLen, boolean gotCaret) {
+	public void parseFastaRecordLength(double nameLen, double seqLen) {
 		int c;
 		nameLen = seqLen = 0;
 		if(!gotCaret) {

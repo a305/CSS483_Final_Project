@@ -24,7 +24,7 @@ public class BitpairOutFileBuf {
 			cur_++;
 			if(cur_ == BUF_SZ) {
 				// Flush the buffer
-				if(!fwrite(buf_, BUF_SZ, 1, out_)) {
+				if(!out_.canWrite()) {
 					System.err.println("Error writing to the reference index file (.4.ebwt)");
 				}
 				// Reset to beginning of the buffer
@@ -40,10 +40,9 @@ public class BitpairOutFileBuf {
 	public void close() {
 		if(cur_ > 0 || bpPtr_ > 0) {
 			if(bpPtr_ == 0) cur_--;
-			if(!fwrite(buf_, cur_ + 1, 1, out_)) {
+			if(!out_.canWrite()) {
 				System.err.println("Error writing to the reference index file (.4.ebwt)");
 			}
 		}
-		out_.close();
 	}
 }

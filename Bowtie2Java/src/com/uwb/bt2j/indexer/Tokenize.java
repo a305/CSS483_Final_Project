@@ -1,13 +1,13 @@
 package com.uwb.bt2j.indexer;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.StringReader;
 
-public class Tokenize<T> {
-	public static <T> void tokenize(String s, String delims, T ss, int max) {
+import com.uwb.bt2j.indexer.types.EList;
+
+public class Tokenize {
+	public static EList<String> tokenize(String s, String delims, int max) {
 		//string::size_type lastPos = s.find_first_not_of(delims, 0);
 		int lastPos = 0;
+		EList<String> ss = new EList();
 		String[] tokens = s.substring(lastPos).split(delims);
 		int pos = tokens.length > 1 ? tokens[0].length() : -1;
 		
@@ -20,12 +20,16 @@ public class Tokenize<T> {
 				pos = -1;
 			}
 		}
+		
+		return ss;
 	}
 	
-	public static void tokenize(String s, String delim, T ss) {
+	public static EList<String> tokenize(String s, String delim) {
 		String[] tokens = s.split(delim);
+		EList<String> ss = new EList();
 		for (String u : tokens) {
 			ss.push_back(u);
 		}
+		return ss;
 	}
 }
