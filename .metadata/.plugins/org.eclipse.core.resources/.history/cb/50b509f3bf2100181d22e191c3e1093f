@@ -25,7 +25,7 @@ public class BitpairOutFileBuf {
 			cur_++;
 			if(cur_ == BUF_SZ) {
 				// Flush the buffer
-				if(!out_.canWrite()fwrite(buf_, BUF_SZ, 1, out_)) {
+				if(!fwrite(buf_, BUF_SZ, 1, out_)) {
 					System.err.println("Error writing to the reference index file (.4.ebwt)");
 				}
 				// Reset to beginning of the buffer

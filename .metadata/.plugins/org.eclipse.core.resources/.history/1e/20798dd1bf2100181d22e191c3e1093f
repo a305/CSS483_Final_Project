@@ -211,6 +211,7 @@ class Alphabet {
 		case 'N': alts[0] = 0; alts[1] = 1; alts[2] = 2; alts[3] = 3; num = 4; break;
 		default: {
 			System.err.println("Bad IUPAC code: " + c + ", (int: " + (int)c + ")");
+			//throw runtime_error("");
 		}
 		}
   }

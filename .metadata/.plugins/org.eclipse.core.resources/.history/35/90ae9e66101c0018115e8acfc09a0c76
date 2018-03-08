@@ -1,8 +1,0 @@
-package com.uwb.bt2j.util;
-
-public class Random1toN {
-	public static double SWAPLIST_THRESH;
-	public static double CONVERSION_THRESH;
-	public static float CONVERSION_FRAC;
-	
-}

@@ -476,7 +476,7 @@ public class Indexer <T> {
 		// Construct index from input strings and parameters
 		filesWritten.push_back(outfile + ".1." + IndexTypes.gEbwt_ext);
 		filesWritten.push_back(outfile + ".2." + IndexTypes.gEbwt_ext);
-		EBWT ebwt = new EBWT(
+		Ebwt ebwt = new Ebwt(
 			"",
 			packed,
 			0,
