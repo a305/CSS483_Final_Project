@@ -399,14 +399,14 @@ public class DifferenceCoverSample <TStr, T>{
 		return min(deltaLeft, deltaRight);
 	}
 	
-	public boolean increasing(T[] ts, int limit) {
+	public boolean increasing(T ts, int limit) {
 		for(int i = 0; i < limit-1; i++) {
 			if(ts[i+1] <= ts[i]) return false;
 		}
 		return true;
 	}
 	
-	public boolean hasDifference(T[] ds, T d, T v, T diff) {
+	public boolean hasDifference(T ds, T d, T v, T diff) {
 		// diffs[] records all the differences observed
 		for(T di = T(); di < d; di++) {
 			for(T dj = di+1; dj < d; dj++) {

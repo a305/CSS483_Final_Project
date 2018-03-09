@@ -36,13 +36,13 @@ public abstract class EBWT <TStr>{
 	public long  _zEbwtByteOff;
 	public long   _zEbwtBpOff;
 	public long  _nPat;  /// number of reference texts
-	public long  _nFrag; /// number of fragments
-	long _plen;
-	long _rstarts;
+	public int  _nFrag; /// number of fragments
+	long[] _plen;
+	int[] _rstarts;
 	long _fchr;
 	long _ftab;
 	long _eftab;
-	long _offs;
+	long[] _offs;
 	byte _ebwt;
 	public boolean       _useMm;        /// use memory-mapped files to hold the index
 	public boolean       useShmem_;     /// use shared memory to hold large parts of the index
@@ -221,7 +221,7 @@ public abstract class EBWT <TStr>{
 			}
 		}
 		if(doBwtFile) {
-			bwtOut = new ofstream(_inBwtStr, ios::binary);
+			bwtOut = new ofstream(_inBwtStr, ios.binary);
 			if(bwtOut.available() <= 0) {
 				System.err.println("Could not open suffix-array file for writing: \"" + _inBwtStr + "\"" + "\n" +
 						+ "Please make sure the directory exists and that permissions allow writing by" + "\n" +
@@ -321,32 +321,15 @@ public abstract class EBWT <TStr>{
 		}
 		VMSG_NL("Returning from Ebwt constructor");
 	}
-	
-	public String adjustEbwtBase(String cmdline, String ebwtFileBase, boolean verbose) {
-		String str = ebwtFileBase;
-		File in = new File((str + ".1." + gEbwt_ext));
-		
-		if(verbose) System.out.println( "Trying " + str);
-		if(!in.exists())
-			if(verbose) System.out.println( "  didn't work" );
-		if(System.getenv("BOWTIE2_INDEXES") != null) {
-			str = System.getenv("BOWTIE2_INDEXES") + "/" + ebwtFileBase;
-			if(verbose) System.out.println( "Trying " + str);
-			in=new File((str + ".1." + gEbwt_ext));
-		}
-		if(!in.exists()) {
-			System.err.println("Could not locate a Bowtie index corresponding to basename \"" + ebwtFileBase + "\"" );
-		}
-		return str;
-	}
+
 	
 	public TStr join(EList<TStr> l, int seed) {
 		RandomSource rand; // reproducible given same seed
 		rand.init(seed);
 		TStr ret;
 		long guessLen = 0;
-		for(long i = 0; i < l.size(); i++) {
-			guessLen += length(l[i]);
+		for(int i = 0; i < l.size(); i++) {
+			guessLen += length(l.get(i));
 		}
 		ret.resize(guessLen);
 		long off = 0;
@@ -418,7 +401,7 @@ public abstract class EBWT <TStr>{
 		try {
 			this._plen.init(new long[this._nPat], this._nPat);
 		} catch(bad_alloc& e) {
-			cerr + "Out of memory allocating plen[] in Ebwt::join()"
+			cerr + "Out of memory allocating plen[] in Ebwt.join()"
 					+ " at " + __FILE__ + ":" + __LINE__ + "\n");;
 			throw e;
 		}
@@ -496,7 +479,7 @@ public abstract class EBWT <TStr>{
 			OutputStream saOut,
 			OutputStream bwtOut
 	) {
-		EbwtParams& eh = this._eh;
+		EbwtParams eh = _eh;
 		
 		assert(eh.repOk());
 		//assert_eq(s.length()+1, sa.size());
@@ -529,7 +512,7 @@ public abstract class EBWT <TStr>{
 			absorbFtab.fillZero();
 		} catch(bad_alloc &e) {
 			cerr + "Out of memory allocating ftab[] or absorbFtab[] "
-					+ "in Ebwt::buildToDisk() at " + __FILE__ + ":"
+					+ "in Ebwt.buildToDisk() at " + __FILE__ + ":"
 					+ __LINE__ + "\n");;
 			throw e;
 		}
@@ -549,7 +532,7 @@ public abstract class EBWT <TStr>{
 	#endif
 		} catch(bad_alloc &e) {
 			cerr + "Out of memory allocating ebwtSide[] in "
-					+ "Ebwt::buildToDisk() at " + __FILE__ + ":"
+					+ "Ebwt.buildToDisk() at " + __FILE__ + ":"
 					+ __LINE__ + "\n");;
 			throw e;
 		}
@@ -573,7 +556,7 @@ public abstract class EBWT <TStr>{
 		// end)
 		// Iterate over packed bwt bytes
 		VMSG_NL("Entering Ebwt loop");
-		//assert_ONLY(long beforeEbwtOff = (long)out1.tellp()); // @double-check - pos_type, std::streampos
+		//assert_ONLY(long beforeEbwtOff = (long)out1.tellp()); // @double-check - pos_type, std.streampos
 		
 		// First integer in the suffix-array output file is the length of the
 		// array, including $
@@ -800,13 +783,13 @@ public abstract class EBWT <TStr>{
 			eftab.fillZero();
 		} catch(bad_alloc &e) {
 			cerr + "Out of memory allocating eftab[] "
-					+ "in Ebwt::buildToDisk() at " + __FILE__ + ":"
+					+ "in Ebwt.buildToDisk() at " + __FILE__ + ":"
 					+ __LINE__ + "\n");;
 			throw e;
 		}
 		long eftabCur = 0;
 		for(long i = 1; i < ftabLen; i++) {
-			long lo = ftab[i] + Ebwt::ftabHi(ftab.ptr(), eftab.ptr(), len, ftabLen, eftabLen, i-1);
+			long lo = ftab[i] + Ebwt.ftabHi(ftab.ptr(), eftab.ptr(), len, ftabLen, eftabLen, i-1);
 			if(absorbFtab[i] > 0) {
 				// Skip a number of short pattern indicated by absorbFtab[i]
 				long hi = lo + absorbFtab[i];
@@ -814,13 +797,13 @@ public abstract class EBWT <TStr>{
 				eftab[eftabCur*2] = lo;
 				eftab[eftabCur*2+1] = hi;
 				ftab[i] = (eftabCur++) ^ IndexTypes.OFF_MASK; // insert pointer into eftab
-				//assert_eq(lo, Ebwt::ftabLo(ftab.ptr(), eftab.ptr(), len, ftabLen, eftabLen, i));
-				//assert_eq(hi, Ebwt::ftabHi(ftab.ptr(), eftab.ptr(), len, ftabLen, eftabLen, i));
+				//assert_eq(lo, Ebwt.ftabLo(ftab.ptr(), eftab.ptr(), len, ftabLen, eftabLen, i));
+				//assert_eq(hi, Ebwt.ftabHi(ftab.ptr(), eftab.ptr(), len, ftabLen, eftabLen, i));
 			} else {
 				ftab[i] = lo;
 			}
 		}
-		////assert_eq(Ebwt::ftabHi(ftab.ptr(), eftab.ptr(), len, ftabLen, eftabLen, ftabLen-1), len+1);
+		////assert_eq(Ebwt.ftabHi(ftab.ptr(), eftab.ptr(), len, ftabLen, eftabLen, ftabLen-1), len+1);
 		// Write ftab to primary file
 		for(long i = 0; i < ftabLen; i++) {
 			writeU<long>(out1, ftab[i], this.toBe());
@@ -833,20 +816,20 @@ public abstract class EBWT <TStr>{
 		// Note: if you'd like to sanity-check the Ebwt, you'll have to
 		// read it back into memory first!
 		assert(!isInMemory());
-		VMSG_NL("Exiting Ebwt::buildToDisk()");
+		VMSG_NL("Exiting Ebwt.buildToDisk()");
 	}
 	
 	public void joinedToTextOff(
 			long qlen,
 			long off,
-			long tidx,
+			int tidx,
 			long textoff,
 			long tlen,
 			boolean rejectStraddle,
 			boolean straddled){
-		long top = 0;
-		long bot = _nFrag; // 1 greater than largest addressable element
-		long elt = IndexTypes.OFF_MASK;
+		int top = 0;
+		int bot = _nFrag; // 1 greater than largest addressable element
+		int elt = (int) IndexTypes.OFF_MASK;
 		// Begin binary search
 		while(true) {
 			elt = top + ((bot - top) >> 1);
@@ -865,7 +848,7 @@ public abstract class EBWT <TStr>{
 						straddled = true;
 						if(rejectStraddle) {
 							// it falls off; signal no-go and return
-							tidx = com.uwb.bt2j.indexer.util.IndexTypes.OFF_MASK;
+							tidx = (int)IndexTypes.OFF_MASK;
 							return;
 						}
 					}
@@ -896,7 +879,7 @@ public abstract class EBWT <TStr>{
 			}
 			// continue with binary search
 		}
-		tlen = this.plen()[tidx];
+		tlen =plen()[tidx];
 	}
 	
 	public long walkLeft(long row, long steps) {
@@ -904,7 +887,7 @@ public abstract class EBWT <TStr>{
 		if(steps > 0) l.initFromRow(row, _eh, ebwt());
 		while(steps > 0) {
 			if(row == _zOff) return IndexTypes.OFF_MASK;
-			long newrow = this.mapLF(l);
+			long newrow = mapLF(l);
 			row = newrow;
 			steps--;
 			if(steps > 0) l.initFromRow(row, _eh, ebwt());
@@ -912,14 +895,14 @@ public abstract class EBWT <TStr>{
 		return row;
 	}
 	
-	public long getOffset(long row) {
+	public long getOffset(int row) {
 		if(row == _zOff) return 0;
-		if((row & _eh._offMask) == row) return this.offs()[row >> _eh._offRate];
+		if((row & _eh._offMask) == row) return offs()[row >> _eh._offRate];
 		long jumps = 0;
 		SideLocus l;
 		l.initFromRow(row, _eh, ebwt());
 		while(true) {
-			long newrow = this.mapLF(l);
+			int newrow = mapLF(l);
 			jumps++;
 			row = newrow;
 			if(row == _zOff) {
@@ -931,13 +914,88 @@ public abstract class EBWT <TStr>{
 		}
 	}
 	
-	public long getOffset(long elt, boolean fw, long hitlen) {
+	public long getOffset(int elt, boolean fw, long hitlen) {
 		long off = getOffset(elt);
 		if(!fw) {
 			off = _eh._len - off - 1;
 			off -= (hitlen-1);
 		}
 		return off;
+	}
+	
+	public boolean contains(String str, long[] otop, long[] obot) {
+		SideLocus tloc, bloc;
+		if(str == "") {
+			if(otop != null && obot != null) {
+				otop = null;
+				obot = null;
+			}
+			return true;
+		}
+		int c = str.charAt(str.length()-1);
+		long top = 0, bot = 0;
+		if(c < 4) {
+			top = fchr()[c];
+			bot = fchr()[c+1];
+		} else {
+			boolean set = false;
+			for(int i = 0; i < 4; i++) {
+				if(fchr()[c] < fchr()[c+1]) {
+					if(set) {
+						return false;
+					} else {
+						set = true;
+						top = fchr()[c];
+						bot = fchr()[c+1];
+					}
+				}
+			}
+		}
+		tloc.initFromRow(top, eh(), ebwt());
+		bloc.initFromRow(bot, eh(), ebwt());
+		for(int i = str.length()-2; i >= 0; i--) {
+			c = str.charAt(i);
+			if(c <= 3) {
+				top = mapLF(tloc, c);
+				bot = mapLF(bloc, c);
+			} else {
+				long sz = bot - top;
+				int c1 = mapLF1(top, tloc);
+				bot = mapLF(bloc, c1);
+				if(bot - top < sz) {
+					// Encountered an N and could not proceed through it because
+					// there was more than one possible nucleotide we could replace
+					// it with
+					return false;
+				}
+			}
+			if(i > 0) {
+				tloc.initFromRow(top, eh(), ebwt());
+				bloc.initFromRow(bot, eh(), ebwt());
+			}
+		}
+		if(otop != null && obot != null) {
+			otop = top; obot = bot;
+		}
+		return bot > top;
+	}
+	
+	public String adjustEbwtBase(String cmdline, String ebwtFileBase, boolean verbose) {
+		String str = ebwtFileBase;
+		File in = new File((str + ".1." + gEbwt_ext));
+		
+		if(verbose) System.out.println( "Trying " + str);
+		if(!in.exists())
+			if(verbose) System.out.println( "  didn't work" );
+		if(System.getenv("BOWTIE2_INDEXES") != null) {
+			str = System.getenv("BOWTIE2_INDEXES") + "/" + ebwtFileBase;
+			if(verbose) System.out.println( "Trying " + str);
+			in=new File((str + ".1." + gEbwt_ext));
+		}
+		if(!in.exists()) {
+			System.err.println("Could not locate a Bowtie index corresponding to basename \"" + ebwtFileBase + "\"" );
+		}
+		return str;
 	}
 	
 	public long    zOff()         { return _zOff; }
@@ -947,10 +1005,9 @@ public abstract class EBWT <TStr>{
 	public long    nFrag()        { return _nFrag; }
 	public long   ftab()              { return _ftab; }
 	public long   eftab()             { return _eftab; }
-	public long   offs()              { return _offs; }
-	public long   plen()              { return _plen; }
-	public long   rstarts()           { return _rstarts; }
-	public boolean        toBe()         { return _toBigEndian; }
+	public long[]   offs()              { return _offs; }
+	public long[]   plen()              { return _plen; }
+	public int[]   rstarts()           { return _rstarts; }
 	public boolean        sanityCheck()  { return _sanity; }
 	public EList<String> refnames()        { return _refnames; }
 	public boolean        fw()           { return fw_; }
@@ -970,9 +1027,9 @@ public abstract class EBWT <TStr>{
 	}
 	
 	public void writeFromMemory(boolean justHeader, OutputStream out1, OutputStream out2) {
-		const EbwtParams& eh = this->_eh;
+		const EbwtParams& eh = this._eh;
 		assert(eh.repOk());
-		uint32_t be = this->toBe();
+		uint32_t be = this.toBe();
 		assert(out1.good());
 		assert(out2.good());
 		
@@ -981,7 +1038,7 @@ public abstract class EBWT <TStr>{
 		// before we join() or buildToDisk()
 		writeI<int32_t>(out1, 1, be); // endian hint for priamry stream
 		writeI<int32_t>(out2, 1, be); // endian hint for secondary stream
-		writeU<TIndexOffU>(out1, eh._len,          be); // length of string (and bwt and suffix array)
+		writeU<long>(out1, eh._len,          be); // length of string (and bwt and suffix array)
 		writeI<int32_t>(out1, eh._lineRate,     be); // 2^lineRate = size in bytes of 1 line
 		writeI<int32_t>(out1, 2,                be); // not used
 		writeI<int32_t>(out1, eh._offRate,      be); // every 2^offRate chars is "marked"
@@ -992,50 +1049,50 @@ public abstract class EBWT <TStr>{
 		writeI<int32_t>(out1, -flags, be); // BTL: chunkRate is now deprecated
 		
 		if(!justHeader) {
-			assert(rstarts() != NULL);
-			assert(offs() != NULL);
-			assert(ftab() != NULL);
-			assert(eftab() != NULL);
+			assert(rstarts() != null);
+			assert(offs() != null);
+			assert(ftab() != null);
+			assert(eftab() != null);
 			assert(isInMemory());
 			// These Ebwt parameters are known after the inputs strings have
 			// been joined() but before they have been built().  These can
 			// written to the disk next and then discarded from memory.
-			writeU<TIndexOffU>(out1, this->_nPat,      be);
-			for(TIndexOffU i = 0; i < this->_nPat; i++)
-				writeU<TIndexOffU>(out1, this->plen()[i], be);
-			assert_geq(this->_nFrag, this->_nPat);
-			writeU<TIndexOffU>(out1, this->_nFrag, be);
-			for(TIndexOffU i = 0; i < this->_nFrag*3; i++)
-				writeU<TIndexOffU>(out1, this->rstarts()[i], be);
+			writeU<long>(out1, this._nPat,      be);
+			for(long i = 0; i < this._nPat; i++)
+				writeU<long>(out1, this.plen()[i], be);
+			assert_geq(this._nFrag, this._nPat);
+			writeU<long>(out1, this._nFrag, be);
+			for(long i = 0; i < this._nFrag*3; i++)
+				writeU<long>(out1, this.rstarts()[i], be);
 			
 			// These Ebwt parameters are discovered only as the Ebwt is being
 			// built (in buildToDisk()).  Of these, only 'offs' and 'ebwt' are
 			// terribly large.  'ebwt' is written to the primary file and then
 			// discarded from memory as it is built; 'offs' is similarly
 			// written to the secondary file and discarded.
-			out1.write((const char *)this->ebwt(), eh._ebwtTotLen);
-			writeU<TIndexOffU>(out1, this->zOff(), be);
-			TIndexOffU offsLen = eh._offsLen;
-			for(TIndexOffU i = 0; i < offsLen; i++)
-				writeU<TIndexOffU>(out2, this->offs()[i], be);
+			out1.write((const char *)this.ebwt(), eh._ebwtTotLen);
+			writeU<long>(out1, this.zOff(), be);
+			long offsLen = eh._offsLen;
+			for(long i = 0; i < offsLen; i++)
+				writeU<long>(out2, this.offs()[i], be);
 			
 			// 'fchr', 'ftab' and 'eftab' are not fully determined until the
 			// loop is finished, so they are written to the primary file after
 			// all of 'ebwt' has already been written and only then discarded
 			// from memory.
 			for(int i = 0; i < 5; i++)
-				writeU<TIndexOffU>(out1, this->fchr()[i], be);
-			for(TIndexOffU i = 0; i < eh._ftabLen; i++)
-				writeU<TIndexOffU>(out1, this->ftab()[i], be);
-			for(TIndexOffU i = 0; i < eh._eftabLen; i++)
-				writeU<TIndexOffU>(out1, this->eftab()[i], be);
+				writeU<long>(out1, this.fchr()[i], be);
+			for(long i = 0; i < eh._ftabLen; i++)
+				writeU<long>(out1, this.ftab()[i], be);
+			for(long i = 0; i < eh._eftabLen; i++)
+				writeU<long>(out1, this.eftab()[i], be);
 		}
 	}
 	
 	public int readFlags(String instr) {
 		ifstream in;
 		// Initialize our primary and secondary input-stream fields
-		in.open((instr + ".1." + gEbwt_ext).c_str(), ios_base::in | ios::binary);
+		in.open((instr + ".1." + gEbwt_ext).c_str(), ios_base.in | ios.binary);
 		if(!in.is_open()) {
 			throw EbwtFileOpenException("Cannot open file " + instr);
 		}
@@ -1048,7 +1105,7 @@ public abstract class EBWT <TStr>{
 			assert_eq(1, endianSwapU32(one));
 			switchEndian = true;
 		}
-		readU<TIndexOffU>(in, switchEndian);
+		readU<long>(in, switchEndian);
 		readI<int32_t>(in, switchEndian);
 		readI<int32_t>(in, switchEndian);
 		readI<int32_t>(in, switchEndian);
@@ -1060,7 +1117,7 @@ public abstract class EBWT <TStr>{
 	public static int readFlags(String instr) {
 		bool switchEndian; // dummy; caller doesn't care
 		#ifdef BOWTIE_MM
-			char *mmFile[] = { NULL, NULL };
+			char *mmFile[] = { null, null };
 		#endif
 			if(_in1Str.length() > 0) {
 				if(_verbose || startVerbose) {
@@ -1068,15 +1125,15 @@ public abstract class EBWT <TStr>{
 					logTime(cerr);
 				}
 				// Initialize our primary and secondary input-stream fields
-				if(_in1 != NULL) fclose(_in1);
+				if(_in1 != null) fclose(_in1);
 				if(_verbose || startVerbose) cerr << "Opening \"" << _in1Str.c_str() << "\"" << endl;
-				if((_in1 = fopen(_in1Str.c_str(), "rb")) == NULL) {
+				if((_in1 = fopen(_in1Str.c_str(), "rb")) == null) {
 					cerr << "Could not open index file " << _in1Str.c_str() << endl;
 				}
 				if(loadSASamp) {
-					if(_in2 != NULL) fclose(_in2);
+					if(_in2 != null) fclose(_in2);
 					if(_verbose || startVerbose) cerr << "Opening \"" << _in2Str.c_str() << "\"" << endl;
-					if((_in2 = fopen(_in2Str.c_str(), "rb")) == NULL) {
+					if((_in2 = fopen(_in2Str.c_str(), "rb")) == null) {
 						cerr << "Could not open index file " << _in2Str.c_str() << endl;
 					}
 				}
@@ -1100,8 +1157,8 @@ public abstract class EBWT <TStr>{
 							cerr << "Error: Could not stat index file " << names[i] << " prior to memory-mapping" << endl;
 							throw 1;
 						}
-						mmFile[i] = (char*)mmap((void *)0, (size_t)sbuf.st_size,
-												PROT_READ, MAP_SHARED, fds[(size_t)i], 0);
+						mmFile[i] = (char*)mmap((void *)0, (int)sbuf.st_size,
+												PROT_READ, MAP_SHARED, fds[(int)i], 0);
 						if(mmFile[i] == (void *)(-1)) {
 							perror("mmap");
 							cerr << "Error: Could not memory-map the index file " << names[i] << endl;
@@ -1119,7 +1176,7 @@ public abstract class EBWT <TStr>{
 						}
 					}
 					mmFile1_ = mmFile[0];
-					mmFile2_ = loadSASamp ? mmFile[1] : NULL;
+					mmFile2_ = loadSASamp ? mmFile[1] : null;
 				}
 		#endif
 			}
@@ -1167,7 +1224,7 @@ public abstract class EBWT <TStr>{
 			}
 			
 			// Reads header entries one by one from primary stream
-			TIndexOffU len          = readU<TIndexOffU>(_in1, switchEndian);
+			long len          = readU<long>(_in1, switchEndian);
 			bytesRead += OFF_SIZE;
 			int32_t  lineRate     = readI<int32_t>(_in1, switchEndian);
 			bytesRead += 4;
@@ -1216,9 +1273,9 @@ public abstract class EBWT <TStr>{
 			// Create a new EbwtParams from the entries read from primary stream
 			EbwtParams *eh;
 			bool deleteEh = false;
-			if(params != NULL) {
-				params->init(len, lineRate, offRate, ftabChars, color, entireRev);
-				if(_verbose || startVerbose) params->print(cerr);
+			if(params != null) {
+				params.init(len, lineRate, offRate, ftabChars, color, entireRev);
+				if(_verbose || startVerbose) params.print(cerr);
 				eh = params;
 			} else {
 				eh = new EbwtParams(len, lineRate, offRate, ftabChars, color, entireRev);
@@ -1226,10 +1283,10 @@ public abstract class EBWT <TStr>{
 			}
 			
 			// Set up overridden suffix-array-sample parameters
-			TIndexOffU offsLen = eh->_offsLen;
-			uint64_t offsSz = eh->_offsSz;
-			TIndexOffU offRateDiff = 0;
-			TIndexOffU offsLenSampled = offsLen;
+			long offsLen = eh._offsLen;
+			uint64_t offsSz = eh._offsSz;
+			long offRateDiff = 0;
+			long offsLenSampled = offsLen;
 			if(_overrideOffRate > offRate) {
 				offRateDiff = _overrideOffRate - offRate;
 			}
@@ -1249,36 +1306,36 @@ public abstract class EBWT <TStr>{
 			}
 			
 			// Read nPat from primary stream
-			this->_nPat = readI<TIndexOffU>(_in1, switchEndian);
+			this._nPat = readI<long>(_in1, switchEndian);
 			bytesRead += OFF_SIZE;
 			_plen.reset();
 			// Read plen from primary stream
 			if(_useMm) {
 		#ifdef BOWTIE_MM
-				_plen.init((TIndexOffU*)(mmFile[0] + bytesRead), _nPat, false);
+				_plen.init((long*)(mmFile[0] + bytesRead), _nPat, false);
 				bytesRead += _nPat*OFF_SIZE;
 				fseeko(_in1, _nPat*OFF_SIZE, SEEK_CUR);
 		#endif
 			} else {
 				try {
 					if(_verbose || startVerbose) {
-						cerr << "Reading plen (" << this->_nPat << "): ";
+						cerr << "Reading plen (" << this._nPat << "): ";
 						logTime(cerr);
 					}
-					_plen.init(new TIndexOffU[_nPat], _nPat, true);
+					_plen.init(new long[_nPat], _nPat, true);
 					if(switchEndian) {
-						for(TIndexOffU i = 0; i < this->_nPat; i++) {
-							plen()[i] = readU<TIndexOffU>(_in1, switchEndian);
+						for(long i = 0; i < this._nPat; i++) {
+							plen()[i] = readU<long>(_in1, switchEndian);
 						}
 					} else {
-						size_t r = MM_READ(_in1, (void*)(plen()), _nPat*OFF_SIZE);
-						if(r != (size_t)(_nPat*OFF_SIZE)) {
+						int r = MM_READ(_in1, (void*)(plen()), _nPat*OFF_SIZE);
+						if(r != (int)(_nPat*OFF_SIZE)) {
 							cerr << "Error reading _plen[] array: " << r << ", " << _nPat*OFF_SIZE << endl;
 							throw 1;
 						}
 					}
 				} catch(bad_alloc& e) {
-					cerr << "Out of memory allocating plen[] in Ebwt::read()"
+					cerr << "Out of memory allocating plen[] in Ebwt.read()"
 					<< " at " << __FILE__ << ":" << __LINE__ << endl;
 					throw e;
 				}
@@ -1292,73 +1349,73 @@ public abstract class EBWT <TStr>{
 			// (i.e. everything up to and including join()).
 			if(justHeader) goto done;
 			
-			this->_nFrag = readU<TIndexOffU>(_in1, switchEndian);
+			this._nFrag = readU<long>(_in1, switchEndian);
 			bytesRead += OFF_SIZE;
 			if(_verbose || startVerbose) {
-				cerr << "Reading rstarts (" << this->_nFrag*3 << "): ";
+				cerr << "Reading rstarts (" << this._nFrag*3 << "): ";
 				logTime(cerr);
 			}
-			assert_geq(this->_nFrag, this->_nPat);
+			assert_geq(this._nFrag, this._nPat);
 			_rstarts.reset();
 			if(loadRstarts) {
 				if(_useMm) {
 		#ifdef BOWTIE_MM
-					_rstarts.init((TIndexOffU*)(mmFile[0] + bytesRead), _nFrag*3, false);
-					bytesRead += this->_nFrag*OFF_SIZE*3;
-					fseeko(_in1, this->_nFrag*OFF_SIZE*3, SEEK_CUR);
+					_rstarts.init((long*)(mmFile[0] + bytesRead), _nFrag*3, false);
+					bytesRead += this._nFrag*OFF_SIZE*3;
+					fseeko(_in1, this._nFrag*OFF_SIZE*3, SEEK_CUR);
 		#endif
 				} else {
-					_rstarts.init(new TIndexOffU[_nFrag*3], _nFrag*3, true);
+					_rstarts.init(new long[_nFrag*3], _nFrag*3, true);
 					if(switchEndian) {
-						for(TIndexOffU i = 0; i < this->_nFrag*3; i += 3) {
+						for(long i = 0; i < this._nFrag*3; i += 3) {
 							// fragment starting position in joined reference
 							// string, text id, and fragment offset within text
-							this->rstarts()[i]   = readU<TIndexOffU>(_in1, switchEndian);
-							this->rstarts()[i+1] = readU<TIndexOffU>(_in1, switchEndian);
-							this->rstarts()[i+2] = readU<TIndexOffU>(_in1, switchEndian);
+							this.rstarts()[i]   = readU<long>(_in1, switchEndian);
+							this.rstarts()[i+1] = readU<long>(_in1, switchEndian);
+							this.rstarts()[i+2] = readU<long>(_in1, switchEndian);
 						}
 					} else {
-						size_t r = MM_READ(_in1, (void *)rstarts(), this->_nFrag*OFF_SIZE*3);
-						if(r != (size_t)(this->_nFrag*OFF_SIZE*3)) {
-							cerr << "Error reading _rstarts[] array: " << r << ", " << (this->_nFrag*OFF_SIZE*3) << endl;
+						int r = MM_READ(_in1, (void *)rstarts(), this._nFrag*OFF_SIZE*3);
+						if(r != (int)(this._nFrag*OFF_SIZE*3)) {
+							cerr << "Error reading _rstarts[] array: " << r << ", " << (this._nFrag*OFF_SIZE*3) << endl;
 							throw 1;
 						}
 					}
 				}
 			} else {
 				// Skip em
-				assert(rstarts() == NULL);
-				bytesRead += this->_nFrag*OFF_SIZE*3;
-				fseeko(_in1, this->_nFrag*OFF_SIZE*3, SEEK_CUR);
+				assert(rstarts() == null);
+				bytesRead += this._nFrag*OFF_SIZE*3;
+				fseeko(_in1, this._nFrag*OFF_SIZE*3, SEEK_CUR);
 			}
 			
 			_ebwt.reset();
 			if(_useMm) {
 		#ifdef BOWTIE_MM
-				_ebwt.init((uint8_t*)(mmFile[0] + bytesRead), eh->_ebwtTotLen, false);
-				bytesRead += eh->_ebwtTotLen;
-				fseek(_in1, eh->_ebwtTotLen, SEEK_CUR);
+				_ebwt.init((uint8_t*)(mmFile[0] + bytesRead), eh._ebwtTotLen, false);
+				bytesRead += eh._ebwtTotLen;
+				fseek(_in1, eh._ebwtTotLen, SEEK_CUR);
 		#endif
 			} else {
 				// Allocate ebwt (big allocation)
 				if(_verbose || startVerbose) {
-					cerr << "Reading ebwt (" << eh->_ebwtTotLen << "): ";
+					cerr << "Reading ebwt (" << eh._ebwtTotLen << "): ";
 					logTime(cerr);
 				}
 				bool shmemLeader = true;
 				if(useShmem_) {
-					uint8_t *tmp = NULL;
+					uint8_t *tmp = null;
 					shmemLeader = ALLOC_SHARED_U8(
-						(_in1Str + "[ebwt]"), eh->_ebwtTotLen, &tmp,
+						(_in1Str + "[ebwt]"), eh._ebwtTotLen, &tmp,
 						"ebwt[]", (_verbose || startVerbose));
-					assert(tmp != NULL);
-					_ebwt.init(tmp, eh->_ebwtTotLen, false);
+					assert(tmp != null);
+					_ebwt.init(tmp, eh._ebwtTotLen, false);
 					if(_verbose || startVerbose) {
 						cerr << "  shared-mem " << (shmemLeader ? "leader" : "follower") << endl;
 					}
 				} else {
 					try {
-						_ebwt.init(new uint8_t[eh->_ebwtTotLen], eh->_ebwtTotLen, true);
+						_ebwt.init(new uint8_t[eh._ebwtTotLen], eh._ebwtTotLen, true);
 					} catch(bad_alloc& e) {
 						cerr << "Out of memory allocating the ebwt[] array for the Bowtie index.  Please try" << endl
 						<< "again on a computer with more memory." << endl;
@@ -1367,11 +1424,11 @@ public abstract class EBWT <TStr>{
 				}
 				if(shmemLeader) {
 					// Read ebwt from primary stream
-					uint64_t bytesLeft = eh->_ebwtTotLen;
-					char *pebwt = (char*)this->ebwt();
+					uint64_t bytesLeft = eh._ebwtTotLen;
+					char *pebwt = (char*)this.ebwt();
 
 					while (bytesLeft>0){
-						size_t r = MM_READ(_in1, (void *)pebwt, bytesLeft);
+						int r = MM_READ(_in1, (void *)pebwt, bytesLeft);
 						if(MM_IS_IO_ERR(_in1,r,bytesLeft)) {
 							cerr << "Error reading _ebwt[] array: " << r << ", "
 								 << bytesLeft << gLastIOErrMsg << endl;
@@ -1381,28 +1438,28 @@ public abstract class EBWT <TStr>{
 						bytesLeft -= r;
 					}
 					if(switchEndian) {
-						uint8_t *side = this->ebwt();
-						for(size_t i = 0; i < eh->_numSides; i++) {
-							TIndexOffU *cums = reinterpret_cast<TIndexOffU*>(side + eh->_sideSz - OFF_SIZE*2);
+						uint8_t *side = this.ebwt();
+						for(int i = 0; i < eh._numSides; i++) {
+							long *cums = reinterpret_cast<long*>(side + eh._sideSz - OFF_SIZE*2);
 							cums[0] = endianSwapU(cums[0]);
 							cums[1] = endianSwapU(cums[1]);
-							side += this->_eh._sideSz;
+							side += this._eh._sideSz;
 						}
 					}
 		#ifdef BOWTIE_SHARED_MEM
-					if(useShmem_) NOTIFY_SHARED(ebwt(), eh->_ebwtTotLen);
+					if(useShmem_) NOTIFY_SHARED(ebwt(), eh._ebwtTotLen);
 		#endif
 				} else {
 					// Seek past the data and wait until master is finished
-					fseeko(_in1, eh->_ebwtTotLen, SEEK_CUR);
+					fseeko(_in1, eh._ebwtTotLen, SEEK_CUR);
 		#ifdef BOWTIE_SHARED_MEM
-					if(useShmem_) WAIT_SHARED(ebwt(), eh->_ebwtTotLen);
+					if(useShmem_) WAIT_SHARED(ebwt(), eh._ebwtTotLen);
 		#endif
 				}
 			}
 			
 			// Read zOff from primary stream
-			_zOff = readU<TIndexOffU>(_in1, switchEndian);
+			_zOff = readU<long>(_in1, switchEndian);
 			bytesRead += OFF_SIZE;
 			assert_lt(_zOff, len);
 			
@@ -1412,45 +1469,45 @@ public abstract class EBWT <TStr>{
 				_fchr.reset();
 				if(_useMm) {
 		#ifdef BOWTIE_MM
-					_fchr.init((TIndexOffU*)(mmFile[0] + bytesRead), 5, false);
+					_fchr.init((long*)(mmFile[0] + bytesRead), 5, false);
 					bytesRead += 5*OFF_SIZE;
 					fseek(_in1, 5*OFF_SIZE, SEEK_CUR);
 		#endif
 				} else {
-					_fchr.init(new TIndexOffU[5], 5, true);
+					_fchr.init(new long[5], 5, true);
 					for(int i = 0; i < 5; i++) {
-						this->fchr()[i] = readU<TIndexOffU>(_in1, switchEndian);
-						assert_leq(this->fchr()[i], len);
-						assert(i <= 0 || this->fchr()[i] >= this->fchr()[i-1]);
+						this.fchr()[i] = readU<long>(_in1, switchEndian);
+						assert_leq(this.fchr()[i], len);
+						assert(i <= 0 || this.fchr()[i] >= this.fchr()[i-1]);
 					}
 				}
-				assert_gt(this->fchr()[4], this->fchr()[0]);
+				assert_gt(this.fchr()[4], this.fchr()[0]);
 				// Read ftab from primary stream
 				if(_verbose || startVerbose) {
 					if(loadFtab) {
-						cerr << "Reading ftab (" << eh->_ftabLen << "): ";
+						cerr << "Reading ftab (" << eh._ftabLen << "): ";
 						logTime(cerr);
 					} else {
-						cerr << "Skipping ftab (" << eh->_ftabLen << "): ";
+						cerr << "Skipping ftab (" << eh._ftabLen << "): ";
 					}
 				}
 				_ftab.reset();
 				if(loadFtab) {
 					if(_useMm) {
 		#ifdef BOWTIE_MM
-						_ftab.init((TIndexOffU*)(mmFile[0] + bytesRead), eh->_ftabLen, false);
-						bytesRead += eh->_ftabLen*OFF_SIZE;
-						fseeko(_in1, eh->_ftabLen*OFF_SIZE, SEEK_CUR);
+						_ftab.init((long*)(mmFile[0] + bytesRead), eh._ftabLen, false);
+						bytesRead += eh._ftabLen*OFF_SIZE;
+						fseeko(_in1, eh._ftabLen*OFF_SIZE, SEEK_CUR);
 		#endif
 					} else {
-						_ftab.init(new TIndexOffU[eh->_ftabLen], eh->_ftabLen, true);
+						_ftab.init(new long[eh._ftabLen], eh._ftabLen, true);
 						if(switchEndian) {
-							for(TIndexOffU i = 0; i < eh->_ftabLen; i++)
-								this->ftab()[i] = readU<TIndexOffU>(_in1, switchEndian);
+							for(long i = 0; i < eh._ftabLen; i++)
+								this.ftab()[i] = readU<long>(_in1, switchEndian);
 						} else {
-							size_t r = MM_READ(_in1, (void *)ftab(), eh->_ftabLen*OFF_SIZE);
-							if(r != (size_t)(eh->_ftabLen*OFF_SIZE)) {
-								cerr << "Error reading _ftab[] array: " << r << ", " << (eh->_ftabLen*OFF_SIZE) << endl;
+							int r = MM_READ(_in1, (void *)ftab(), eh._ftabLen*OFF_SIZE);
+							if(r != (int)(eh._ftabLen*OFF_SIZE)) {
+								cerr << "Error reading _ftab[] array: " << r << ", " << (eh._ftabLen*OFF_SIZE) << endl;
 								throw 1;
 							}
 						}
@@ -1458,49 +1515,49 @@ public abstract class EBWT <TStr>{
 					// Read etab from primary stream
 					if(_verbose || startVerbose) {
 						if(loadFtab) {
-							cerr << "Reading eftab (" << eh->_eftabLen << "): ";
+							cerr << "Reading eftab (" << eh._eftabLen << "): ";
 							logTime(cerr);
 						} else {
-							cerr << "Skipping eftab (" << eh->_eftabLen << "): ";
+							cerr << "Skipping eftab (" << eh._eftabLen << "): ";
 						}
 
 					}
 					_eftab.reset();
 					if(_useMm) {
 		#ifdef BOWTIE_MM
-						_eftab.init((TIndexOffU*)(mmFile[0] + bytesRead), eh->_eftabLen, false);
-						bytesRead += eh->_eftabLen*OFF_SIZE;
-						fseeko(_in1, eh->_eftabLen*OFF_SIZE, SEEK_CUR);
+						_eftab.init((long*)(mmFile[0] + bytesRead), eh._eftabLen, false);
+						bytesRead += eh._eftabLen*OFF_SIZE;
+						fseeko(_in1, eh._eftabLen*OFF_SIZE, SEEK_CUR);
 		#endif
 					} else {
-						_eftab.init(new TIndexOffU[eh->_eftabLen], eh->_eftabLen, true);
+						_eftab.init(new long[eh._eftabLen], eh._eftabLen, true);
 						if(switchEndian) {
-							for(TIndexOffU i = 0; i < eh->_eftabLen; i++)
-								this->eftab()[i] = readU<TIndexOffU>(_in1, switchEndian);
+							for(long i = 0; i < eh._eftabLen; i++)
+								this.eftab()[i] = readU<long>(_in1, switchEndian);
 						} else {
-							size_t r = MM_READ(_in1, (void *)this->eftab(), eh->_eftabLen*OFF_SIZE);
-							if(r != (size_t)(eh->_eftabLen*OFF_SIZE)) {
-								cerr << "Error reading _eftab[] array: " << r << ", " << (eh->_eftabLen*OFF_SIZE) << endl;
+							int r = MM_READ(_in1, (void *)this.eftab(), eh._eftabLen*OFF_SIZE);
+							if(r != (int)(eh._eftabLen*OFF_SIZE)) {
+								cerr << "Error reading _eftab[] array: " << r << ", " << (eh._eftabLen*OFF_SIZE) << endl;
 								throw 1;
 							}
 						}
 					}
-					for(TIndexOffU i = 0; i < eh->_eftabLen; i++) {
-						if(i > 0 && this->eftab()[i] > 0) {
-							assert_geq(this->eftab()[i], this->eftab()[i-1]);
-						} else if(i > 0 && this->eftab()[i-1] == 0) {
-							assert_eq(0, this->eftab()[i]);
+					for(long i = 0; i < eh._eftabLen; i++) {
+						if(i > 0 && this.eftab()[i] > 0) {
+							assert_geq(this.eftab()[i], this.eftab()[i-1]);
+						} else if(i > 0 && this.eftab()[i-1] == 0) {
+							assert_eq(0, this.eftab()[i]);
 						}
 					}
 				} else {
-					assert(ftab() == NULL);
-					assert(eftab() == NULL);
+					assert(ftab() == null);
+					assert(eftab() == null);
 					// Skip ftab
-					bytesRead += eh->_ftabLen*OFF_SIZE;
-					fseeko(_in1, eh->_ftabLen*OFF_SIZE, SEEK_CUR);
+					bytesRead += eh._ftabLen*OFF_SIZE;
+					fseeko(_in1, eh._ftabLen*OFF_SIZE, SEEK_CUR);
 					// Skip eftab
-					bytesRead += eh->_eftabLen*OFF_SIZE;
-					fseeko(_in1, eh->_eftabLen*OFF_SIZE, SEEK_CUR);
+					bytesRead += eh._eftabLen*OFF_SIZE;
+					fseeko(_in1, eh._eftabLen*OFF_SIZE, SEEK_CUR);
 				}
 			} catch(bad_alloc& e) {
 				cerr << "Out of memory allocating fchr[], ftab[] or eftab[] arrays for the Bowtie index." << endl
@@ -1513,16 +1570,16 @@ public abstract class EBWT <TStr>{
 			if(loadNames) {
 				while(true) {
 					char c = '\0';
-					if(MM_READ(_in1, (void *)(&c), (size_t)1) != (size_t)1) break;
+					if(MM_READ(_in1, (void *)(&c), (int)1) != (int)1) break;
 					bytesRead++;
 					if(c == '\0') break;
 					else if(c == '\n') {
-						this->_refnames.push_back("");
+						this._refnames.push_back("");
 					} else {
-						if(this->_refnames.size() == 0) {
-							this->_refnames.push_back("");
+						if(this._refnames.size() == 0) {
+							this._refnames.push_back("");
 						}
-						this->_refnames.back().push_back(c);
+						this._refnames.back().push_back(c);
 					}
 				}
 			}
@@ -1533,7 +1590,7 @@ public abstract class EBWT <TStr>{
 				
 				shmemLeader = true;
 				if(_verbose || startVerbose) {
-					cerr << "Reading offs (" << offsLenSampled << std::setw(2) << OFF_SIZE*8 <<"-bit words): ";
+					cerr << "Reading offs (" << offsLenSampled << std.setw(2) << OFF_SIZE*8 <<"-bit words): ";
 					logTime(cerr);
 				}
 				
@@ -1541,18 +1598,18 @@ public abstract class EBWT <TStr>{
 					if(!useShmem_) {
 						// Allocate offs_
 						try {
-							_offs.init(new TIndexOffU[offsLenSampled], offsLenSampled, true);
+							_offs.init(new long[offsLenSampled], offsLenSampled, true);
 						} catch(bad_alloc& e) {
 							cerr << "Out of memory allocating the offs[] array  for the Bowtie index." << endl
 							<< "Please try again on a computer with more memory." << endl;
 							throw 1;
 						}
 					} else {
-						TIndexOffU *tmp = NULL;
+						long *tmp = null;
 						shmemLeader = ALLOC_SHARED_U(
 							(_in2Str + "[offs]"), offsLenSampled*OFF_SIZE, &tmp,
 							"offs", (_verbose || startVerbose));
-						_offs.init((TIndexOffU*)tmp, offsLenSampled, false);
+						_offs.init((long*)tmp, offsLenSampled, false);
 					}
 				}
 				
@@ -1561,28 +1618,28 @@ public abstract class EBWT <TStr>{
 						// Allocate offs (big allocation)
 						if(switchEndian || offRateDiff > 0) {
 							assert(!_useMm);
-							const TIndexOffU blockMaxSz = (2 * 1024 * 1024); // 2 MB block size
-							const TIndexOffU blockMaxSzU = (blockMaxSz >> (OFF_SIZE/4 + 1)); // # U32s per block
+							const long blockMaxSz = (2 * 1024 * 1024); // 2 MB block size
+							const long blockMaxSzU = (blockMaxSz >> (OFF_SIZE/4 + 1)); // # U32s per block
 							char *buf;
 							try {
 								buf = new char[blockMaxSz];
-							} catch(std::bad_alloc& e) {
+							} catch(std.bad_alloc& e) {
 								cerr << "Error: Out of memory allocating part of _offs array: '" << e.what() << "'" << endl;
 								throw e;
 							}
-							for(TIndexOffU i = 0; i < offsLen; i += blockMaxSzU) {
-								TIndexOffU block = min<TIndexOffU>(blockMaxSzU, offsLen - i);
-								size_t r = MM_READ(_in2, (void *)buf, block << (OFF_SIZE/4 + 1));
-								if(r != (size_t)(block << (OFF_SIZE/4 + 1))) {
+							for(long i = 0; i < offsLen; i += blockMaxSzU) {
+								long block = min<long>(blockMaxSzU, offsLen - i);
+								int r = MM_READ(_in2, (void *)buf, block << (OFF_SIZE/4 + 1));
+								if(r != (int)(block << (OFF_SIZE/4 + 1))) {
 									cerr << "Error reading block of _offs[] array: " << r << ", " << (block << (OFF_SIZE/4 + 1)) << endl;
 									throw 1;
 								}
-								TIndexOffU idx = i >> offRateDiff;
-								for(TIndexOffU j = 0; j < block; j += (1 << offRateDiff)) {
+								long idx = i >> offRateDiff;
+								for(long j = 0; j < block; j += (1 << offRateDiff)) {
 									assert_lt(idx, offsLenSampled);
-									this->offs()[idx] = ((TIndexOffU*)buf)[j];
+									this.offs()[idx] = ((long*)buf)[j];
 									if(switchEndian) {
-										this->offs()[idx] = endianSwapU(this->offs()[idx]);
+										this.offs()[idx] = endianSwapU(this.offs()[idx]);
 									}
 									idx++;
 								}
@@ -1591,7 +1648,7 @@ public abstract class EBWT <TStr>{
 						} else {
 							if(_useMm) {
 		#ifdef BOWTIE_MM
-								_offs.init((TIndexOffU*)(mmFile[1] + bytesRead), offsLen, false);
+								_offs.init((long*)(mmFile[1] + bytesRead), offsLen, false);
 								bytesRead += offsSz;
 								fseeko(_in2, offsSz, SEEK_CUR);
 		#endif
@@ -1600,10 +1657,10 @@ public abstract class EBWT <TStr>{
 								// not be able to handle read amounts greater than 2^32
 								// bytes.
 								uint64_t bytesLeft = offsSz;
-								char *offs = (char *)this->offs();
+								char *offs = (char *)this.offs();
 
 								while(bytesLeft > 0) {
-									size_t r = MM_READ(_in2, (void*)offs, bytesLeft);
+									int r = MM_READ(_in2, (void*)offs, bytesLeft);
 									if(MM_IS_IO_ERR(_in2,r,bytesLeft)) {
 										cerr << "Error reading block of _offs[] array: "
 										     << r << ", " << bytesLeft << gLastIOErrMsg << endl;
@@ -1627,21 +1684,21 @@ public abstract class EBWT <TStr>{
 				}
 			}
 			
-			this->postReadInit(*eh); // Initialize fields of Ebwt not read from file
+			this.postReadInit(*eh); // Initialize fields of Ebwt not read from file
 			if(_verbose || startVerbose) print(cerr, *eh);
 			
 			// The fact that _ebwt and friends actually point to something
-			// (other than NULL) now signals to other member functions that the
+			// (other than null) now signals to other member functions that the
 			// Ebwt is loaded into memory.
 			
 		done: // Exit hatch for both justHeader and !justHeader
 			
 			// Be kind
 			if(deleteEh) delete eh;
-			if(_in1 != NULL) {
+			if(_in1 != null) {
 				rewind(_in1);
 			}
-			if(_in2 != NULL) {
+			if(_in2 != null) {
 				rewind(_in2);
 			}
 	}
@@ -1670,18 +1727,18 @@ public abstract class EBWT <TStr>{
 	}
 	
 	public void sanityCheckAll(int reverse) {
-		const EbwtParams& eh = this->_eh;
+		EbwtParams eh = this._eh;
 		assert(isInMemory());
 		// Check ftab
-		for(TIndexOffU i = 1; i < eh._ftabLen; i++) {
-			assert_geq(this->ftabHi(i), this->ftabLo(i-1));
-			assert_geq(this->ftabLo(i), this->ftabHi(i-1));
-			assert_leq(this->ftabHi(i), eh._bwtLen+1);
+		for(long i = 1; i < eh._ftabLen; i++) {
+			assert_geq(this.ftabHi(i), this.ftabLo(i-1));
+			assert_geq(this.ftabLo(i), this.ftabHi(i-1));
+			assert_leq(this.ftabHi(i), eh._bwtLen+1);
 		}
-		assert_eq(this->ftabHi(eh._ftabLen-1), eh._bwtLen);
+		assert_eq(this.ftabHi(eh._ftabLen-1), eh._bwtLen);
 		
 		// Check offs
-		TIndexOff seenLen = (eh._bwtLen + 31) >> ((TIndexOffU)5);
+		TIndexOff seenLen = (eh._bwtLen + 31) >> ((long)5);
 		TIndexOff *seen;
 		try {
 			seen = new TIndexOff[seenLen]; // bitvector marking seen offsets
@@ -1690,55 +1747,55 @@ public abstract class EBWT <TStr>{
 			throw e;
 		}
 		memset(seen, 0, OFF_SIZE * seenLen);
-		TIndexOffU offsLen = eh._offsLen;
-		for(TIndexOffU i = 0; i < offsLen; i++) {
-			assert_lt(this->offs()[i], eh._bwtLen);
-			TIndexOff w = this->offs()[i] >> 5;
-			TIndexOff r = this->offs()[i] & 31;
+		long offsLen = eh._offsLen;
+		for(long i = 0; i < offsLen; i++) {
+			assert_lt(this.offs()[i], eh._bwtLen);
+			TIndexOff w = this.offs()[i] >> 5;
+			TIndexOff r = this.offs()[i] & 31;
 			assert_eq(0, (seen[w] >> r) & 1); // shouldn't have been seen before
 			seen[w] |= (1 << r);
 		}
 		delete[] seen;
 		
 		// Check nPat
-		assert_gt(this->_nPat, 0);
+		assert_gt(this._nPat, 0);
 		
 		// Check plen, flen
-		for(TIndexOffU i = 0; i < this->_nPat; i++) {
-			assert_geq(this->plen()[i], 0);
+		for(long i = 0; i < this._nPat; i++) {
+			assert_geq(this.plen()[i], 0);
 		}
 		
 		// Check rstarts
-		if(this->rstarts() != NULL) {
-			for(TIndexOffU i = 0; i < this->_nFrag-1; i++) {
-				assert_gt(this->rstarts()[(i+1)*3], this->rstarts()[i*3]);
+		if(this.rstarts() != null) {
+			for(long i = 0; i < this._nFrag-1; i++) {
+				assert_gt(this.rstarts()[(i+1)*3], this.rstarts()[i*3]);
 				if(reverse == REF_READ_REVERSE) {
-					assert(this->rstarts()[(i*3)+1] >= this->rstarts()[((i+1)*3)+1]);
+					assert(this.rstarts()[(i*3)+1] >= this.rstarts()[((i+1)*3)+1]);
 				} else {
-					assert(this->rstarts()[(i*3)+1] <= this->rstarts()[((i+1)*3)+1]);
+					assert(this.rstarts()[(i*3)+1] <= this.rstarts()[((i+1)*3)+1]);
 				}
 			}
 		}
 		
 		// Check ebwt
 		sanityCheckUpToSide(eh._numSides);
-		VMSG_NL("Ebwt::sanityCheck passed");
+		VMSG_NL("Ebwt.sanityCheck passed");
 	}
 	
 	public void checkOrigs(EList<String> os, boolean color, boolean mirror) {
 		SString<char> rest;
 		restore(rest);
-		TIndexOffU restOff = 0;
-		size_t i = 0, j = 0;
+		long restOff = 0;
+		int i = 0, j = 0;
 		if(mirror) {
 			// TODO: FIXME
 			return;
 		}
 		while(i < os.size()) {
-			size_t olen = os[i].length();
+			int olen = os[i].length();
 			int lastorig = -1;
 			for(; j < olen; j++) {
-				size_t joff = j;
+				int joff = j;
 				if(mirror) joff = olen - j - 1;
 				if((int)os[i][joff] == 4) {
 					// Skip over Ns
@@ -1792,41 +1849,41 @@ public abstract class EBWT <TStr>{
 				+ "    nPat: "  + _nPat + "\n"
 				+ "    plen: ").getBytes());
 		if(plen() == null) {
-			out.write( "null" + "\n");
+			out.write(( "null" + "\n").getBytes());
 		} else {
-			out.write( "non-null, [0] = " + plen()[0] + "\n");
+			out.write(( "non-null, [0] = " + plen()[0] + "\n").getBytes());
 		}
-		out.write( "    rstarts: ";
+		out.write( ("    rstarts: ").getBytes());
 		if(rstarts() == null) {
-			out.write( "null" + "\n");
+			out.write( ("null" + "\n").getBytes());
 		} else {
-			out.write( "non-null, [0] = " + rstarts()[0] + "\n");
+			out.write(( "non-null, [0] = " + rstarts()[0] + "\n").getBytes());
 		}
-		out.write( "    ebwt: ";
+		out.write( ("    ebwt: ").getBytes());
 		if(ebwt() == null) {
 			out.write( "null" + "\n");
 		} else {
 			out.write( "non-null, [0] = " + ebwt()[0] + "\n");
 		}
-		out.write( "    fchr: ";
+		out.write( "    fchr: ");
 		if(fchr() == null) {
 			out.write( "null" + "\n");
 		} else {
 			out.write( "non-null, [0] = " + fchr()[0] + "\n");
 		}
-		out.write( "    ftab: ";
+		out.write( "    ftab: ");
 		if(ftab() == null) {
 			out.write( "null" + "\n");
 		} else {
 			out.write( "non-null, [0] = " + ftab()[0] + "\n");
 		}
-		out.write( "    eftab: ";
+		out.write( "    eftab: ");
 		if(eftab() == null) {
 			out.write( "null" + "\n");
 		} else {
 			out.write( "non-null, [0] = " + eftab()[0] + "\n");
 		}
-		out.write( "    offs: ";
+		out.write( "    offs: ");
 		if(offs() == null) {
 			out.write( "null" + "\n");
 		} else {
@@ -2024,64 +2081,6 @@ public abstract class EBWT <TStr>{
 		}
 	}
 	
-	public boolean contains(BTDnaString str, long otop, long obot) {
-		SideLocus tloc, bloc;
-		if(str.empty()) {
-			if(otop != null && obot != null) otop = obot = 0;
-			return true;
-		}
-		int c = str[str.length()-1];
-		long top = 0, bot = 0;
-		if(c < 4) {
-			top = fchr()[c];
-			bot = fchr()[c+1];
-		} else {
-			boolean set = false;
-			for(int i = 0; i < 4; i++) {
-				if(fchr()[c] < fchr()[c+1]) {
-					if(set) {
-						return false;
-					} else {
-						set = true;
-						top = fchr()[c];
-						bot = fchr()[c+1];
-					}
-				}
-			}
-		}
-		tloc.initFromRow(top, eh(), ebwt());
-		bloc.initFromRow(bot, eh(), ebwt());
-		for(long i = (long)str.length()-2; i >= 0; i--) {
-			c = str[i];
-			if(c <= 3) {
-				top = mapLF(tloc, c);
-				bot = mapLF(bloc, c);
-			} else {
-				long sz = bot - top;
-				int c1 = mapLF1(top, tloc);
-				bot = mapLF(bloc, c1);
-				if(bot - top < sz) {
-					// Encountered an N and could not proceed through it because
-					// there was more than one possible nucleotide we could replace
-					// it with
-					return false;
-				}
-			}
-			if(i > 0) {
-				tloc.initFromRow(top, eh(), ebwt());
-				bloc.initFromRow(bot, eh(), ebwt());
-			}
-		}
-		if(otop != null && obot != null) {
-			otop = top; obot = bot;
-		}
-		return bot > top;
-	}
-	
-	public boolean contains(String str, long top, long bot) {
-		return contains(new BTDnaString(str, true), top, bot);
-	}
-	
 	public boolean isInMemory() {
 		if(ebwt() != null) {
 			return true;
@@ -2095,7 +2094,7 @@ public abstract class EBWT <TStr>{
 	
 	public void loadIntoMemory(
 			int color,
-			Object object,
+			int needEntireReverse,
 			boolean loadSASamp,
 			boolean loadFtab,
 			boolean loadRstarts,
@@ -2103,7 +2102,7 @@ public abstract class EBWT <TStr>{
 			boolean verbose){
 		readIntoMemory(
 				color,       // expect index to be colorspace?
-				object, // require reverse index to be concatenated reference reversed
+				needEntireReverse, // require reverse index to be concatenated reference reversed
 				loadSASamp,  // load the SA sample portion?
 				loadFtab,    // load the ftab (_ftab[] and _eftab[])?
 				loadRstarts, // load the r-starts (_rstarts[])?
@@ -2115,16 +2114,7 @@ public abstract class EBWT <TStr>{
 	}
 	
 	public void evictFromMemory() {
-		_fchr.free();
-		_ftab.free();
-		_eftab.free();
-		_rstarts.free();
-		_offs.free(); // might not be under control of APtrWrap
-		_ebwt.free(); // might not be under control of APtrWrap
-		// Keep plen; it's small and the client may want to seq it
-		// even when the others are evicted.
-		//_plen  = null;
-		_zEbwtByteOff = com.uwb.bt2j.indexer.util.IndexTypes.OFF_MASK;
+		_zEbwtByteOff = IndexTypes.OFF_MASK;
 		_zEbwtBpOff = -1;
 	}
 	
@@ -2330,8 +2320,8 @@ public abstract class EBWT <TStr>{
 		// sequences.  A record represents a stretch of unambiguous
 		// characters in one of the input sequences.
 		EList<RefRecord> szs = new EList(1);
-		Pair<long, long> sztot;
-		sztot = BitPairReference::szsFromFasta(is, file, bigEndian, refparams, szs, sanity);
+		Pair<Long,Long> sztot;
+		sztot = BitPairReference.szsFromFasta(is, file, bigEndian, refparams, szs, sanity);
 		// Construct Ebwt from input strings and parameters
 		Ebwt ebwtFw = new Ebwt(
 				TStr,
@@ -2393,27 +2383,25 @@ public abstract class EBWT <TStr>{
 	}
 	
 	public void szsToDisk(EList<RefRecord> szs, OutputStream os, int reverse) {
-		TIndexOffU seq = 0;
-		TIndexOffU off = 0;
-		TIndexOffU totlen = 0;
-		for(unsigned int i = 0; i < szs.size(); i++) {
+		long seq = 0;
+		long off = 0;
+		long totlen = 0;
+		for(int i = 0; i < szs.size(); i++) {
 			if(szs[i].len == 0) continue;
 			if(szs[i].first) off = 0;
 			off += szs[i].off;
 			if(szs[i].first && szs[i].len > 0) seq++;
-			TIndexOffU seqm1 = seq-1;
-			assert_lt(seqm1, _nPat);
-			TIndexOffU fwoff = off;
-			if(reverse == REF_READ_REVERSE) {
+			long seqm1 = seq-1;
+			long fwoff = off;
+			if(reverse == ReadDir.REF_READ_REVERSE) {
 				// Invert pattern idxs
 				seqm1 = _nPat - seqm1 - 1;
 				// Invert pattern idxs
-				assert_leq(off + szs[i].len, plen()[seqm1]);
 				fwoff = plen()[seqm1] - (off + szs[i].len);
 			}
-			writeU<TIndexOffU>(os, totlen, this->toBe()); // offset from beginning of joined string
-			writeU<TIndexOffU>(os, seqm1,  this->toBe()); // sequence id
-			writeU<TIndexOffU>(os, fwoff,  this->toBe()); // offset into sequence
+			writeU<long>(os, totlen, this.toBe()); // offset from beginning of joined string
+			writeU<long>(os, seqm1,  this.toBe()); // sequence id
+			writeU<long>(os, fwoff,  this.toBe()); // offset into sequence
 			totlen += szs[i].len;
 			off += szs[i].len;
 		}
@@ -2563,12 +2551,12 @@ public abstract class EBWT <TStr>{
 					// we would have thrown one eventually as part of
 					// constructing the DifferenceCoverSample
 					dcv += 1;
-					long sz = (long)DifferenceCoverSample<TStr>::simulateAllocs(s, dcv >> 1);
+					long sz = (long)DifferenceCoverSample<TStr>.simulateAllocs(s, dcv >> 1);
 					if(nthreads > 1) sz *= (nthreads + 1);
 					AutoArray<byte> tmp(sz, 1);
 					dcv >>= 1;
 					// Likewise with the KarkkainenBlockwiseSA
-					sz = (long)KarkkainenBlockwiseSA<TStr>::simulateAllocs(s, bmax);
+					sz = (long)KarkkainenBlockwiseSA<TStr>.simulateAllocs(s, bmax);
 					AutoArray<byte> tmp2(sz, 1);
 					// Now throw in the 'ftab' and 'isaSample' structures
 					// that we'll eventually allocate in buildToDisk
@@ -2668,7 +2656,7 @@ public abstract class EBWT <TStr>{
 		return false;
 	}
 	
-	public long fchr() {
+	public long[] fchr() {
 		return _fchr.get();
 	}
 	
@@ -2676,7 +2664,7 @@ public abstract class EBWT <TStr>{
 		return _ebwt.get();
 	}
 	
-	public long mapLF(SideLocus l) {
+	public int[] mapLF(SideLocus l) {
 		long ret;
 		int c = rowL(l);
 		ret = countBt2Side(l, c);
@@ -2705,7 +2693,7 @@ public abstract class EBWT <TStr>{
 	}
 	
 	public boolean readEbwtColor(String instr) {
-		int32_t flags = Ebwt::readFlags(instr);
+		int32_t flags = Ebwt.readFlags(instr);
 		if(flags < 0 && (((-flags) & EBWT_COLOR) != 0)) {
 			return true;
 		} else {
@@ -2714,7 +2702,7 @@ public abstract class EBWT <TStr>{
 	}
 	
 	public boolean readEntireReverse(String instr) {
-		int32_t flags = Ebwt::readFlags(instr);
+		int32_t flags = Ebwt.readFlags(instr);
 		if(flags < 0 && (((-flags) & EBWT_ENTIRE_REV) != 0)) {
 			return true;
 		} else {
@@ -2732,7 +2720,7 @@ public abstract class EBWT <TStr>{
 		}
 		
 		// Reads header entries one by one from primary stream
-		TIndexOffU len          = readU<TIndexOffU>(fin, switchEndian);
+		long len          = readU<long>(fin, switchEndian);
 		int32_t  lineRate     = readI<int32_t>(fin, switchEndian);
 		/*int32_t  linesPerSide =*/ readI<int32_t>(fin, switchEndian);
 		int32_t  offRate      = readI<int32_t>(fin, switchEndian);
@@ -2749,18 +2737,18 @@ public abstract class EBWT <TStr>{
 		// Create a new EbwtParams from the entries read from primary stream
 		EbwtParams eh(len, lineRate, offRate, ftabChars, color, entireReverse);
 		
-		TIndexOffU nPat = readI<TIndexOffU>(fin, switchEndian); // nPat
+		long nPat = readI<long>(fin, switchEndian); // nPat
 		fseeko(fin, nPat*OFF_SIZE, SEEK_CUR);
 		
 		// Skip rstarts
-		TIndexOffU nFrag = readU<TIndexOffU>(fin, switchEndian);
+		long nFrag = readU<long>(fin, switchEndian);
 		fseeko(fin, nFrag*OFF_SIZE*3, SEEK_CUR);
 		
 		// Skip ebwt
 		fseeko(fin, eh._ebwtTotLen, SEEK_CUR);
 		
 		// Skip zOff from primary stream
-		readU<TIndexOffU>(fin, switchEndian);
+		readU<long>(fin, switchEndian);
 		
 		// Skip fchr
 		fseeko(fin, 5 * OFF_SIZE, SEEK_CUR);
@@ -2797,15 +2785,12 @@ public abstract class EBWT <TStr>{
 	}
 	
 	public void readEbwtRefNames(String isntr, EList<String> refnames) {
-		FILE* fin;
+		File fin = new File(instr + ".1." + gEbwt_ext);
 		// Initialize our primary and secondary input-stream fields
-	    fin = fopen((instr + ".1." + gEbwt_ext).c_str(),"rb");
-		if(fin == NULL) {
-			throw EbwtFileOpenException("Cannot open file " + instr);
+		if(fin == null) {
+			throw new Exception("Cannot open file " + instr);
 		}
-		assert_eq(ftello(fin), 0);
 		readEbwtRefnames(fin, refnames);
-	    fclose(fin);
 	}
 	
 	public void restore(String s) {

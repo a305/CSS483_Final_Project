@@ -4,13 +4,6 @@ import com.uwb.bt2j.indexer.types.EList;
 import com.uwb.bt2j.indexer.util.IndexTypes;
 
 public class MultikeyQSort <TStr, TPos, THost, T> {
-	class QSortRange {
-		int begin;
-		int end;
-		int depth;
-	}
-	public long bkts[][];
-	
     public void swap(TStr[] s, int slen, int a, int b) {
         swap(s[a],s[b]);
     }
@@ -23,7 +16,7 @@ public class MultikeyQSort <TStr, TPos, THost, T> {
 	    }
     }
 
-    public void vecswap2(TStr[] s, int slen, TStr s2, TPos i, TPos j, TPos n, TPos begin, TPos end) {
+    public void vecswap2(TStr s, int slen, TStr s2, TPos i, TPos j, TPos n, TPos begin, TPos end) {
         while(n-- > 0) {
 		TPos a = i+n;
 		TPos b = j+n;
@@ -289,10 +282,10 @@ public class MultikeyQSort <TStr, TPos, THost, T> {
     			assert_eq(host[s1+i], host1[s2+i]);
     		}
     	}
-    	boolean ret = dc.breakTie((TIndexOffU)(s1+diff), (TIndexOffU)(s2+diff)) < 0;
+    	bool ret = dc.breakTie((TIndexOffU)(s1+diff), (TIndexOffU)(s2+diff)) < 0;
     	// Sanity-check return value using dollarLt
     #ifndef NDEBUG
-    	boolean ret2 = sstr_suf_lt(host1, s1, hlen, host, s2, hlen, false);
+    	bool ret2 = sstr_suf_lt(host1, s1, hlen, host, s2, hlen, false);
     	assert(!sanityCheck || ret == ret2);
     #endif
     	return ret;
@@ -427,16 +420,25 @@ public class MultikeyQSort <TStr, TPos, THost, T> {
     				assert_neq(j, targ);
     				if(sufDcLtU8(host1, host, hlen, s[j], s[targ], dc, sanityCheck)) {
     					// j < targ
+    					assert(!sufDcLtU8(host1, host, hlen, s[targ], s[j], dc, sanityCheck));
+    					ASSERT_SUF_LT(j, targ);
     					targ = j;
     					targoff = joff;
+    				} else {
+    					assert(sufDcLtU8(host1, host, hlen, s[targ], s[j], dc, sanityCheck));
+    					ASSERT_SUF_LT(targ, j); // !
     				}
     			}
     		}
     		if(i != targ) {
+    			ASSERT_SUF_LT(targ, i);
     			// swap i and targ
     			TIndexOffU tmp = s[i];
     			s[i] = s[targ];
     			s[targ] = tmp;
+    		}
+    		for(size_t j = i+1; j < end; j++) {
+    			ASSERT_SUF_LT(i, j);
     		}
     	}
     	if(sanityCheck) {
@@ -446,12 +448,12 @@ public class MultikeyQSort <TStr, TPos, THost, T> {
     
     public void bucketSortSufDcU8(T1 host1, T2 host, int hlen, long[] s, int slen, DifferenceCoverSample<T1> dc, int hi, int _begin, int _end, int _depth, boolean sanityCheck) {
     	// 5 64-element buckets for bucket-sorting A, C, G, T, $
-        long bkts[] = new long[4];
+        TIndexOffU* bkts[4];
         for(size_t i = 0; i < 4; i++) {
             bkts[i] = new TIndexOffU[4 * 1024 * 1024];
         }
         ELList<size_t, 5, 1024> block_list;
-        boolean first = true;
+        bool first = true;
         while(true) {
             size_t begin = 0, end = 0;
             if(first) {
@@ -535,8 +537,11 @@ public class MultikeyQSort <TStr, TPos, THost, T> {
     	// Helper for making the recursive call; sanity-checks arguments to
     	// make sure that the problem actually got smaller.
     	#define MQS_RECURSE_SUF_DC_U8(nbegin, nend, ndepth) { \
+    		assert(nbegin > begin || nend < end || ndepth > depth); \
     		mkeyQSortSufDcU8(host1, host, hlen, s, slen, dc, hi, nbegin, nend, ndepth, sanityCheck); \
     	}
+    	assert_leq(begin, slen);
+    	assert_leq(end, slen);
     	size_t n = end - begin;
     	if(n <= 1) return; // 1-element list already sorted
     	if(depth > dc.v()) {
@@ -561,6 +566,18 @@ public class MultikeyQSort <TStr, TPos, THost, T> {
     	size_t a, b, c, d, r;
     	CHOOSE_AND_SWAP_PIVOT(SWAP1, CHAR_AT_SUF_U8); // choose pivot, swap to begin
     	int v = CHAR_AT_SUF_U8(begin, depth); // v <- pivot value
+    	#ifndef NDEBUG
+    	{
+    		bool stillInBounds = false;
+    		for(size_t i = begin; i < end; i++) {
+    			if(depth < (hlen-s[i])) {
+    				stillInBounds = true;
+    				break;
+    			} else { /* already fell off this suffix */ }
+    		}
+    		assert(stillInBounds); // >=1 suffix must still be in bounds
+    	}
+    	#endif
     	a = b = begin;
     	c = d = end-1;
     	while(true) {
@@ -576,7 +593,7 @@ public class MultikeyQSort <TStr, TPos, THost, T> {
     		// Invariant: everything after d is = pivot, everything
     		// between c and d is >
     		int cc = 0; // shouldn't have to init but gcc on Mac complains
-    		//boolean hiLatch = true;
+    		//bool hiLatch = true;
     		while(b <= c && v <= (cc = CHAR_AT_SUF_U8(c, depth))) {
     			if(v == cc) {
     				SWAP(s, c, d); d--;
@@ -589,9 +606,11 @@ public class MultikeyQSort <TStr, TPos, THost, T> {
     		b++;
     		c--;
     	}
-
-    	r = Math.min(a-begin, b-a); VECSWAP(s, begin, b-r,   r);  // swap left = to center
-    	r = Math.min(d-c, end-d-1); VECSWAP(s, b,     end-r, r);  // swap right = to center
+    	assert(a > begin || c < end-1);                      // there was at least one =s
+    	assert_lt(d-c, n); // they can't all have been > pivot
+    	assert_lt(b-a, n); // they can't all have been < pivot
+    	r = min(a-begin, b-a); VECSWAP(s, begin, b-r,   r);  // swap left = to center
+    	r = min(d-c, end-d-1); VECSWAP(s, b,     end-r, r);  // swap right = to center
     	r = b-a; // r <- # of <'s
     	if(r > 0) {
     		MQS_RECURSE_SUF_DC_U8(begin, begin + r, depth); // recurse on <'s
