@@ -1,0 +1,39 @@
+package com.uwb.bt2j.indexer.types;
+
+public class SDnaStringFixed {
+	protected char cs_[];
+	protected int len_;
+	
+	public SDnaStringFixed(String b, boolean chars, boolean colors) {
+		if(chars) {
+			if(colors) {
+				installColors(b, b.length());
+			} else {
+				installChars(b, b.length());
+			}
+		} else {
+			install(b, b.length());
+		}
+	}
+	
+	public void installReverseComp(String b, int sz) {
+		for(int i = 0; i < sz; i++)
+			cs_[i] = (b.charAt(sz-i-1) == 4 ? (char)4 : (char)(b.charAt(sz-i-1) ^ 3));
+		len_ = sz;
+	}
+	
+	public void reverseComp() {
+		for(int i = 0; i < (len_ >> 1); i++) {
+			char tmp1 = (char) (cs_[i] == 4 ? 4 : cs_[i] ^ 3);
+			char tmp2 = (char) (cs_[len_-i-1] == 4 ? 4 : cs_[len_-i-1] ^ 3);
+			this.cs_[i] = tmp2;
+			this.cs_[this.len_-i-1] = tmp1;
+		}
+		// Do middle element iff there are an odd number
+		if((this.len_ & 1) != 0) {
+			char tmp = this.cs_[this.len_ >> 1];
+			tmp = (char) (tmp == 4 ? 4 : tmp ^ 3);
+			this.cs_[this.len_ >> 1] = tmp;
+		}
+	}
+}

@@ -1,0 +1,39 @@
+package com.uwb.bt2j.indexer.types;
+
+/*
+ * A fixed-length string using heap memory with size set at construction time
+ *   or when install() member is called.
+ */
+public class SString {
+	protected char cs_[];
+	protected String printcs_;
+	protected int len_;
+	
+	public SString() {
+		len_ = 0;
+	}
+	
+	public SString(int sz) {
+		len_ = 0;
+		cs_ = new char[sz];
+	}
+	
+	public SString(char[] o) {
+		cs_ = o;
+	}
+	
+	public char windowGet(int i, boolean fw, int depth, int len) {
+		if(len == 0) len = len_;
+		return fw ? cs_[depth+i] : cs_[depth+len-i-1];
+	}
+	
+	public String windowGet(boolean fw, int depth, int len) {
+		char ret[] = new char[len_];
+		if(len == 0) len = len_;
+		for(int i = 0; i < len; i++) {
+			ret[i] = fw ? cs_[depth+i] : cs_[depth+len-i-1]];
+		}
+	}
+	
+
+}

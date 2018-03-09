@@ -1,0 +1,144 @@
+package com.uwb.bt2j.indexer.blockwise;
+
+import org.omg.CORBA_2_3.portable.OutputStream;
+
+import com.uwb.bt2j.indexer.RandomSource;
+import com.uwb.bt2j.indexer.types.ELList;
+import com.uwb.bt2j.indexer.types.EList;
+
+import javafx.util.Pair;
+
+public class KarkkainenBlockwiseSA extends InorderBlockwiseSA{
+	
+	private EList<Long> _sampleSuffs;
+	private int _nthreads;
+	private long _itrBucketIdx;
+	private long _cur;
+	private int _dcV;
+	private boolean _built;
+	private RandomSource _randomSrc;
+	private String _base_fname;
+	private boolean _bigEndian;
+	//private EList<Thread>
+	private EList<Pair<KarkkainenBlockwiseSA, Integer>> _tParams;
+	private ELList<Long> _itrBuckets;
+	private boolean _done;
+
+	public KarkkainenBlockwiseSA(String __text, long __bucketSz, boolean __sanityCheck, boolean __passMemExc,
+			boolean __verbose, OutputStream __logger) {
+		super(__text, __bucketSz, __sanityCheck, __passMemExc, __verbose, __logger);
+		_sampleSuffs = 2;
+		_nthreads = __nthreads;
+		_itrBucketIdx = 0;
+		_cur = 0;
+		_dcV = __dcV;
+		_dc = 2;
+		_built = false;
+		_base_fname = base_fname;
+		_bigEndian = false;
+	}
+	
+	public static int simulateAllocs(String text, int bucketSz) {
+		 int len = text.length();
+	        // _sampleSuffs and _itrBucket are in memory at the peak
+	        int bsz = bucketSz;
+	        int sssz = (int) (len / Long.max(bucketSz-1, 1));
+	        long[] tmp = new long[bsz + sssz + (1024 * 1024 /*out of caution*/)];
+	        return bsz;
+	}
+
+	public long nextSuffix() {
+		// Launch threads if not
+				if(this._nthreads > 1) {
+		
+					if(_threads.size() == 0) {
+		                _done = _sampleSuffs.size() + 1; 
+		                for (int i = 0; i < _sampleSuffs.size() + 1; i++) {
+		                    _done.get()[i] = false;
+		                }
+						_itrBuckets.resize(this._nthreads);
+						_tparams.resize(this._nthreads);
+						for(int tid = 0; tid < this._nthreads; tid++) {
+							_tparams[tid].first = this;
+							_tparams[tid].second = tid;
+							_threads.push_back(new tthread::thread(nextBlock_Worker, (void*)&_tparams[tid]));
+						}
+					}
+				}
+				if(this._itrPushedBackSuffix != OFF_MASK) {
+					TIndexOffU tmp = this._itrPushedBackSuffix;
+					this._itrPushedBackSuffix = OFF_MASK;
+					return tmp;
+				}
+				while(this._itrBucketPos >= this._itrBucket.size() ||
+				      this._itrBucket.size() == 0)
+				{
+					if(!hasMoreBlocks()) {
+						throw out_of_range("No more suffixes");
+					}
+					if(this._nthreads == 1) {
+						nextBlock((int)_cur);
+						_cur++;
+					} else {
+						while(!_done.get()[this._itrBucketIdx]) {
+							SLEEP(1);
+						}
+						// Read suffixes from a file
+						std::ostringstream number; number << this._itrBucketIdx;
+						const string fname = _base_fname + "." + number.str() + ".sa";
+						ifstream sa_file(fname.c_str(), ios::binary);
+						if(!sa_file.good()) {
+							cerr << "Could not open file for reading a suffix array: \"" << fname << "\"" << endl;
+							throw 1;
+						}
+						int numSAs = readU<TIndexOffU>(sa_file, _bigEndian);
+						this._itrBucket.resizeExact(numSAs);
+						for(int i = 0; i < numSAs; i++) {
+							this._itrBucket[i] = readU<TIndexOffU>(sa_file, _bigEndian);
+						}
+						sa_file.close();
+						std::remove(fname.c_str());
+					}
+					this._itrBucketIdx++;
+					this._itrBucketPos = 0;
+				}
+				return this._itrBucket[this._itrBucketPos++];
+	}
+	
+	public int dcV() {
+		return _dcV;
+	}
+	
+	public static void nextBlockWorker() {
+		
+	}
+	
+	protected void reset() {
+		if(!_built) {
+			build();
+		}
+		_cur = 0;
+	}
+	
+	protected boolean isReset() {
+		return _cur == 0;
+	}
+	
+	private void build() {
+		// Calculate difference-cover sample
+        if(_dcV != 0) {
+            _dc.init(new TDC(this->text(), _dcV, this->verbose(), this->sanityCheck()));
+            _dc.get()->build(this->_nthreads);
+        }
+        // Calculate sample suffixes
+        if(this->bucketSz() <= this->text().length()) {
+            VMSG_NL("Building samples");
+            buildSamples();
+        } else {
+            VMSG_NL("Skipping building samples since text length " <<
+                    this->text().length() << " is less than bucket size: " <<
+                    this->bucketSz());
+        }
+        _built = true;
+	}
+}

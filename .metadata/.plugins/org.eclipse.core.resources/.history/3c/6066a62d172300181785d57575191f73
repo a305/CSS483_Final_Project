@@ -1,0 +1,15 @@
+package com.uwb.bt2j.indexer.types;
+
+public class SDnaStringFixed {
+	public SDnaStringFixed(String b, boolean chars, boolean colors) {
+		if(chars) {
+			if(colors) {
+				installColors(b, b.length());
+			} else {
+				installChars(b, b.length());
+			}
+		} else {
+			install(b, strlen(b));
+		}
+	}
+}

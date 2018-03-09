@@ -1,0 +1,9 @@
+package com.uwb.bt2j.indexer.types;
+
+/*
+ * Like SString, but stores a list uint32_t words where each word is divided
+ *   into 16 2-bit slots interpreted as holding one A/C/G/T nucleotide each.
+ */
+public class S2bDnaString {
+
+}

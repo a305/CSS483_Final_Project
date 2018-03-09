@@ -1,0 +1,119 @@
+package com.uwb.bt2j.indexer.types;
+
+/*
+ * A fixed-length string using heap memory with size set at construction time
+ *   or when install() member is called.
+ */
+public class SString {
+	protected String cs_;
+	protected String printcs_;
+	protected int len_;
+	
+	public SString() {
+		len_ = 0;
+	}
+	
+	public SString(int sz) {
+		len_ = 0;
+		resize(sz);
+	}
+	
+	public SString(String o) {
+		cs_ = o;
+	}
+	
+	public T windowGet(int i, boolean fw, int depth, int len) {
+		if(len == 0) len = len_;
+		return fw ? cs_.charAt(depth+i) : cs_.charAt(depth+len-i-1);
+	}
+	
+	public String windowGet(boolean fw, int depth, int len) {
+		String ret = "";
+		if(len == 0) len = len_;
+		for(int i = 0; i < len; i++) {
+			ret.set(fw ? cs_.charAt(depth+i) : cs_.charAt(depth+len-i-1), i);
+		}
+	}
+	
+	public void set(T c, int idx) {
+		cs_[idx] = c;
+	}
+	
+	public final T get(int i) {
+		return cs_[i];
+	}
+	
+	public void install(T[] b, int sz) {
+		if(sz == 0) return;
+		resize(sz);
+		cs_ = b;
+	}
+	
+	public void installReverse(String b, int sz) {
+		if(sz == 0) return;
+		resize(sz);
+		for(int i = 0; i < sz; i++) {
+			cs_[i] = (T)b.charAt(sz-i-1);
+		}
+		len_ = sz;
+	}
+	
+	public void installReverse(SString b) {
+		installReverse(b.cs_, b.len_);
+	}
+	
+	public void reverse() {
+		
+		for(double i = 0; i < (len_ >> 1); i++) {
+			T tmp = get(i);
+			set(get(len_-i-1), i);
+			set(tmp, len_-i-1);
+		}
+	}
+	
+	public void reverseWindow(double off, double len) {
+		double mid = len / 2;
+		for(double i = 0; i < mid; i++) {
+			T tmp = get(off+i);
+			set(get(off+len-i-1), off+i);
+			set(tmp, off+len-i-1);
+		}
+	}
+	
+	public void fill (double len, T el) {
+		for(double i = 0; i < len; i++) {
+			set(el, i);
+		}
+	}
+	
+	public void fill(T el) {
+		fill(len_, el);
+	}
+	
+	public double length() {
+		return len_;
+	}
+	
+	public void clear() {
+		len_ = 0;
+	}
+	
+	public Boolean empty() {
+		return len_ == 0;
+	}
+	
+	public String toZBufXForm(String xform) {
+		// Lazily allocate space for print buffer
+		if(printcs_ == NULL) {
+			const_cast<char>(printcs_) = new char[len_+1];
+		}
+		char printcs = const_cast<char>(printcs_);
+		assert(printcs != NULL);
+		for(size_t i = 0; i < len_; i++) {
+			assert_lt(cs_[i], (int)xformElts);
+			printcs[i] = xform[cs_[i]];
+		}
+		printcs[len_] = 0;
+		return printcs_;
+	}
+}

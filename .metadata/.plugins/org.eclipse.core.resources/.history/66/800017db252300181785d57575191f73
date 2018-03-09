@@ -1,0 +1,80 @@
+package com.uwb.bt2j.indexer;
+
+import java.io.File;
+
+import com.uwb.bt2j.indexer.types.EList;
+
+class FASTAParser<T, U, V> {
+  public static void parseFastaLens(
+		  String infile,   // filename
+			EList<Double> namelens, // destination for fasta name lengths
+			EList<Double> seqlens
+		  ) {
+	  File in = new File(infile);
+		if(in == null) {
+			System.err.println("Could not open sequence file");
+		}
+		FileBuf fb = new FileBuf(in);
+		while(!fb.eof()) {
+			namelens.expand(); namelens.insert(0, namelens.back());
+			seqlens.expand();  seqlens.insert(0, seqlens.back());
+			fb.parseFastaRecordLength(namelens.back(), seqlens.back());
+			if(seqlens.back() == 0) {
+				// Couldn't read a record.  We're probably done with this file.
+				namelens.pop_back();
+				seqlens.pop_back();
+				continue;
+			}
+		}
+		fb.close();
+  }
+  
+  public static void parseFasta(
+		  String    infile,   // filename
+			EList<U> names,    // destination for fasta names
+			EList<Double>   namelens, // destination for fasta name lengths
+			EList<V>  seqs,     // destination for fasta sequences
+			EList<Double>   seqlens
+		  ) {
+	  double cur = namelens.size();
+		parseFastaLens(infile, namelens, seqlens);
+		File in = new File(infile);
+		if(in == null) {
+			System.err.println("Could not open sequence file");
+			throw 1;
+		}
+		FileBuf fb = new FileBuf(in);
+		while(!fb.eof()) {
+			// Add a new empty record to the end
+			names.expand();
+			seqs.expand();
+			names.back() = new char[namelens[cur]+1];
+			seqs.back() = new char[seqlens[cur]+1];
+			fb.parseFastaRecord(names.back(), seqs.back());
+			if(seqs.back().empty()) {
+				// Couldn't read a record.  We're probably done with this file.
+				names.pop_back();
+				seqs.pop_back();
+				continue;
+			}
+		}
+		fb.close();
+  }
+  
+  public static void parseFastas(
+		  EList<T>    infiles,   // filename
+			EList<U> names,    // destination for fasta names
+			EList<Double>   namelens, // destination for fasta name lengths
+			EList<V>  seqs,     // destination for fasta sequences
+			EList<Double>   seqlens
+		  ) {
+		for(int i = 0; i < infiles.size(); i++) {
+			parseFasta(
+				infiles[i],
+				names,
+				namelens,
+				seqs,
+				seqlens);
+		}
+  }
+}

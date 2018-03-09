@@ -1,0 +1,51 @@
+package com.uwb.bt2j.indexer;
+
+public class StringUtils<S, T> {
+	
+	public static int hash_string(String s) {
+		int ret = 0;
+		int a = 63689;
+		int b = 378551;
+		for(int i = 0; i < s.length(); i++) {
+			ret = (ret * a) + (int)s.charAt(i);
+			if(a == 0) {
+				a += b;
+			} else {
+				a *= b;
+			}
+			if(a == 0) {
+				a += b;
+			}
+		}
+		return ret;
+	}
+	
+	public static String reverse(String in) {
+		char ret[] = in.toCharArray();
+		int back = ret.length - 1;
+		for(int i = 0; i < ret.length / 2; i++) {
+			char tmp = ret[i];
+			back -= i;
+			ret[i] = ret[back];
+			ret[back] = tmp;
+		}
+		return new String(ret);
+	}
+	
+	public static String fill(char el, int n) {
+		String ret = "";
+		for(int i = 0; i < n; i++)
+			ret += el;
+		return ret;
+	}
+	
+	public String set(String o, char c, int i) {
+		char ret[] = o.toCharArray();
+		ret[i] = c;
+		return new String(;
+	}
+	
+	public static String insert(String o, char c, int i) {
+		return o.
+	}
+}

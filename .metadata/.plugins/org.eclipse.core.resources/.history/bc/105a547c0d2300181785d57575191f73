@@ -1,0 +1,146 @@
+package com.uwb.bt2j.indexer.types;
+
+/*
+ * A fixed-length string using heap memory with size set at construction time
+ *   or when install() member is called.
+ */
+public class SString<T> {
+	protected T[] cs_;
+	protected String printcs_;
+	protected int len_;
+	
+	public SString() {
+		len_ = 0;
+	}
+	
+	public SString(int sz) {
+		len_ = 0;
+		resize(sz);
+	}
+	
+	public SString(SString<T> o) {
+		install(o.cs_, o.len_);
+	}
+	
+	public SString(T b, int sz) {
+		install(b, sz);
+	}
+	
+	public SString(T b) {
+		install(b, b.toString().length());
+	}
+	
+	public void resize(int sz) {
+		if(cs_ != null) {
+			cs_ = null;
+		}
+		if(printcs_ != null) {
+			printcs_ = null;
+		}
+		if(sz != 0) {
+			cs_ = (T[]) new Object[sz+1];
+		}
+		len_ = sz;
+	}
+	
+	public T windowGet(int i, boolean fw, int depth, int len) {
+		if(len == 0) len = len_;
+		return fw ? cs_[depth+i] : cs_[depth+len-i-1];
+	}
+	
+	public void windowGet(T ret, Boolean fw, int depth, int len) {
+		if(len == 0) len = len_;
+		ret.resize(len);
+		for(int i = 0; i < len; i++) {
+			ret.set(fw ? cs_[depth+i] : cs_[depth+len-i-1], i);
+		}
+	}
+	
+	public void set(T c, int idx) {
+		cs_[idx] = c;
+	}
+	
+	public final T get(int i) {
+		return cs_[i];
+	}
+	
+	public void install(T[] b, int sz) {
+		if(sz == 0) return;
+		resize(sz);
+		cs_ = b;
+	}
+	
+	public void install(String b) {
+		double sz = b.length();
+		if(sz == 0) return;
+		resize(sz);
+		memcpy(cs_, b.c_str(), sz * sizeof(T));
+	}
+	
+	public void installReverse(String b, double sz) {
+		if(sz == 0) return;
+		resize(sz);
+		for(double i = 0; i < sz; i++) {
+			cs_[i] = b[sz-i-1];
+		}
+		len_ = sz;
+	}
+	
+	public void installReverse(SString b) {
+		installReverse(b.cs_, b.len_);
+	}
+	
+	public void reverse() {
+		for(double i = 0; i < (len_ >> 1); i++) {
+			T tmp = get(i);
+			set(get(len_-i-1), i);
+			set(tmp, len_-i-1);
+		}
+	}
+	
+	public void reverseWindow(double off, double len) {
+		double mid = len / 2;
+		for(double i = 0; i < mid; i++) {
+			T tmp = get(off+i);
+			set(get(off+len-i-1), off+i);
+			set(tmp, off+len-i-1);
+		}
+	}
+	
+	public void fill (double len, T el) {
+		for(double i = 0; i < len; i++) {
+			set(el, i);
+		}
+	}
+	
+	public void fill(T el) {
+		fill(len_, el);
+	}
+	
+	public double length() {
+		return len_;
+	}
+	
+	public void clear() {
+		len_ = 0;
+	}
+	
+	public Boolean empty() {
+		return len_ == 0;
+	}
+	
+	public String toZBufXForm(String xform) {
+		// Lazily allocate space for print buffer
+		if(printcs_ == NULL) {
+			const_cast<char>(printcs_) = new char[len_+1];
+		}
+		char printcs = const_cast<char>(printcs_);
+		assert(printcs != NULL);
+		for(size_t i = 0; i < len_; i++) {
+			assert_lt(cs_[i], (int)xformElts);
+			printcs[i] = xform[cs_[i]];
+		}
+		printcs[len_] = 0;
+		return printcs_;
+	}
+}

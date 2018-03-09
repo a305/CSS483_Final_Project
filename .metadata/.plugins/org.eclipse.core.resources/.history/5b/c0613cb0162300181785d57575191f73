@@ -1,0 +1,240 @@
+package com.uwb.bt2j.indexer.types;
+
+/*
+ * A string using heap memory where the size of the backing store is
+ *   automatically resized as needed.  Supports operations like append, insert,
+ *   erase, etc.
+ */
+public class SStringExpandable<T> {
+	private int S, M;
+	protected T cs_;
+	protected String printcs_;
+	protected char zero_;
+	protected T zeroT_;
+	protected int len_;
+	protected int sz_;
+	
+	public SStringExpandable(int s, int m) {
+		S = s; M = m;
+		cs_ = null;
+		printcs_ = null;
+		len_ = 0;
+		sz_ = 0;
+	}
+	
+	public SStringExpandable(int s, int m, int sz) {
+		S = s; M = m;
+		cs_ = null;
+		printcs_ = null;
+		len_ = 0;
+		sz_ = 0;
+		expandNoCopy(sz);
+	}
+	
+	public SStringExpandable(int s, int m, String str) {
+		S = s; M = m;
+		cs_ = null;
+		printcs_ = null;
+		len_ = 0;
+		sz_ = 0;
+		
+		install(str, str.length());
+	}
+	
+	public T windowGet(int i,
+			boolean   fw,
+			int depth,
+			int len) {
+		if(len == 0) len = len_;
+		return fw ? cs_[depth+i] : cs_[depth+len-i-1];
+	}
+	
+	public void windowGet(
+			T ret,
+			boolean   fw,
+			int depth,
+			int len) {
+		if(len == 0) len = len_;
+		for(int i = 0; i < len; i++) {
+			ret.append(fw ? cs_[depth+i] : cs_[depth+len-i-1]);
+		}
+	}
+	
+	public void insert(T c, int idx) {
+		if(sz_ < len_ + 1) expandCopy((len_ + 1 + S) * M);
+		len_++;
+		// Move everyone down by 1
+		// len_ is the *new* length
+		for(int i = len_; i > idx+1; i--) {
+			cs_[i-1] = cs_[i-2];
+		}
+		cs_[idx] = c;
+	}
+	
+	public void set(int c, int idx) {
+		cs_[idx] = c;
+	}
+	
+	public void append(T c) {
+		if(sz_ < len_ + 1) expandCopy((len_ + 1 + S) * M);
+		cs_[len_++] = c;
+	}
+	
+	public void remove(int idx) {
+		for(int i = idx; i < len_-1; i++) {
+			cs_[i] = cs_[i+1];
+		}
+		len_--;
+	}
+	
+	public T get(int i) {
+		return cs_[i];
+	}
+	
+	public void install(T b, int sz) {
+		if(sz_ < sz) expandNoCopy((sz + S) * M);
+		cs_ = b;
+		len_ = sz;
+	}
+	
+	public void install(T b) {
+		install(b, b.toString().length());
+	}
+	
+	public void installReverse(String b, int sz) {
+		if(sz_ < sz) expandNoCopy((sz + S) * M);
+		for(int i = 0; i < sz; i++) {
+			cs_[i] = b.charAt(sz-i-1);
+		}
+		len_ = sz;
+	}
+	
+	public void reverse() {
+		for(int i = 0; i < (len_ >> 1); i++) {
+			T tmp = get(i);
+			set(get(len_-i-1), i);
+			set(tmp, len_-i-1);
+		}
+	}
+	
+	public void reverseWindow(int off, int len) {
+		int mid = len >> 1;
+		for(int i = 0; i < mid; i++) {
+			T tmp = get(off+i);
+			set(get(off+len-i-1), off+i);
+			set(tmp, off+len-i-1);
+		}
+	}
+	
+	public void resize(int len) {
+		if(sz_ < len) expandCopy((len + S) * M);
+		len_ = len;
+	}
+	
+	public void resize(int len, T el) {
+		if(sz_ < len) expandCopy((len + S) * M);
+		if(len > len_) {
+			for(int i = len_; i < len; i++) {
+				cs_[i] = el;
+			}
+		}
+		len_ = len;
+	}
+	
+	public void fill(T el) {
+		fill(len_, el);
+	}
+	
+	public void trimBegin(int len) {
+		if(len == len_) {
+			len_ = 0; return;
+		}
+		for(int i = 0; i < len_-len; i++) {
+			cs_[i] = cs_[i+len];
+		}
+		len_ -= len;
+	}
+	
+	public int trimEnd(int len) {
+		if(len >= len_) {
+			int ret = len_;
+			len_ = 0;
+			return ret;
+		}
+		len_ -= len;
+		return len;
+	}
+	
+	public void append(T b, int sz) {
+		b =cs_ + len_;
+		len_ += sz;
+	}
+	
+	public int length() {
+		return len_;
+	}
+	
+	public void clear() {
+		len_ = 0;
+	}
+	
+	public boolean empty() {
+		return len_ ==0;
+	}
+	
+	public String toZBufXForm(String xform) {
+		if(empty()) {
+			const_cast<char>(zero_) = 0;
+			return zero_;
+		}
+		String printcs = const_cast<char>(printcs_);
+		// Lazily allocate space for print buffer
+		for(int i = 0; i < len_; i++) {
+			printcs[i] = xform[(int)cs_[i]];
+		}
+		printcs[len_] = 0;
+		return printcs_;
+	}
+	
+	public T toZBuf() {
+		if(empty()) {
+			const_cast<T>(zeroT_) = 0;
+			return zeroT_;
+		}
+		const_cast<T>(cs_)[len_] = 0;
+		return cs_;
+	}
+	
+	public boolean eq(String str) {
+		String self = toZBuf();
+		return str.compareTo(self) == 0;
+	}
+	
+	public T buf() {
+		return cs_;
+	}
+	
+	public T wbuf() {
+		return cs_;
+	}
+	
+	protected void expandCopy(int sz) {
+		if(sz_ >= sz) return; // done!
+		T tmp  = new T[sz + 1];
+		String ptmp;
+		if(cs_ != null)
+			tmp = cs_;
+		if(printcs_ != null)
+			printcs_ = ptmp;
+		cs_ = tmp;
+		printcs_ = ptmp;
+		sz_ = sz;
+	}
+	
+	public void expandNoCopy(int sz) {
+		if(sz_ >= sz) return; // done!
+		cs_ = new T[sz + 1];
+		printcs_ = new char[sz + 1];
+		sz_ = sz;
+	}
+}

@@ -1,0 +1,83 @@
+package com.uwb.bt2j.indexer.types;
+
+import com.uwb.bt2j.indexer.EbwtParams;
+import com.uwb.bt2j.indexer.util.IndexTypes;
+
+public class SideLocus {
+	
+	public long _sideByteOff; // offset of top side within ebwt[]
+	public long _sideNum;     // index of side
+	public long _charOff;      // character offset within side
+	public long _by;            // byte within side (not adjusted for bw sides)
+	public long _bp;            // bitpair within byte (not adjusted for bw sides)
+	
+	public SideLocus() {
+		_sideByteOff = 0;
+		_sideNum = 0;
+		_charOff = 0;
+		_by = -1;
+		_bp = -1;
+	}
+	
+	public SideLocus(long row, EbwtParams ep, byte ebwt) {
+		initFromRow(row, ep, ebwt);
+	}
+	
+	public static void initFromTopBot(
+		long top,
+		long bot,
+		EbwtParams ep,
+		byte ebwt,
+		SideLocus ltop,
+		SideLocus lbot) {
+		long sideBwtLen = ep._sideBwtLen;
+		ltop.initFromRow(top, ep, ebwt);
+		long spread = bot - top;
+		// Many cache misses on the following lines
+		if(ltop._charOff + spread < sideBwtLen) {
+			lbot._charOff = ltop._charOff + spread;
+			lbot._sideNum = ltop._sideNum;
+			lbot._sideByteOff = ltop._sideByteOff;
+			lbot._by = lbot._charOff >> 2;
+			lbot._bp = lbot._charOff & 3;
+		} else {
+			lbot.initFromRow(bot, ep, ebwt);
+		}
+	}
+	
+	public void initFromRow(long row, EbwtParams ep, byte ebwt){
+		int sideSz     = ep._sideSz;
+		
+		// Side length is hard-coded for now; this allows the compiler
+		// to do clever things to accelerate / and %.
+		_sideNum       = row / (48*IndexTypes.OFF_SIZE);
+		_charOff       = row % (48*IndexTypes.OFF_SIZE);
+		_sideByteOff   = _sideNum * sideSz;
+		
+		// Tons of cache misses on the next line
+		_by 		   = _charOff >> 2; // byte within side
+		_bp 		   = _charOff & 3;  // bit-pair within byte
+	}
+	
+	public void nextSide(EbwtParams ep) {
+		_sideByteOff += ep.sideSz();
+		_sideNum++;
+		_by = _bp = _charOff = 0;
+	}
+	
+	public boolean valid() {
+		return (_bp != -1 ? true : false);
+	}
+	
+	public long toBWRow() {
+		return _sideNum * 48*IndexTypes.OFF_SIZE + _charOff;
+	}
+	
+	public void invalidate() {
+		_bp = -1;
+	}
+	
+	public long side(char ebwt) {
+		return ebwt + _sideByteOff;
+	}
+}

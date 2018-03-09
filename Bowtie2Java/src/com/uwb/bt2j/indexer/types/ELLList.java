@@ -1,9 +1,9 @@
 package com.uwb.bt2j.indexer.types;
 
-class ELLList <T>{
+public class ELLList <T>{
 	
 	private int cat_;
-	private ELLList<T> list_;
+	private ELList<T> list_;
 	private int sz_;
 	private int cur_;
 	
@@ -71,7 +71,7 @@ class ELLList <T>{
 		cur_ = sz;
   }
   
-  public ELList<T> get(int i){
+  public EList<T> get(int i){
 	  return list_.get(i);
   }
   
@@ -79,11 +79,11 @@ class ELLList <T>{
     cur_ = 0;
   }
   
-  public ELList<T> back() {
+  public EList<T> back() {
 	  return list_.get(cur_-1);
   }
   
-  public ELList<T> front() {
+  public EList<T> front() {
 	  return list_.get(0);
   }
   

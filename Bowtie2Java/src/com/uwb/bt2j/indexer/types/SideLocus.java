@@ -1,7 +1,7 @@
 package com.uwb.bt2j.indexer.types;
 
-import com.uwb.bt2j.indexer.EbwtParams;
-import com.uwb.bt2j.indexer.IndexTypes;
+import com.uwb.bt2j.indexer.util.EbwtParams;
+import com.uwb.bt2j.indexer.util.IndexTypes;
 
 public class SideLocus {
 	

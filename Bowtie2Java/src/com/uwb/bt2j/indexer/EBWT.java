@@ -7,9 +7,16 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Scanner;
 
+import com.uwb.bt2j.indexer.blockwise.InorderBlockwiseSA;
+import com.uwb.bt2j.indexer.blockwise.KarkkainenBlockwiseSA;
+import com.uwb.bt2j.indexer.filebuf.FileBuf;
 import com.uwb.bt2j.indexer.types.EList;
+import com.uwb.bt2j.indexer.types.RandomSource;
+import com.uwb.bt2j.indexer.types.RefReadInParams;
 import com.uwb.bt2j.indexer.types.RefRecord;
 import com.uwb.bt2j.indexer.types.SideLocus;
+import com.uwb.bt2j.indexer.util.EbwtParams;
+import com.uwb.bt2j.indexer.util.IndexTypes;
 
 public abstract class EBWT <TStr>{
 	public static final String gEbwt_ext = "bt2";
@@ -858,7 +865,7 @@ public abstract class EBWT <TStr>{
 						straddled = true;
 						if(rejectStraddle) {
 							// it falls off; signal no-go and return
-							tidx = IndexTypes.IndexTypes.OFF_MASK;
+							tidx = com.uwb.bt2j.indexer.util.IndexTypes.OFF_MASK;
 							return;
 						}
 					}
@@ -1314,7 +1321,7 @@ public abstract class EBWT <TStr>{
 		// Keep plen; it's small and the client may want to seq it
 		// even when the others are evicted.
 		//_plen  = null;
-		_zEbwtByteOff = IndexTypes.IndexTypes.OFF_MASK;
+		_zEbwtByteOff = com.uwb.bt2j.indexer.util.IndexTypes.OFF_MASK;
 		_zEbwtBpOff = -1;
 	}
 	
@@ -1398,7 +1405,7 @@ public abstract class EBWT <TStr>{
 		if(ftab[i] <= len) {
 			return ftab[i];
 		} else {
-			long efIdx = ftab[i] ^ IndexTypes.IndexTypes.OFF_MASK;
+			long efIdx = ftab[i] ^ com.uwb.bt2j.indexer.util.IndexTypes.OFF_MASK;
 			return eftab[efIdx*2+1];
 		}
 	}
@@ -1806,13 +1813,13 @@ public abstract class EBWT <TStr>{
 			return off;
 		} else {
 			// Try looking at zoff
-			return IndexTypes.IndexTypes.OFF_MASK;
+			return com.uwb.bt2j.indexer.util.IndexTypes.OFF_MASK;
 		}
 	}
 	
 	public long tryOffset(long elt, boolean fw, long hitlen) {
 		long off = tryOffset(elt);
-		if(off != IndexTypes.IndexTypes.OFF_MASK && !fw) {
+		if(off != com.uwb.bt2j.indexer.util.IndexTypes.OFF_MASK && !fw) {
 			off = _eh._len - off - 1;
 			off -= (hitlen-1);
 		}
@@ -1851,7 +1858,7 @@ public abstract class EBWT <TStr>{
 	}
 	
 	public long mapLF1(long row, SideLocus l, int c) {
-		if(rowL(l) != c || row == _zOff) return IndexTypes.IndexTypes.OFF_MASK;
+		if(rowL(l) != c || row == _zOff) return com.uwb.bt2j.indexer.util.IndexTypes.OFF_MASK;
 		long ret = countBt2Side(l, c);
 		return ret;
 	}

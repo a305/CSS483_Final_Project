@@ -8,41 +8,18 @@ public class ELSet<T> {
 	private int sz_;
 	private int cur_;
 	
-  public ELSet() {
-	  cat_ = 0;
-	  list_ = null;
-	  sz_ = 0;
-	  cur_ = 0;
-  }
-  
-  public ELSet(int cat) {
-	  cat_ = cat;
-	  list_ = null;
-	  sz_ = 128;
-	  cur_ = 0;
-  }
-  
-  public ELSet(int isz, int cat) {
-	  cat_ = cat;
-	  list_ = null;
-	  sz_ = isz;
-	  cur_ = 0;
-  }
-  
-  public ELSet(ELSet<T> o) {
-	  cat_ = 0;
-	  list_ = null;
-	  sz_ = 0;
-	  cur_ = 0;
-  }
-  
-  public ELSet(ELSet<T> o, int cat) {
-	  cat_ = cat;
-	  list_ = null;
-	  sz_ = 0;
-	  cur_ = 0;
-  }
-  
+	  public ELSet(int cat) {
+		  cat_ = cat;
+		  sz_ = 128;
+		  cur_ = 0;
+	  }
+	  
+	  public ELSet(int isz, int cat) {
+		  cat_ = cat;
+		  sz_ = isz;
+		  cur_ = 0;
+	  }
+
   public void xfer(ELSet<T> o) {
 	  // Can only transfer into an empty object
 	  list_ = o.list_;
@@ -85,22 +62,22 @@ public class ELSet<T> {
   }
   
   public ESet<T> back() {
-	  return list_[cur_-1];
+	  return (ESet<T>) list_.get(cur_-1);
   }
   
   public ESet<T> front() {
-	  return list_[0];
+	  return (ESet<T>) list_.get(0);
   }
   
   public ESet<T> get(int idx) {
-	  return list_[idx];
+	  return (ESet<T>) list_.get(idx);
   }
   
   public void setCat(int cat) {
 		cat_ = cat;
 		if(cat_ != 0) {
 			for(int i = 0; i < sz_; i++) {
-				list_[i].setCat(cat_);
+				list_.get(i).setCat(cat_);
 			}
 		}
   }
@@ -116,7 +93,7 @@ public class ELSet<T> {
 		ESet<T> tmp;
 		if(list_ != null) {
 			for(int i = 0; i < cur_; i++) {
-				tmp[i].xfer(list_[i]);
+				tmp.get(i).xfer(list_.get(i));
 			}
 		}
 		list_ = tmp;
@@ -127,7 +104,12 @@ public class ELSet<T> {
 	  if(thresh <= sz_) return;
 		int newsz = (sz_ * 2)+1;
 		while(newsz < thresh) newsz *= 2;
-		ESet<T> tmp;
+		ESet<T> tmp = new ESet(newsz);
+		if(cat_ != 0) {
+			for(int i = 0; i < newsz; i++) {
+				tmp.get(i).setCat(cat_);
+			}
+		}
 		list_ = tmp;
 		sz_ = newsz;
   }

@@ -2,8 +2,6 @@ package com.uwb.bt2j.indexer.types;
 
 import java.util.Arrays;
 
-import com.uwb.bt2j.indexer.RandomSource;
-
 public class EList<T> {
 	private int cat_;
 	private int allocCat_;
@@ -269,6 +267,10 @@ public class EList<T> {
   
   public int cat() {
 	  return cat_;
+  }
+  
+  public void set(T o, int idx) {
+	  list_[idx] = o;
   }
   
   public void setCat(int cat) {

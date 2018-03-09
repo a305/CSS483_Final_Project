@@ -1,0 +1,172 @@
+package com.uwb.bt2j.indexer.types;
+
+import com.uwb.bt2j.indexer.BitpairOutFileBuf;
+import com.uwb.bt2j.indexer.FileBuf;
+import com.uwb.bt2j.indexer.Indexer.GetOpts;
+import com.uwb.bt2j.indexer.types.RefRecord.ReadDir;
+
+import javafx.util.Pair;
+
+public class RefReadInParams <TStr>{
+	public boolean color;
+	public ReadDir reverse;
+	public boolean nsToAs;
+	public boolean bisulfite;
+	
+	public RefReadInParams(boolean col, ReadDir reverse2, boolean nsToA, boolean bisulf) {
+		color = col;
+		reverse = reverse2;
+		nsToAs = nsToA;
+		bisulfite = bisulf;
+	}
+	
+	public static RefRecord fastaRefReadAppend(
+			FileBuf in,             // input file
+			boolean first,              // true iff this is the first record in the file
+			TStr dst,               // destination buf for parsed characters
+			int dstoff,          // index of next character in dst to assign
+			RefReadInParams rparms, // 
+			String name)     // put parsed FASTA name here
+	{
+		int c;
+		int lastc = '>';
+		if(first) {
+			c = in.getPastWhitespace();
+			if(c != '>') {
+				System.err.println("Reference file does not seem to be a FASTA file");
+			}
+			lastc = c;
+		}
+
+		// RefRecord params
+		int len = 0;
+		int off = 0;
+		first = true;
+
+		int ilen = dstoff;
+
+		// Chew up the id line; if the next line is either
+		// another id line or a comment line, keep chewing
+		int lc = -1; // last-DNA char variable for color conversion
+		c = lastc;
+		if(c == '>' || c == '#') {
+			do {
+				while (c == '#') {
+					if((c = in.getPastNewline()) == -1) {
+						lastc = -1;
+						goto bail;
+					}
+				}
+				while(true) {
+					c = in.get();
+					if(c == -1) {
+						lastc = -1;
+						goto bail;
+					}
+					if(c == '\n' || c == '\r') {
+						while(c == '\r' || c == '\n') c = in.get();
+						if(c == -1) {
+							lastc = -1;
+							goto bail;
+						}
+						break;
+					}
+					if (name) name.push_back(c);
+				}
+				// c holds the first character on the line after the name
+				// line
+				if(c == '>') {
+					// If there's another name line immediately after this one,
+					// discard the previous name and start fresh with the new one
+					if (name) name.clear();
+				}
+			} while (c == '>' || c == '#');
+		} else {
+			first = false;
+		}
+
+		// Skip over an initial stretch of gaps or ambiguous characters.
+		// For colorspace we skip until we see two consecutive unambiguous
+		// characters (i.e. the first unambiguous color).
+		while(true) {
+			int cat = Alphabet.asc2dnacat[c];
+			if(rparms.nsToAs && cat >= 2) {
+				c = 'A';
+			}
+			int cc = toupper(c);
+			if(rparms.bisulfite && cc == 'C') c = cc = 'T';
+			if(cat == 1) {
+				// This is a DNA character
+				if(rparms.color) {
+					if(lc != -1) {
+						// Got two consecutive unambiguous DNAs
+						break; // to read-in loop
+					}
+					// Keep going; we need two consecutive unambiguous DNAs
+					lc = Alphabet.asc2dna[(int)c];
+					// The 'if(off > 0)' takes care of the case where
+					// the reference is entirely unambiguous and we don't
+					// want to incorrectly increment off.
+					if(off > 0) off++;
+				} else {
+					break; // to read-in loop
+				}
+			} else if(cat >= 2) {
+				if(lc != -1 && off == 0) {
+					off++;
+				}
+				lc = -1;
+				off++; // skip it
+			} else if(c == '>') {
+				lastc = '>';
+				goto bail;
+			}
+			c = in.get();
+			if(c == -1) {
+				lastc = -1;
+				goto bail;
+			}
+		}
+		if(first && rparms.color && off > 0) {
+			// Handle the case where the first record has ambiguous
+			// characters but we're in color space; one of those counts is
+			// spurious
+			off--;
+		}
+		// in now points just past the first character of a sequence
+		// line, and c holds the first character
+		while(true) {
+			// Note: can't have a comment in the middle of a sequence,
+			// though a comment can end a sequence
+			int cat = Alphabet.asc2dnacat[c];
+			if(cat == 1) {
+				// Consume it
+				if(!rparms.color || lc != -1) len++;
+				// Add it to referenece buffer
+				if(rparms.color) {
+					dst.set((char)Alphabet.dinuc2color[Alphabet.asc2dna[(int)c]][lc], dstoff++);
+				} else if(!rparms.color) {
+					dst.set(Alphabet.asc2dna[c], dstoff++);
+				}
+				lc = Alphabet.asc2dna[(int)c];
+			}
+			c = in.get();
+			if(rparms.nsToAs && Alphabet.asc2dnacat[c] >= 2) c = 'A';
+			if (c == -1 || c == '>' || c == '#' || Alphabet.asc2dnacat[c] >= 2) {
+				lastc = c;
+				break;
+			}
+			if(rparms.bisulfite && toupper(c) == 'C') c = 'T';
+		}
+
+	  bail:
+		// Optionally reverse the portion that we just appended.
+		// ilen = length of buffer before this last sequence was appended.
+		if(rparms.reverse == REF_READ_REVERSE_EACH) {
+			// Find limits of the portion we just appended
+			int nlen = dstoff;
+			dst.reverseWindow(ilen, nlen);
+		}
+		return new RefRecord((long)off, (long)len, first);
+	}
+}

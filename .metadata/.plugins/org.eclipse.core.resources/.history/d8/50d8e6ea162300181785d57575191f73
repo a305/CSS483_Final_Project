@@ -1,0 +1,9 @@
+package com.uwb.bt2j.indexer.types;
+
+/*
+ * A fixed-length string using stack memory where size is set at compile
+ *   time.
+ */
+public class SStringFixed {
+
+}

@@ -10,10 +10,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
-import com.uwb.bt2j.indexer.Formats.FileFormat;
+import com.uwb.bt2j.indexer.filebuf.FileBuf;
+import com.uwb.bt2j.indexer.types.BitPairReference;
 import com.uwb.bt2j.indexer.types.EList;
+import com.uwb.bt2j.indexer.types.RefReadInParams;
 import com.uwb.bt2j.indexer.types.RefRecord;
 import com.uwb.bt2j.indexer.types.RefRecord.ReadDir;
+import com.uwb.bt2j.indexer.util.IndexTypes;
+import com.uwb.bt2j.indexer.util.Formats.FileFormat;
 import com.uwb.bt2j.indexer.types.S2bDnaString;
 import com.uwb.bt2j.indexer.types.SString;
 

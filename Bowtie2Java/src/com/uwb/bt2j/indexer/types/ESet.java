@@ -155,7 +155,7 @@ public class ESet<T> {
   
   private int scanLoBound(T el) {
 	  for(int i = 0; i < cur_; i++) {
-			if(!(list_[i] < el)) {
+			if(!(list_.get(i) < el)) {
 				// Shouldn't be equal
 				return i;
 			}
@@ -171,7 +171,7 @@ public class ESet<T> {
 				return lo;
 			}
 			int mid = lo + ((hi-lo)>>1);
-			if(list_[mid] < el) {
+			if(list_.get(mid) < el) {
 				if(lo == mid) {
 					return hi;
 				}

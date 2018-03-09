@@ -10,20 +10,17 @@ public class EMap <K,V>{
 	
 	public EMap(int cat) {
 		cat_ = cat;
-		list_ = null;
 		sz_ = 128;
 		cur_ = 0;
 	}
 	
 	public EMap(int isz, int cat) {
 		cat_ = cat;
-		list_ = null;
 		sz_ = isz;
 		cur_ = 0;
 	}
 	
 	public EMap(EMap<K,V> o) {
-		list_ = null;
 	}
 	
 	public int size() {
@@ -42,10 +39,10 @@ public class EMap <K,V>{
 		}
 		if(cur_ < 16) {
 			// Linear scan
-			i = scanLoBound(el.first);
+			i = scanLoBound(el.getKey());
 		} else {
 			// Binary search
-			i = bsearchLoBound(el.first);
+			i = bsearchLoBound(el.getKey());
 		}
 		if(list_[i] == el) return false; // already there
 		insert(el, i);
@@ -54,7 +51,7 @@ public class EMap <K,V>{
 	
 	public boolean contains(K el) {
 		if(cur_ == 0) return false;
-		else if(cur_ == 1) return el == list_[0].first;
+		else if(cur_ == 1) return el == list_[0].getKey();
 		int i;
 		if(cur_ < 16) {
 			// Linear scan
@@ -63,14 +60,14 @@ public class EMap <K,V>{
 			// Binary search
 			i = bsearchLoBound(el);
 		}
-		return i != cur_ && list_[i].first == el;
+		return i != cur_ && list_[i].getKey() == el;
 	}
 	
 	public boolean containsEx(K el, int i) {
 		if(cur_ == 0) return false;
 		else if(cur_ == 1) {
 			i = 0;
-			return el == list_[0].first;
+			return el == list_[0].getKey();
 		}
 		if(cur_ < 16) {
 			// Linear scan
@@ -79,7 +76,7 @@ public class EMap <K,V>{
 			// Binary search
 			i = bsearchLoBound(el);
 		}
-		return i != cur_ && list_[i].first == el;
+		return i != cur_ && list_[i].getKey() == el;
 	}
 	
 	public void remove(K el) {
@@ -109,7 +106,7 @@ public class EMap <K,V>{
 	
 	private int scanLoBound(K el) {
 		for(int i = 0; i < cur_; i++) {
-			if(!(list_[i].first < el)) {
+			if(!(list_[i].getKey() < el)) {
 				// Shouldn't be equal
 				return i;
 			}
@@ -125,7 +122,7 @@ public class EMap <K,V>{
 				return lo;
 			}
 			int mid = lo + ((hi-lo)>>1);
-			if(list_[mid].first < el) {
+			if(list_[mid].getKey() < el) {
 				if(lo == mid) {
 					return hi;
 				}

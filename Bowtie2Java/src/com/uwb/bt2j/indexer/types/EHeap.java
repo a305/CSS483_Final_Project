@@ -8,46 +8,46 @@ public class EHeap<T> {
 		l_.push_back(o);
 		while(pos > 0) {
 			int parent = (pos-1) >> 1;
-			if(l_[pos] < l_[parent]) {
-				T tmp = new T(l_[pos]);
-				l_[pos] = l_[parent];
-				l_[parent] = tmp;
+			if(l_.get(pos) < l_.get(parent)) {
+				T tmp = new T(l_.get(pos));
+				l_.set(l_.get(parent),pos);
+				l_.set(tmp,parent);
 				pos = parent;
 			} else break;
 		}
 	}
 	
 	public T top() {
-		return l_[0];
+		return l_.get(0);
 	}
 	
 	public T pop() {
-		T ret = l_[0];
-		l_[0] = l_[l_.size()-1];
+		T ret = l_.get(0);
+		l_.set(l_.get(l_.size()-1),0);
 		l_.resize(l_.size()-1);
 		int cur = 0;
 		while(true) {
 			int c1 = ((cur+1) << 1) - 1;
 			int c2 = c1 + 1;
 			if(c2 < l_.size()) {
-				if(l_[c1] < l_[cur] && l_[c1] <= l_[c2]) {
-					T tmp(l_[c1]);
-					l_[c1] = l_[cur];
-					l_[cur] = tmp;
+				if(l_.get(c1) < l_.get(cur) && l_.get(c1) <= l_.get(c2)) {
+					T tmp = new T(l_.get(c1));
+					l_.set(l_.get(cur),c1);
+					l_.set(tmp,cur);
 					cur = c1;
-				} else if(l_[c2] < l_[cur]) {
-					T tmp(l_[c2]);
-					l_[c2] = l_[cur];
-					l_[cur] = tmp;
+				} else if(l_.get(c2) < l_.get(cur)) {
+					T tmp = new T(l_.get(c2));
+					l_.set(l_.get(cur),c2);
+					l_.set(tmp ,cur);
 					cur = c2;
 				} else {
 					break;
 				}
 			} else if(c1 < l_.size()) {
-				if(l_[c1] < l_[cur]) {
-					T tmp(l_[c1]);
-					l_[c1] = l_[cur];
-					l_[cur] = tmp;
+				if(l_.get(c1) < l_.get(cur)) {
+					T tmp = new T(l_.get(c1));
+					l_.set(l_.get(cur) ,c1);
+					l_.set(tmp, cur);
 					cur = c1;
 				} else {
 					break;

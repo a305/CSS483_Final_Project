@@ -2,6 +2,7 @@ package com.uwb.bt2j.indexer;
 
 import java.io.File;
 
+import com.uwb.bt2j.indexer.filebuf.FileBuf;
 import com.uwb.bt2j.indexer.types.EList;
 
 class FASTAParser<T, U, V> {

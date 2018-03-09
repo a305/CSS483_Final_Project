@@ -1,6 +1,6 @@
 package com.uwb.bt2j.indexer.types;
 
-class ELList <T>{
+public class ELList <T>{
 	
 	private int cat_;
 	private EList<EList<T>> list_;
