@@ -1,0 +1,579 @@
+package com.uwb.bt2j.indexer;
+
+import com.uwb.bt2j.indexer.types.ELList;
+import com.uwb.bt2j.indexer.types.EList;
+import com.uwb.bt2j.indexer.util.IndexTypes;
+
+public class MultikeyQSort <TStr, TPos, THost, T> {
+	class QSortRange {
+		int begin;
+		int end;
+		int depth;
+	}
+	public long bkts[][];
+	
+	private static void CHAR_AT(int[] s, int ss, int aa) {
+		return ((length(s[ss]) > aa) ? (int)(s[ss][aa]) : hi);
+	}
+	
+	private static int CHAR_AT_SUF(String host, int hlen, int[] s, int si, int off, int hi) {
+		return ((off+s[si]) < hlen) ? host.charAt(off+s[si]) : (hi);
+	}
+	
+    public void swap(TStr[] s, int slen, int a, int b) {
+        swap(s[a],s[b]);
+    }
+
+    public void vecswap(TStr s, int slen, int i, int j, int n, TPos begin, TPos end) {
+        while(n-- > 0) {
+		int a = i+n;
+		int b = j+n;
+		swap(s, slen, a, b);
+	    }
+    }
+
+    public void vecswap2(TStr[] s, int slen, TStr s2, TPos i, TPos j, TPos n, TPos begin, TPos end) {
+        while(n-- > 0) {
+		TPos a = i+n;
+		TPos b = j+n;
+		swap(s, slen, a, b);
+        swap(s2, slen, a, b);
+	    }
+    }
+
+    public boolean PartitionedSuf(String host, long[] s, int hi, int pivot, int begin, int end, int depth) {
+        int hlen = host.length();
+	    int state = 0; // 0 . 1st = section, 1 . < section, 2 . > section, 3 . 2nd = section
+	for(int i = begin; i < end; i++) {
+		switch(state) {
+		case 0:
+			if       (CHAR_AT_SUF(i, depth) < pivot)  { state = 1; break; }
+			else if  (CHAR_AT_SUF(i, depth) > pivot)  { state = 2; break; }
+            break;
+		case 1:
+			if       (CHAR_AT_SUF(i, depth) > pivot)  { state = 2; break; }
+			else if  (CHAR_AT_SUF(i, depth) == pivot) { state = 3; break; }
+            break;
+		case 2:
+			if       (CHAR_AT_SUF(i, depth) == pivot) { state = 3; break; }
+            break;
+		}
+	}
+	return true;
+    }
+
+    public boolean PartitionedSuf2(String host, long[] s, int hi, int pivot, int begin, int end, int depth) {
+        int hlen = host.length();
+	    int state = 0; // 0 . 1st = section, 1 . < section, 2 . > section, 3 . 2nd = section
+	for(int i = begin; i < end; i++) {
+		switch(state) {
+		case 0:
+            if       (CHAR_AT_SUF(i, depth) == pivot) { state = 1; break; }
+			else if  (CHAR_AT_SUF(i, depth) > pivot)  { state = 2; break; }
+		case 1:
+			if       (CHAR_AT_SUF(i, depth) > pivot)  { state = 2; break; }
+		}
+	}
+	return true;
+    }
+    
+    public void mkeyQSortSuf(String host, int hlen, long[] s, int slen, int hi, int begin, int end, int depth, int upto) {
+
+		int a, b, c, d, /*e,*/ r;
+		int n = end - begin;
+		if(n <= 1) return;                 // 1-element list already sorted
+		CHOOSE_AND_SWAP_PIVOT(SWAP1, CHAR_AT_SUF); // pick pivot, swap it into [begin]
+		int v = CHAR_AT_SUF(begin, depth); // v <- randomly-selected pivot value
+		a = b = begin;
+		c = d = end-1;
+		while(true) {
+			// Invariant: everything before a is = pivot, everything
+			// between a and b is <
+			int bc = 0; // shouldn't have to init but gcc on Mac complains
+			while(b <= c && v >= (bc = CHAR_AT_SUF(b, depth))) {
+				if(v == bc) {
+					SWAP(s, a, b); a++;
+				}
+				b++;
+			}
+			// Invariant: everything after d is = pivot, everything
+			// between c and d is >
+			int cc = 0; // shouldn't have to init but gcc on Mac complains
+			while(b <= c && v <= (cc = CHAR_AT_SUF(c, depth))) {
+				if(v == cc) {
+					SWAP(s, c, d); d--;
+				}
+				c--;
+			}
+			if(b > c) break;
+			SWAP(s, b, c);
+			b++;
+			c--;
+		}
+	    r = Math.min(a-begin, b-a);
+	    VECSWAP(s, begin, b-r,   r);  // swap left = to center
+		r = Math.min(d-c, end-d-1);
+	    VECSWAP(s, b,     end-r, r);  // swap right = to center
+		r = b-a; // r <- # of <'s
+		if(r > 0 && depth < upto) {
+			mkeyQSortSuf(host, hlen, s, slen, hi, begin, begin + r, depth, upto);
+		}
+		// Do not recurse on ='s if the pivot was the off-the-end value;
+		// they're already fully sorted
+		if(v != hi && depth < upto) {
+			mkeyQSortSuf(host, hlen, s, slen, hi, begin + r, begin + r + (a-begin) + (end-d-1), depth + 1, upto);
+		}
+		r = d-c; // r <- # of >'s excluding those exhausted
+		if(r > 0 && v < hi-1 && depth < upto) {
+			mkeyQSortSuf(host, hlen, s, slen, hi, end - r, end, depth, upto);
+		}
+	}
+	
+    public void mkeyQSortSuf(String host, long[] s, int slen, int hi, boolean verbose, boolean sanityCheck, int upto) {
+        int hlen = host.length();
+        mkeyQSortSuf(host, hlen, s, slen, hi, 0, slen, 0, upto);
+    }
+    
+    public void mkeyQSortSuf2(String host, long[] s, int slen, long[] s2, int hi, boolean verbose, boolean sanityCheck, int upto, EList<Integer> boundaries) {
+        int hlen = host.length();
+    long[] sOrig = null;
+    if(sanityCheck)
+        sOrig = s;
+    mkeyQSortSuf2(host, hlen, s, slen, s2, hi, 0, slen, 0, upto, boundaries);
+    }
+
+    public void mkeyQSortSuf2(String host, int hlen, long[] s, int slen, long[] s2, int hi, int _begin, int _end, int _depth, int upto, EList<Integer> boundaries) {
+        ELList<QSortRange> block_list;
+    while(true) {
+        int begin = 0, end = 0, depth = 0;
+        if(block_list.size() == 0) {
+            begin = _begin;
+            end = _end;
+            depth = _depth;
+        } else {
+            if(block_list.back().size() > 0) {
+                begin = block_list.back().get(0).begin;
+                end = block_list.back().get(0).end;
+                depth = block_list.back().get(0).depth;
+                block_list.back().erase(0);
+            } else {
+                block_list.resize(block_list.size() - 1);
+                if(block_list.size() == 0) {
+                    break;
+                }
+            }
+        }
+        if(depth == upto) {
+            if(boundaries != null) {
+                boundaries.push_back(end);
+            }
+            continue;
+        }
+        int a, b, c, d, /*e,*/ r;
+        int n = end - begin;
+        if(n <= 1) { // 1-element list already sorted
+            if(n == 1 && boundaries != null) {
+                boundaries.push_back(end);
+            }
+            continue;
+        }
+        CHOOSE_AND_SWAP_PIVOT(SWAP2, CHAR_AT_SUF); // pick pivot, swap it into [begin]
+        int v = CHAR_AT_SUF(begin, depth); // v <- randomly-selected pivot value
+
+        a = b = begin;
+        c = d = /*e =*/ end-1;
+        while(true) {
+            // Invariant: everything before a is = pivot, everything
+            // between a and b is <
+            int bc = 0; // shouldn't have to init but gcc on Mac complains
+            while(b <= c && v >= (bc = CHAR_AT_SUF(b, depth))) {
+                if(v == bc) {
+                    SWAP2(s, s2, a, b); a++;
+                }
+                b++;
+            }
+            // Invariant: everything after d is = pivot, everything
+            // between c and d is >
+            int cc = 0; // shouldn't have to init but gcc on Mac complains
+            while(b <= c && v <= (cc = CHAR_AT_SUF(c, depth))) {
+                if(v == cc) {
+                    SWAP2(s, s2, c, d); d--; /*e--;*/
+                }
+                //else if(c == e && v == hi) e--;
+                c--;
+            }
+            if(b > c) break;
+            SWAP2(s, s2, b, c);
+            b++;
+            c--;
+        }
+        r = Math.min(a-begin, b-a);
+        VECSWAP2(s, s2, begin, b-r,   r);  // swap left = to center
+        r = Math.min(d-c, end-d-1);
+        VECSWAP2(s, s2, b,     end-r, r);  // swap right = to center
+        r = b-a; // r <- # of <'s
+        block_list.expand();
+        block_list.back().clear();
+        if(r > 0) { // recurse on <'s
+            block_list.back().expand();
+            block_list.back().back().begin = begin;
+            block_list.back().back().end = begin + r;
+            block_list.back().back().depth = depth;
+        }
+        // Do not recurse on ='s if the pivot was the off-the-end value;
+        // they're already fully sorted
+        //if(v != hi) { // recurse on ='s
+            block_list.back().expand();
+            block_list.back().back().begin = begin + r;
+            block_list.back().back().end = begin + r + (a-begin) + (end-d-1);
+            block_list.back().back().depth = depth + 1;
+        //}
+        r = d-c;   // r <- # of >'s excluding those exhausted
+        if(r > 0 /*&& v < hi-1*/) { // recurse on >'s
+            block_list.back().expand();
+            block_list.back().back().begin = end - r;
+            block_list.back().back().end = end;
+            block_list.back().back().depth = depth;
+        }
+    }
+    }
+    
+    public void mkeyQSortSufDcU8(String host1, String host, int hlen, long[] s, int slen, DifferenceCoverSample dc, int hi, int _begin, int _end, int _depth, boolean sanityCheck) {
+    	int n = _end - _begin;
+    	if(n <= 1) return; // 1-element list already sorted
+    	if(_depth > dc.v()) {
+    		// Quicksort the remaining suffixes using difference cover
+    		// for constant-time comparisons; this is O(k*log(k)) where
+    		// k=(end-begin)
+    		qsortSufDcU8<String,String>(host1, host, hlen, s, slen, dc, begin, end, sanityCheck);
+    		if(sanityCheck) {
+    			sanityCheckOrderedSufs(host1, hlen, s, slen, OFF_MASK, begin, end);
+    		}
+    		return;
+    	}
+    	if(n <= BUCKET_SORT_CUTOFF) {
+    		// Bucket sort remaining items
+    		bucketSortSufDcU8(host1, host, hlen, s, slen, dc,
+    		                  (uint8_t)hi, begin, end, depth, sanityCheck);
+    		if(sanityCheck) {
+    			sanityCheckOrderedSufs(host1, hlen, s, slen, OFF_MASK, begin, end);
+    		}
+    		return;
+    	}
+    	int a, b, c, d, r;
+    	CHOOSE_AND_SWAP_PIVOT(SWAP1, CHAR_AT_SUF_U8); // choose pivot, swap to begin
+    	int v = CHAR_AT_SUF_U8(_begin, _depth); // v <- pivot value
+    	a = b = _begin;
+    	c = d = _end-1;
+    	while(true) {
+    		// Invariant: everything before a is = pivot, everything
+    		// between a and b is <
+    		int bc = 0; // shouldn't have to init but gcc on Mac complains
+    		while(b <= c && v >= (bc = CHAR_AT_SUF_U8(b, _depth))) {
+    			if(v == bc) {
+    				SWAP(s, a, b); a++;
+    			}
+    			b++;
+    		}
+    		// Invariant: everything after d is = pivot, everything
+    		// between c and d is >
+    		int cc = 0; // shouldn't have to init but gcc on Mac complains
+    		//boolean hiLatch = true;
+    		while(b <= c && v <= (cc = CHAR_AT_SUF_U8(c, _depth))) {
+    			if(v == cc) {
+    				SWAP(s, c, d); d--;
+    			}
+    			//else if(hiLatch && cc == hi) { }
+    			c--;
+    		}
+    		if(b > c) break;
+    		SWAP(s, b, c);
+    		b++;
+    		c--;
+    	}
+
+    	r = Math.min(a-_begin, b-a);
+    	VECSWAP(s, _begin, b-r,   r);  // swap left = to center
+    	r = Math.min(d-c, _end-d-1);
+    	VECSWAP(s, b, _end-r, r);  // swap right = to center
+    	r = b-a; // r <- # of <'s
+    	if(r > 0) {
+    		mkeyQSortSufDcU8(host1, host, hlen, s, slen, dc, hi, _begin, _begin + r, _depth, sanityCheck);
+    	}
+    	// Do not recurse on ='s if the pivot was the off-the-end value;
+    	// they're already fully sorted
+    	if(v != hi) {
+    		mkeyQSortSufDcU8(host1, host, hlen, s, slen, dc, hi, _begin + r, _begin + r + (a-_begin) + (_end-d-1), _depth + 1, sanityCheck);
+    	}
+    	r = d-c; // r <- # of >'s excluding those exhausted
+    	if(r > 0 && v < hi-1) {
+    		mkeyQSortSufDcU8(host1, host, hlen, s, slen, dc, hi, _end - r, _end, _depth, sanityCheck);
+    	}
+    }
+
+    public void mkeyQSortSufDcU8(String host1, String host, int hlen, long[] s, int slen, DifferenceCoverSample dc, int hi, boolean verbose, boolean sanityCheck) {
+	mkeyQSortSufDcU8(host1, host, hlen, s, slen, dc, hi, 0, slen, 0, sanityCheck);
+    }
+    
+    public boolean sufDcLt(String host, String s1, String s2, DifferenceCoverSample dc, boolean sanityCheck) {
+        int diff = dc.tieBreakOff(s1, s2);
+	boolean ret = dc.breakTie(s1+diff, s2+diff) < 0;
+	return ret;
+    }
+    
+    public boolean sufDcLtU8(String host1, String host, int hlen, int s1, int s2, DifferenceCoverSample dc, boolean sanityCheck) {
+    	hlen += 0;
+    	int diff = dc.tieBreakOff((long)s1, (long)s2);
+
+    	boolean ret = dc.breakTie((long)(s1+diff), (long)(s2+diff)) < 0;
+    	// Sanity-check return value using dollarLt
+    	return ret;
+    }
+    
+    public void qsortSufDc(T host, int hlen, long[] s, int slen, DifferenceCoverSample<T> dc, int begin, int end, boolean sanityCheck) {
+        int n = end - begin;
+	if(n <= 1) return;                 // 1-element list already sorted
+	// Note: rand() didn't really cut it here; it seemed to run out of
+	// randomness and, after a time, returned the same thing over and
+	// over again
+	int a = (rand() % n) + begin; // choose pivot between begin and end
+	SWAP(s, end-1, a); // move pivot to end
+	int cur = 0;
+	for(int i = begin; i < end-1; i++) {
+		if(sufDcLt(host, s[i], s[end-1], dc, sanityCheck)) {
+			SWAP(s, i, begin + cur);
+			cur++;
+		}
+	}
+	// Put pivot into place
+	SWAP(s, end-1, begin+cur);
+	if(begin+cur > begin) qsortSufDc(host, hlen, s, slen, dc, begin, begin+cur);
+	if(end > begin+cur+1) qsortSufDc(host, hlen, s, slen, dc, begin+cur+1, end);
+    }
+    
+    public void qsortSufDcU8(String host1, String host, int hlen, long[] s, int slen, DifferenceCoverSample<String> dc, int begin, int end, boolean sanityCheck) {
+    	int n = end - begin;
+    	if(n <= 1) return;                 // 1-element list already sorted
+    	// Note: rand() didn't really cut it here; it seemed to run out of
+    	// randomness and, after a time, returned the same thing over and
+    	// over again
+    	int a = (rand() % n) + begin; // choose pivot between begin and end
+    	_lt(a, end);
+    	_geq(a, begin);
+    	SWAP(s, end-1, a); // move pivot to end
+    	int cur = 0;
+    	for(int i = begin; i < end-1; i++) {
+    		if(sufDcLtU8(host1, host, hlen, s[i], s[end-1], dc, sanityCheck)) {
+    #ifndef NDEBUG
+    			if(sanityCheck) {
+    				(sstr_suf_lt(host1, s[i], hlen, host1, s[end-1], hlen, false));
+    			}
+    			_lt(begin + cur, end-1);
+    #endif
+    			SWAP(s, i, begin + cur);
+    			cur++;
+    		}
+    	}
+    	// Put pivot into place
+    	_lt(cur, end-begin);
+    	SWAP(s, end-1, begin+cur);
+    	if(begin+cur > begin) qsortSufDcU8(host1, host, hlen, s, slen, dc, begin, begin+cur);
+    	if(end > begin+cur+1) qsortSufDcU8(host1, host, hlen, s, slen, dc, begin+cur+1, end);
+    }
+    
+    public short get_uint8(TStr t, int off) {
+    	return t[off];
+    }
+    
+    public short get_uint8(S2bDnaString t, int off) {
+    	return (short) t[off];
+    }
+    
+    public int char_at_suf_u8(TStr host, int hlen, lonh[] s, int si, int off, short hi) {
+    	return ((off+s[si]) < hlen) ? get_uint8(host, off+s[si]) : (hi);
+    }
+    
+    public void selectionSortSufDcU8(String host1, String host, int hlen, long[] s, int slen, DifferenceCoverSample<String> dc, int hi, int begin, int end, int depth, boolean sanityCheck) {
+    	#define ASSERT_SUF_LT(l, r) \
+    	if(sanityCheck && \
+    	   !sstr_suf_lt(host1, s[l], hlen, host1, s[r], hlen, false)) { \
+    		(false); \
+    	}
+
+    	_gt(end, begin+1);
+    	_leq(end-begin, SELECTION_SORT_CUTOFF);
+    	_eq(hi, 4);
+    	int v = dc.v();
+    	if(end == begin+2) {
+    		int off = dc.tieBreakOff(s[begin], s[begin+1]);
+    		if(off + s[begin] >= hlen ||
+    		   off + s[begin+1] >= hlen)
+    		{
+    			off = OFF_MASK;
+    		}
+    		if(off != OFF_MASK) {
+    			if(off < depth) {
+    				qsortSufDcU8<String,String>(host1, host, hlen, s, slen, dc,
+    				                    begin, end, sanityCheck);
+    				// It's helpful for debugging if we call this here
+    				if(sanityCheck) {
+    					sanityCheckOrderedSufs(host1, hlen, s, slen,
+    					                       OFF_MASK, begin, end);
+    				}
+    				return;
+    			}
+    			v = off - depth + 1;
+    		}
+    	}
+    	_leq(v, dc.v());
+    	int lim = v;
+    	_geq(lim, 0);
+    	for(int i = begin; i < end-1; i++) {
+    		int targ = i;
+    		int targoff = depth + s[i];
+    		for(int j = i+1; j < end; j++) {
+    			_neq(j, targ);
+    			int joff = depth + s[j];
+    			int k;
+    			for(k = 0; k <= lim; k++) {
+    				_neq(j, targ);
+    				uint8_t jc = (k + joff < hlen)    ? get_uint8(host, k + joff)    : hi;
+    				uint8_t tc = (k + targoff < hlen) ? get_uint8(host, k + targoff) : hi;
+    				(jc != hi || tc != hi);
+    				if(jc > tc) {
+    					// the jth suffix is greater than the current
+    					// smallest suffix
+    					break;
+    				} else if(jc < tc) {
+    					// the jth suffix is less than the current smallest
+    					// suffix, so update smallest to be j
+    					targ = j;
+    					targoff = joff;
+    					break;
+    				} else if(k == lim) {
+    					// Check whether either string ends immediately
+    					// after this character
+    					_leq(k + joff + 1, hlen);
+    					_leq(k + targoff + 1, hlen);
+    					if(k + joff + 1 == hlen) {
+    						// targ < j
+    						_neq(k + targoff + 1, hlen);
+    						break;
+    					} else if(k + targoff + 1 == hlen) {
+    						// j < targ
+    						targ = j;
+    						targoff = joff;
+    						break;
+    					}
+    				} else {
+    					// They're equal so far, keep going
+    				}
+    			}
+    			// The jth suffix was equal to the current smallest suffix
+    			// up to the difference-cover period, so disambiguate with
+    			// difference cover
+    			if(k == lim+1) {
+    				if(sufDcLtU8(host1, host, hlen, s[j], s[targ], dc, sanityCheck)) {
+    					// j < targ
+    					targ = j;
+    					targoff = joff;
+    				}
+    			}
+    		}
+    		if(i != targ) {
+    			// swap i and targ
+    			TIndexOffU tmp = s[i];
+    			s[i] = s[targ];
+    			s[targ] = tmp;
+    		}
+    	}
+    	if(sanityCheck) {
+    		sanityCheckOrderedSufs(host1, hlen, s, slen, OFF_MASK, begin, end);
+    	}
+    }
+    
+    public void bucketSortSufDcU8(String host1, String host, int hlen, long[] s, int slen, DifferenceCoverSample<String> dc, int hi, int _begin, int _end, int _depth, boolean sanityCheck) {
+    	// 5 64-element buckets for bucket-sorting A, C, G, T, $
+        long bkts[] = new long[4];
+        for(int i = 0; i < 4; i++) {
+            bkts[i] = new long[4 * 1024 * 1024];
+        }
+        ELList<Integer> block_list;
+        boolean first = true;
+        while(true) {
+            int begin = 0, end = 0;
+            if(first) {
+                begin = _begin;
+                end = _end;
+                first = false;
+            } else {
+                if(block_list.size() == 0) {
+                    break;
+                }
+                if(block_list.back().size() > 1) {
+                    end = block_list.back().back(); block_list.back().pop_back();
+                    begin = block_list.back().back();
+                } else {
+                    block_list.resize(block_list.size() - 1);
+                    if(block_list.size() == 0) {
+                        break;
+                    }
+                }
+            }
+            int depth = block_list.size() + _depth;
+            if(end <= begin + 1) { // 1-element list already sorted
+                continue;
+            }
+            if(depth > dc.v()) {
+                // Quicksort the remaining suffixes using difference cover
+                // for constant-time comparisons; this is O(k*log(k)) where
+                // k=(end-begin)
+                qsortSufDcU8<String,String>(host1, host, hlen, s, slen, dc, begin, end, sanityCheck);
+                continue;
+            }
+            if(end-begin <= SELECTION_SORT_CUTOFF) {
+                // Bucket sort remaining items
+                selectionSortSufDcU8(host1, host, hlen, s, slen, dc, hi,
+                                     begin, end, depth, sanityCheck);
+                if(sanityCheck) {
+                    sanityCheckOrderedSufs(host1, hlen, s, slen,
+                                           OFF_MASK, begin, end);
+                }
+                continue;
+            }
+            int cnts[] = { 0, 0, 0, 0, 0 };
+            for(int i = begin; i < end; i++) {
+                int off = depth + s[i];
+                uint8_t c = (off < hlen) ? get_uint8(host, off) : hi;
+
+                if(c == 0) {
+                    s[begin + cnts[0]++] = s[i];
+                } else {
+                    bkts[c-1][cnts[c]++] = s[i];
+                }
+            }
+            int cur = begin + cnts[0];
+            if(cnts[1] > 0) { memcpy(&s[cur], bkts[0], cnts[1] << (OFF_SIZE/4 + 1)); cur += cnts[1]; }
+            if(cnts[2] > 0) { memcpy(&s[cur], bkts[1], cnts[2] << (OFF_SIZE/4 + 1)); cur += cnts[2]; }
+            if(cnts[3] > 0) { memcpy(&s[cur], bkts[2], cnts[3] << (OFF_SIZE/4 + 1)); cur += cnts[3]; }
+            if(cnts[4] > 0) { memcpy(&s[cur], bkts[3], cnts[4] << (OFF_SIZE/4 + 1)); }
+            // This frame is now totally finished with bkts[][], so recursive
+            // callees can safely clobber it; we're not done with cnts[], but
+            // that's local to the stack frame.
+            block_list.expand();
+            block_list.back().clear();
+            block_list.back().push_back(begin);
+            for(int i = 0; i < 4; i++) {
+                if(cnts[i] > 0) {
+                    block_list.back().push_back(block_list.back().back() + cnts[i]);
+                }
+            }
+        }
+        // Done
+        
+        for(int i = 0; i < 4; i++) {
+            delete [] bkts[i];
+        }
+    }
+}
+

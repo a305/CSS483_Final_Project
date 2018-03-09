@@ -2,30 +2,30 @@
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
 		<item value="false" key="isRegEx"/>
-		<item value="" key="selection"/>
-		<item value="false" key="casesensitive"/>
+		<item value="boolean" key="selection"/>
+		<item value="true" key="casesensitive"/>
 		<item value="false" key="incremental"/>
 		<item value="true" key="wrap"/>
 		<item value="false" key="wholeword"/>
 		<list key="findhistory">
-			<item value=".c_str()"/>
 			<item value="booleanean"/>
 			<item value="bool"/>
-			<item value="size_t"/>
 			<item value="-&gt;"/>
-			<item value="[i]"/>
-			<item value="OFF_"/>
+			<item value="NULL"/>
 			<item value="TIndexOffU"/>
+			<item value="::"/>
+			<item value="size_t"/>
+			<item value="T"/>
 		</list>
 		<list key="replacehistory">
-			<item value=""/>
 			<item value="boolean"/>
-			<item value="int"/>
 			<item value="."/>
-			<item value=".get(i)"/>
-			<item value="IndexTypes.OFF_"/>
-			<item value="long"/>
 			<item value="null"/>
+			<item value="long"/>
+			<item value="int"/>
+			<item value=".getKey()"/>
+			<item value=")"/>
+			<item value="l_.get("/>
 		</list>
 	</section>
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">

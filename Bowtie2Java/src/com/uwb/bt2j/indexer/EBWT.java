@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Scanner;
 
-import com.uwb.bt2j.indexer.blockwise.InorderBlockwiseSA;
 import com.uwb.bt2j.indexer.blockwise.KarkkainenBlockwiseSA;
 import com.uwb.bt2j.indexer.filebuf.FileBuf;
 import com.uwb.bt2j.indexer.types.EList;
