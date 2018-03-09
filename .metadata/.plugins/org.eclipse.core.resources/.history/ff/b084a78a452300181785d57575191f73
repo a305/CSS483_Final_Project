@@ -64,7 +64,7 @@ public class Indexer <T> {
 	public static long bmaxMultSqrt;
 	public static int bmaxDivN;
 	public static int dcv;
-	public static boolean noDc;
+	public static int noDc;
 	public static boolean entireSA;
 	public static int seed;
 	public static boolean showVersion;
@@ -116,8 +116,8 @@ public class Indexer <T> {
 		bmaxMultSqrt = IndexTypes.OFF_MASK; // same, as multplier of sqrt(n)
 		bmaxDivN     = 4;          // same, as divisor of n
 		dcv          = 1024;  // bwise SA difference-cover sample sz
-		noDc         = false;     // disable difference-cover sample
-		entireSA     = false;     // 1 = disable blockwise SA
+		noDc         = 0;     // disable difference-cover sample
+		entireSA     = 0;     // 1 = disable blockwise SA
 		seed         = 0;     // srandom seed
 		showVersion  = false;     // just print version and quit?
 		//   Ebwt parameters
@@ -559,7 +559,7 @@ public class Indexer <T> {
 			// padded string, not a list)
 			ebwt.loadIntoMemory(
 				0,
-				reverse == ReadDir.REF_READ_REVERSE ? (refparams.reverse == ReadDir.REF_READ_REVERSE) : 0,
+				reverse ? (refparams.reverse == ReadDir.REF_READ_REVERSE) : 0,
 				true,  // load SA sample?
 				true,  // load ftab?
 				true,  // load rstarts?

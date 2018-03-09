@@ -559,7 +559,7 @@ public class Indexer <T> {
 			// padded string, not a list)
 			ebwt.loadIntoMemory(
 				0,
-				reverse == ReadDir.REF_READ_REVERSE ? (refparams.reverse == ReadDir.REF_READ_REVERSE) : 0,
+				reverse ? (refparams.reverse == ReadDir.REF_READ_REVERSE) : 0,
 				true,  // load SA sample?
 				true,  // load ftab?
 				true,  // load rstarts?
