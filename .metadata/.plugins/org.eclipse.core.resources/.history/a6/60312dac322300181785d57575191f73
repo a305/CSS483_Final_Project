@@ -74,7 +74,7 @@ public class Indexer <T> {
 	public static int linesPerSide;
 	public static int offRate;
 	public static int ftabChars;
-	public static boolean  bigEndian;
+	public static int  bigEndian;
 	public static boolean nsToAs;    // convert Ns to As
 	public static boolean doSaFile;  // make a file with just the suffix array in it
 	public static boolean doBwtFile; // make a file with just the BWT string in it
@@ -125,7 +125,7 @@ public class Indexer <T> {
 		linesPerSide = 1;  // 1 64-byte line on a side
 		offRate      = 4;  // sample 1 out of 16 SA elts
 		ftabChars    = 10; // 10 chars in initial lookup table
-		bigEndian    = false;  // little endian
+		bigEndian    = 0;  // little endian
 		nsToAs       = false; // convert reference Ns to As prior to indexing
 		doSaFile     = false; // make a file with just the suffix array in it
 		doBwtFile    = false; // make a file with just the BWT string in it
@@ -187,7 +187,7 @@ public class Indexer <T> {
 			}
 			outfile = args[optind++];
 
-			infiles = StringUtils.tokenize(infile, ",");
+			infiles = Tokenize.tokenize(infile, ",");
 			if(infiles.size() < 1) {
 				System.err.println("Tokenized input file list was empty!");
 				printUsage(System.err);
@@ -231,7 +231,7 @@ public class Indexer <T> {
 			{
 				if(!packed) {
 					try {
-						driver(infile, infiles, outfile, false, ReadDir.REF_READ_FORWARD);
+						driver<SString<Character> >(infile, infiles, outfile, false, ReadDir.REF_READ_FORWARD);
 					} catch(Exception e) {
 						if(autoMem) {
 							System.err.println( "Switching to a packed string representation.");
@@ -242,14 +242,14 @@ public class Indexer <T> {
 					}
 				}
 				if(packed) {
-					driver(infile, infiles, outfile, true, ReadDir.REF_READ_FORWARD);
+					driver<S2bDnaString>(infile, infiles, outfile, true, ReadDirREF_READ_FORWARD);
 				}
 
-			ReadDir reverseType = reverseEach ? ReadDir.REF_READ_REVERSE_EACH : ReadDir.REF_READ_REVERSE;
+			int reverseType = reverseEach ? ReadDir.REF_READ_REVERSE_EACH : ReadDir.REF_READ_REVERSE;
 			seed = (int) (Integer.MAX_VALUE * Math.random());
 			if(!packed) {
 				try {
-					driver(infile, infiles, outfile + ".rev", false, ReadDir.REF_READ_REVERSE);
+					driver<SString<Character> >(infile, infiles, outfile + ".rev", false, ReadDir.reverseType);
 				} catch(Exception e) {
 					if(autoMem) {
 						System.err.println( "Switching to a packed string representation.");
@@ -261,7 +261,6 @@ public class Indexer <T> {
 			}
 			if(packed) {
 				driver(infile, infiles, outfile + ".rev", true, ReadDir.REF_READ_REVERSE);
-			}
 			}
 		} catch(Exception e) {
 			System.err.println( "Error: Encountered exception: '" + e + "'" );
@@ -327,7 +326,6 @@ public class Indexer <T> {
 		do {
 			next_option = getopt_long(
 				args.length, args,short_options, long_options, option_index);
-			long t;
 			switch (next_option) {
 				case ARG_WRAPPER:
 					wrapper = optarg;
@@ -336,35 +334,19 @@ public class Indexer <T> {
 				case 'c': format = FileFormat.CMDLINE; break;
 				case 'p': packed = true; break;
 				case 'l':
-					t = Integer.parseInt(optarg);
-					if(t >= 3)
-						lineRate = (int) t;
-					else
-						System.err.println("-l/--lineRate arg must be at least 3");
+					lineRate = parseNumber<Integer>(3, "-l/--lineRate arg must be at least 3");
 					break;
 				case 'i':
-					t = Integer.parseInt(optarg);
-					if(t >= 1)
-						linesPerSide = (int) t;
-					else
-						System.err.println("-i/--linesPerSide arg must be at least 1");
+					linesPerSide = parseNumber<Integer>(1, "-i/--linesPerSide arg must be at least 1");
 					break;
 				case 'o':
-					t = Integer.parseInt(optarg);
-					if(t >= 0)
-						offRate = (int) t;
-					else
-						System.err.println("-o/--offRate arg must be at least 0");
+					offRate = parseNumber<Integer>(0, "-o/--offRate arg must be at least 0");
 					break;
 				case '3':
 					justRef = true;
 					break;
 				case 't':
-					t = Integer.parseInt(optarg);
-					if(t >= 1)
-						ftabChars = (int) t;
-					else
-						System.err.println("-t/--ftabChars arg must be at least 1");
+					ftabChars = parseNumber<Integer>(1, "-t/--ftabChars arg must be at least 1");
 					break;
 				case 'n':
 					// all f-s is used to mean "not set", so put 'e' on end
@@ -376,46 +358,26 @@ public class Indexer <T> {
 					abort = true;
 					break;
 				case ARG_BMAX:
-					t = Long.parseLong(optarg);
-					if(t >= 1)
-						bmax = t;
-					else
-						System.err.println("--bmax arg must be at least 1");
+					bmax = parseNumber<Long>(1, "--bmax arg must be at least 1");
 					bmaxMultSqrt = IndexTypes.OFF_MASK; // don't use multSqrt
 					bmaxDivN = 0xffffffff;     // don't use multSqrt
 					break;
 				case ARG_BMAX_MULT:
-					t = Long.parseLong(optarg);
-					if(t >= 1)
-						bmaxMultSqrt = t;
-					else
-						System.err.println("--bmaxmultsqrt arg must be at least 1");
+					bmaxMultSqrt = parseNumber<Long>(1, "--bmaxmultsqrt arg must be at least 1");
 					bmax = IndexTypes.OFF_MASK;     // don't use bmax
 					bmaxDivN = 0xffffffff; // don't use multSqrt
 					break;
 				case ARG_BMAX_DIV:
 					bmaxDivNSet = true;
-					t = Integer.parseInt(optarg);
-					if(t >= 1)
-						bmaxDivN = (int) t;
-					else
-						System.err.println("--bmaxdivn arg must be at least 1");
+					bmaxDivN = parseNumber<Integer>(1, "--bmaxdivn arg must be at least 1");
 					bmax = IndexTypes.OFF_MASK;         // don't use bmax
 					bmaxMultSqrt = IndexTypes.OFF_MASK; // don't use multSqrt
 					break;
 				case ARG_DCV:
-					t = Integer.parseInt(optarg);
-					if(t >= 3)
-						dcv = (int) t;
-					else
-						System.err.println("--dcv arg must be at least 3");
+					dcv = parseNumber<Integer>(3, "--dcv arg must be at least 3");
 					break;
 				case ARG_SEED:
-					t = Integer.parseInt(optarg);
-					if(t >= 0)
-						seed = (int) t;
-					else
-						System.err.println("--seed arg must be at least 0");
+					seed = parseNumber<Integer>(0, "--seed arg must be at least 0");
 					break;
 				case ARG_REVERSE_EACH:
 					reverseEach = true;
@@ -425,11 +387,7 @@ public class Indexer <T> {
 					break;
 				case ARG_NTOA: nsToAs = true; break;
 	            case ARG_THREADS:
-	            	t = Integer.parseInt(optarg);
-					if(t >= 0)
-						nthreads = (int) t;
-					else
-						System.err.println("--threads arg must be at least 1");
+	                nthreads = parseNumber<Integer>(0, "--threads arg must be at least 1");
 	                break;
 				case 'a': autoMem = false; break;
 				case 'q': verbose = false; break;
@@ -443,6 +401,7 @@ public class Indexer <T> {
 						break;
 				default:
 					printUsage(System.err);
+					throw 1;
 			}
 		} while(next_option != -1);
 		if(bmax < 40) {
@@ -508,7 +467,7 @@ public class Indexer <T> {
 		Pair<Integer,Integer> sztot;
 		{
 			if(verbose) System.out.println( "Reading reference sizes" );
-			if(!(reverse == ReadDir.REF_READ_REVERSE) && (writeRef || justRef)) {
+			if(!reverse && (writeRef || justRef)) {
 				filesWritten.push_back(outfile + ".3." + IndexTypes.gEbwt_ext);
 				filesWritten.push_back(outfile + ".4." + IndexTypes.gEbwt_ext);
 				sztot = BitPairReference.szsFromFasta(is, outfile, bigEndian, refparams, szs, sanityCheck);
@@ -530,7 +489,7 @@ public class Indexer <T> {
 			ftabChars,    // number of chars in initial arrow-pair calc
 	              nthreads,
 			outfile,      // basename for .?.ebwt files
-			reverse == ReadDir.REF_READ_FORWARD, // fw
+			reverse == 0, // fw
 			!entireSA,    // useBlockwise
 			bmax,         // block size for blockwise SA builder
 			bmaxMultSqrt, // block size as multiplier of sqrt(len)
@@ -538,7 +497,7 @@ public class Indexer <T> {
 			noDc? 0 : dcv,// difference-cover period
 			is,           // list of input streams
 			szs,          // list of reference sizes
-			(long)sztot.getKey(),  // total size of all unambiguous ref chars
+			(long)sztot.first,  // total size of all unambiguous ref chars
 			refparams,    // reference read-in parameters
 			seed,         // pseudo-random number generator seed
 			-1,           // override offRate
@@ -551,7 +510,7 @@ public class Indexer <T> {
 		// load it into memory, call ebwt.loadIntoMemory()
 		if(verbose) {
 			// Print Ebwt's vital stats
-			ebwt.eh().print(System.out);
+			ebwt.eh().print(cout);
 		}
 		if(sanityCheck) {
 			// Try restoring the original string (if there were
@@ -565,23 +524,23 @@ public class Indexer <T> {
 				true,  // load rstarts?
 				false,
 				false);
-			String s2;
+			SString<Character> s2;
 			ebwt.restore(s2);
 			ebwt.evictFromMemory();
 			{
-				String joinedss = ebwt.join(
+				SString<Character> joinedss = Ebwt.join(
 					is,          // list of input streams
 					szs,         // list of reference sizes
-					(long)sztot.getKey(), // total size of all unambiguous ref chars
+					(long)sztot.first, // total size of all unambiguous ref chars
 					refparams,   // reference read-in parameters
 					seed);       // pseudo-random number generator seed
 				if(refparams.reverse == ReadDir.REF_READ_REVERSE) {
-					joinedss = StringUtils.reverse(joinedss);
+					joinedss.reverse();
 				}
 			}
 			if(verbose) {
 				if(s2.length() < 1000) {
-					System.out.println( "Passed restore check: " + s2);
+					System.out.println( "Passed restore check: " + s2.toZBuf());
 				} else {
 					System.out.println( "Passed restore check: (" + s2.length() + " chars)" );
 				}

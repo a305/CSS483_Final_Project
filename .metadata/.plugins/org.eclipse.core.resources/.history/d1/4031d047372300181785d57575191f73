@@ -576,12 +576,12 @@ public class Indexer <T> {
 					refparams,   // reference read-in parameters
 					seed);       // pseudo-random number generator seed
 				if(refparams.reverse == ReadDir.REF_READ_REVERSE) {
-					joinedss = StringUtils.reverse(joinedss);
+					joinedss.reverse();
 				}
 			}
 			if(verbose) {
 				if(s2.length() < 1000) {
-					System.out.println( "Passed restore check: " + s2);
+					System.out.println( "Passed restore check: " + s2.toZBuf());
 				} else {
 					System.out.println( "Passed restore check: (" + s2.length() + " chars)" );
 				}

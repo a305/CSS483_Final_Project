@@ -569,19 +569,19 @@ public class Indexer <T> {
 			ebwt.restore(s2);
 			ebwt.evictFromMemory();
 			{
-				String joinedss = ebwt.join(
+				String joinedss = Ebwt.join(
 					is,          // list of input streams
 					szs,         // list of reference sizes
-					(long)sztot.getKey(), // total size of all unambiguous ref chars
+					(long)sztot.first, // total size of all unambiguous ref chars
 					refparams,   // reference read-in parameters
 					seed);       // pseudo-random number generator seed
 				if(refparams.reverse == ReadDir.REF_READ_REVERSE) {
-					joinedss = StringUtils.reverse(joinedss);
+					joinedss.reverse();
 				}
 			}
 			if(verbose) {
 				if(s2.length() < 1000) {
-					System.out.println( "Passed restore check: " + s2);
+					System.out.println( "Passed restore check: " + s2.toZBuf());
 				} else {
 					System.out.println( "Passed restore check: (" + s2.length() + " chars)" );
 				}

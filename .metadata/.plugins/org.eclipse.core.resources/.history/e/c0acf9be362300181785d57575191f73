@@ -74,7 +74,7 @@ public class Indexer <T> {
 	public static int linesPerSide;
 	public static int offRate;
 	public static int ftabChars;
-	public static boolean  bigEndian;
+	public static int  bigEndian;
 	public static boolean nsToAs;    // convert Ns to As
 	public static boolean doSaFile;  // make a file with just the suffix array in it
 	public static boolean doBwtFile; // make a file with just the BWT string in it
@@ -125,7 +125,7 @@ public class Indexer <T> {
 		linesPerSide = 1;  // 1 64-byte line on a side
 		offRate      = 4;  // sample 1 out of 16 SA elts
 		ftabChars    = 10; // 10 chars in initial lookup table
-		bigEndian    = false;  // little endian
+		bigEndian    = 0;  // little endian
 		nsToAs       = false; // convert reference Ns to As prior to indexing
 		doSaFile     = false; // make a file with just the suffix array in it
 		doBwtFile    = false; // make a file with just the BWT string in it
@@ -508,7 +508,7 @@ public class Indexer <T> {
 		Pair<Integer,Integer> sztot;
 		{
 			if(verbose) System.out.println( "Reading reference sizes" );
-			if(!(reverse == ReadDir.REF_READ_REVERSE) && (writeRef || justRef)) {
+			if(!reverse == 1 && (writeRef || justRef)) {
 				filesWritten.push_back(outfile + ".3." + IndexTypes.gEbwt_ext);
 				filesWritten.push_back(outfile + ".4." + IndexTypes.gEbwt_ext);
 				sztot = BitPairReference.szsFromFasta(is, outfile, bigEndian, refparams, szs, sanityCheck);
@@ -530,7 +530,7 @@ public class Indexer <T> {
 			ftabChars,    // number of chars in initial arrow-pair calc
 	              nthreads,
 			outfile,      // basename for .?.ebwt files
-			reverse == ReadDir.REF_READ_FORWARD, // fw
+			reverse == 0, // fw
 			!entireSA,    // useBlockwise
 			bmax,         // block size for blockwise SA builder
 			bmaxMultSqrt, // block size as multiplier of sqrt(len)
@@ -538,7 +538,7 @@ public class Indexer <T> {
 			noDc? 0 : dcv,// difference-cover period
 			is,           // list of input streams
 			szs,          // list of reference sizes
-			(long)sztot.getKey(),  // total size of all unambiguous ref chars
+			(long)sztot.first,  // total size of all unambiguous ref chars
 			refparams,    // reference read-in parameters
 			seed,         // pseudo-random number generator seed
 			-1,           // override offRate
@@ -551,7 +551,7 @@ public class Indexer <T> {
 		// load it into memory, call ebwt.loadIntoMemory()
 		if(verbose) {
 			// Print Ebwt's vital stats
-			ebwt.eh().print(System.out);
+			ebwt.eh().print(cout);
 		}
 		if(sanityCheck) {
 			// Try restoring the original string (if there were
@@ -565,23 +565,23 @@ public class Indexer <T> {
 				true,  // load rstarts?
 				false,
 				false);
-			String s2;
+			SString<Character> s2;
 			ebwt.restore(s2);
 			ebwt.evictFromMemory();
 			{
-				String joinedss = ebwt.join(
+				SString<Character> joinedss = Ebwt.join(
 					is,          // list of input streams
 					szs,         // list of reference sizes
-					(long)sztot.getKey(), // total size of all unambiguous ref chars
+					(long)sztot.first, // total size of all unambiguous ref chars
 					refparams,   // reference read-in parameters
 					seed);       // pseudo-random number generator seed
 				if(refparams.reverse == ReadDir.REF_READ_REVERSE) {
-					joinedss = StringUtils.reverse(joinedss);
+					joinedss.reverse();
 				}
 			}
 			if(verbose) {
 				if(s2.length() < 1000) {
-					System.out.println( "Passed restore check: " + s2);
+					System.out.println( "Passed restore check: " + s2.toZBuf());
 				} else {
 					System.out.println( "Passed restore check: (" + s2.length() + " chars)" );
 				}

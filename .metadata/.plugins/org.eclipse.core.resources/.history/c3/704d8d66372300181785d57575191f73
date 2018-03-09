@@ -581,7 +581,7 @@ public class Indexer <T> {
 			}
 			if(verbose) {
 				if(s2.length() < 1000) {
-					System.out.println( "Passed restore check: " + s2);
+					System.out.println( "Passed restore check: " + s2.toZBuf());
 				} else {
 					System.out.println( "Passed restore check: (" + s2.length() + " chars)" );
 				}

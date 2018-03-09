@@ -497,7 +497,7 @@ public class BitPairReference {
 	  return refOffs_.get(idx);
   }
   
-  public static Pair<Integer, Integer> szsFromFasta(EList<FileBuf> is,
+  public static Pair<Double, Double> szsFromFasta(EList<FileBuf> is,
 			String outfile,
 			boolean bigEndian,
 			RefReadInParams refparams,

@@ -358,7 +358,7 @@ public abstract class EBWT <TStr>{
 		}
 		return ret;
 	}
-	public String join(
+	public TStr join(
 			EList<FileBuf> l,
 			EList<RefRecord> szs,
 			long sztot,
