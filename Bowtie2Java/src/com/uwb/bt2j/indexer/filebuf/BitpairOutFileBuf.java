@@ -1,11 +1,14 @@
 package com.uwb.bt2j.indexer.filebuf;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 
 public class BitpairOutFileBuf {
 	private static final double BUF_SZ = 1024 * 128;
 	private File out_;
+	private FileWriter writer;
 	private int bpPtr_;
 	private double cur_;
 	private char buf_[];
@@ -25,9 +28,18 @@ public class BitpairOutFileBuf {
 			cur_++;
 			if(cur_ == BUF_SZ) {
 				// Flush the buffer
-				if(!fwrite(buf_, BUF_SZ, 1, out_)) {
+				try
+				{
+					writer = new FileWriter(out_);
+					writer.write(buf_);
+				} catch (IOException e)
+				{
 					System.err.println("Error writing to the reference index file (.4.ebwt)");
 				}
+				
+				//if(!fwrite(buf_, BUF_SZ, 1, out_)) {
+				//	System.err.println("Error writing to the reference index file (.4.ebwt)");
+				//}
 				// Reset to beginning of the buffer
 				cur_ = 0;
 			}
@@ -41,10 +53,18 @@ public class BitpairOutFileBuf {
 	public void close() {
 		if(cur_ > 0 || bpPtr_ > 0) {
 			if(bpPtr_ == 0) cur_--;
-			if(!fwrite(buf_, cur_ + 1, 1, out_)) {
+			try
+			{
+				writer = new FileWriter(out_);
+				writer.write(buf_);
+			} catch (IOException e)
+			{
 				System.err.println("Error writing to the reference index file (.4.ebwt)");
 			}
+			//if(!fwrite(buf_, cur_ + 1, 1, out_)) {
+			//	System.err.println("Error writing to the reference index file (.4.ebwt)");
+			//}
 		}
-		out_.close();
+		//out_.close();
 	}
 }
