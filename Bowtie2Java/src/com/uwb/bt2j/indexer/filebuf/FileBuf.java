@@ -1,18 +1,18 @@
 package com.uwb.bt2j.indexer.filebuf;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
+import java.util.zip.GZIPInputStream;
 
 public class FileBuf <TNameStr, TSeqStr> {
 	private static final double BUF_SZ = 1024 * 256;
-	private File _in;
+	private FileOutputStream _in;
+	private GZIPInputStream _zIn; //IS THIS SUPPOSED TO BE HERE? IT WASN'T ORIGINALLY
 	private FileInputStream _inf;
 	private InputStream _ins;
 	private double _cur;
 	private double _buf_sz;
 	private boolean _done;
-	private byte _buf;
+	private byte[] _buf;
 	private double _lastn_cur;
 	private char _lastn_buf[];
 	
@@ -28,9 +28,9 @@ public class FileBuf <TNameStr, TSeqStr> {
 		init();
 	}
 	
-	public FileBuf(File in) {
+	public FileBuf(File in) throws FileNotFoundException {
 		init();
-		_in = in;
+		_in = new FileOutputStream((in));
 	}
 	
 	public FileBuf(FileInputStream inf) {
@@ -47,21 +47,24 @@ public class FileBuf <TNameStr, TSeqStr> {
 		return _in != null || _inf != null || _ins != null;
 	}
 	
-	public void close() {
+	public void close() throws IOException{
 		if(_in != null && _ins != System.in) {
-			fclose(_in);
+			_in.close();
 		} else if(_inf != null) {
 			_inf.close();
 		} else if(_zIn != null) {
-			gzclose(_zIn);
+			_zIn.close();
 		}
 	}
 	
-	public int get() {
+	public int get() throws IOException{
 		int c = peek();
 		if(c != -1) {
 			_cur++;
-			if(_lastn_cur < LASTN_BUF_SZ) _lastn_buf[_lastn_cur++] = c;
+			if(_lastn_cur < LASTN_BUF_SZ)
+			{
+				_lastn_buf[((int)_lastn_cur++)] = (char)c;
+			}
 		}
 		return c;
 	}
@@ -70,8 +73,8 @@ public class FileBuf <TNameStr, TSeqStr> {
 		return (_cur == _buf_sz) && _done;
 	}
 	
-	public void newFile(File in) {
-		_in = in;
+	public void newFile(File in) throws FileNotFoundException{
+		_in = new FileOutputStream(in);
 		_zIn = null;
 		_inf = null;
 		_ins = null;
@@ -80,7 +83,7 @@ public class FileBuf <TNameStr, TSeqStr> {
 		_done = false;
 	}
 	
-	public void newFile(gzFile in) {
+	public void newFile(GZIPInputStream in) {
 		_in = null;
 		_zIn = in;
 		_inf = null;
@@ -110,24 +113,25 @@ public class FileBuf <TNameStr, TSeqStr> {
 		_done = false;
 	}
 	
-	public void reset() {
+	public void reset() throws IOException
+	{
 		if(_inf != null) {
-			_inf.clear();
-			_inf.seekg(0, std::ios::beg);
+			_inf.reset();
+			//_inf.seekg(0, std::ios::beg);
 		} else if(_ins != null) {
-			_ins.clear();
-			_ins.seekg(0, std::ios::beg);
+			_ins.reset();
+			//_ins.seekg(0, std::ios::beg);
 		} else if (_zIn != null) {
-			gzrewind(_zIn);
+			_zIn.reset();
 		} else {
-			rewind(_in);
+			_in.flush();
 		}
 		_cur = BUF_SZ;
 		_buf_sz = BUF_SZ;
 		_done = false;
 	}
 	
-	public int peek() {
+	public int peek() throws IOException {
 		if(_cur == _buf_sz) {
 			if(_done) {
 				// We already exhausted the input stream
@@ -137,16 +141,20 @@ public class FileBuf <TNameStr, TSeqStr> {
 			else {
 				// Get the next chunk
 				if(_inf != null) {
-					_inf.read((String)_buf, BUF_SZ);
-					_buf_sz = _inf.gcount();
+					_inf.read(_buf);
+					//_buf_sz = _inf.gcount();
+					_buf_sz = _buf.length;
 				} else if(_zIn != null) {
-					_buf_sz = gzread(_zIn, _buf, BUF_SZ);
+					//_buf_sz = gzread(_zIn, _buf, BUF_SZ);
+					_buf_sz = _zIn.read(_buf, 0, (int)BUF_SZ);
 				} else if(_ins != null) {
-					_ins.read((String)_buf, BUF_SZ);
-					_buf_sz = _ins.gcount();
+					//_ins.read((String)_buf, BUF_SZ);
+					_ins.read(_buf);
+					//_buf_sz = _ins.gcount();
+					_buf_sz = _buf.length;
 				} else {
 					// TODO: consider an _unlocked function
-					_buf_sz = fread(_buf, 1, BUF_SZ, _in);
+					//_buf_sz = fread(_buf, 1, BUF_SZ, _in);
 				}
 				_cur = 0;
 				if(_buf_sz == 0) {
@@ -160,11 +168,11 @@ public class FileBuf <TNameStr, TSeqStr> {
 				}
 			}
 		}
-		return (int)_buf[_cur];
+		return _buf[(int)_cur];
 	}
 	
-	public double gets(String buf, double len) {
-		double stored = 0;
+	public double gets(char[] buf, double len) throws IOException{
+		int stored = 0;
 		while(true) {
 			int c = get();
 			if(c == -1) {
@@ -188,9 +196,9 @@ public class FileBuf <TNameStr, TSeqStr> {
 		}
 	}
 	
-	public double get(String buf, double len) {
-		double stored = 0;
-		for(double i = 0; i < len; i++) {
+	public double get(char[] buf, double len) throws IOException{
+		int stored = 0;
+		for(int i = 0; i < len; i++) {
 			int c = get();
 			if(c == -1) return i;
 			buf[stored++] = (char)c;
@@ -200,27 +208,27 @@ public class FileBuf <TNameStr, TSeqStr> {
 	
 	public static final double LASTN_BUF_SZ = 1024 * 8;
 	
-	public int getPastWhitespace() {
+	public int getPastWhitespace() throws IOException{
 		int c;
-		while(isspace(c = get()) && c != -1);
+		while(Character.isSpaceChar(c = get()) && c != -1);
 		return c;
 	}
 	
-	public int getPastNewline() {
+	public int getPastNewline() throws IOException{
 		int c = get();
 		while(!isnewline(c) && c != -1) c = get();
 		while(isnewline(c)) c = get();
 		return c;
 	}
 	
-	public int peekPastNewline() {
+	public int peekPastNewline() throws IOException{
 		int c = peek();
 		while(!isnewline(c) && c != -1) c = get();
 		while(isnewline(c)) c = get();
 		return c;
 	}
 	
-	public int peekUptoNewline() {
+	public int peekUptoNewline() throws IOException{
 		int c = peek();
 		while(!isnewline(c) && c != -1) {
 			get(); c = peek();
@@ -232,7 +240,7 @@ public class FileBuf <TNameStr, TSeqStr> {
 		return c;
 	}
 	
-	public void parseFastaRecord(TNameStr name, TSeqStr seq) {
+	public void parseFastaRecord(TNameStr name, TSeqStr seq) throws IOException{
 		int c;
 		if(!gotCaret) {
 			// Skip over caret and non-newline whitespace
@@ -253,7 +261,7 @@ public class FileBuf <TNameStr, TSeqStr> {
 		// and the next caret
 		while(true) {
 			// skip over whitespace
-			while(isspace(c)) { get(); c = peek(); }
+			while(Character.isSpaceChar(c)) { get(); c = peek(); }
 			// if we see caret or EOF, break
 			if(c == '>' || c == -1) break;
 			// append and continue
@@ -262,7 +270,7 @@ public class FileBuf <TNameStr, TSeqStr> {
 		}
 	}
 	
-	public void parseFastaRecordLength(double nameLen, double seqLen) {
+	public void parseFastaRecordLength(double nameLen, double seqLen) throws IOException{
 		int c;
 		nameLen = seqLen = 0;
 		if(!gotCaret) {
@@ -283,7 +291,7 @@ public class FileBuf <TNameStr, TSeqStr> {
 		// and the next caret
 		while(true) {
 			// skip over whitespace
-			while(isspace(c)) { get(); c = peek(); }
+			while(Character.isSpaceChar(c)) { get(); c = peek(); }
 			// if we see caret or EOF, break
 			if(c == '>' || c == -1) break;
 			// append and continue
@@ -297,12 +305,12 @@ public class FileBuf <TNameStr, TSeqStr> {
 	}
 	
 	public double copyLastN(String buf) {
-		_lastn_cur = buf;
+		_lastn_cur = Double.parseDouble(buf);
 		return _lastn_cur;
 	}
 	
 	public String lastN() {
-		return _lastn_buf;
+		return String.valueOf(_lastn_buf);
 	}
 	
 	public double lastNLen() {
