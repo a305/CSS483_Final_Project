@@ -1,7 +1,0 @@
-package com.uwb.bt2j.util.pattern;
-
-public class DuelPatternComposer extends PatternComposer{
-	public Pair<Boolean, int> nextBatch() {
-		
-	}
-}

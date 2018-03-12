@@ -6,7 +6,7 @@ import java.util.zip.GZIPInputStream;
 public class FileBuf <TNameStr, TSeqStr> {
 	private static final double BUF_SZ = 1024 * 256;
 	private FileOutputStream _in;
-	private GZIPInputStream _zIn;
+	private GZIPInputStream _zIn; //IS THIS SUPPOSED TO BE HERE? IT WASN'T ORIGINALLY
 	private FileInputStream _inf;
 	private InputStream _ins;
 	private double _cur;
@@ -240,7 +240,7 @@ public class FileBuf <TNameStr, TSeqStr> {
 		return c;
 	}
 	
-	public void parseFastaRecord(String name, String seq) throws IOException{
+	public void parseFastaRecord(TNameStr name, TSeqStr seq) throws IOException{
 		int c;
 		if(!gotCaret) {
 			// Skip over caret and non-newline whitespace
@@ -251,12 +251,11 @@ public class FileBuf <TNameStr, TSeqStr> {
 			c = peek();
 			while(isspace_notnl(c)) { get(); c = peek(); }
 		}
-		int namecur = 0, seqcur = 0;
+		double namecur = 0, seqcur = 0;
 		// c is the first character of the fasta name record, or is the first
 		// newline character if the name record is empty
 		while(!isnewline(c) && c != -1) {
-			name = name.substring(0,namecur++) + c + name.substring(namecur);
-			get(); c = peek();
+			name[namecur++] = c; get(); c = peek();
 		}
 		// sequence consists of all the non-whitespace characters between here
 		// and the next caret
@@ -266,7 +265,6 @@ public class FileBuf <TNameStr, TSeqStr> {
 			// if we see caret or EOF, break
 			if(c == '>' || c == -1) break;
 			// append and continue
-			seq = seq.substring(0,seqcur++) + c 
 			seq[seqcur++] = c;
 			get(); c = peek();
 		}

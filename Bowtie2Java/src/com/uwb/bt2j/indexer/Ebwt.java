@@ -9,11 +9,12 @@ import com.uwb.bt2j.indexer.types.EList;
 import com.uwb.bt2j.indexer.types.RandomSource;
 import com.uwb.bt2j.indexer.types.RefReadInParams;
 import com.uwb.bt2j.indexer.types.RefRecord;
+import com.uwb.bt2j.indexer.types.RefRecord.ReadDir;
 import com.uwb.bt2j.indexer.types.SideLocus;
 import com.uwb.bt2j.indexer.util.EbwtParams;
 import com.uwb.bt2j.indexer.util.IndexTypes;
 
-public abstract class EBWT <TStr>{
+public abstract class Ebwt <TStr>{
 	public static final String gEbwt_ext = "bt2";
 	public String gLastIOErrMsg;
 	public int    _overrideOffRate;
@@ -66,7 +67,7 @@ public abstract class EBWT <TStr>{
 		EbwtFlags(int y){x = y;}
 	}
 	
-	public EBWT(String in,
+	public Ebwt(String in,
 				int color,
 				int needEntireReverse,
 				boolean fw,
@@ -133,7 +134,7 @@ public abstract class EBWT <TStr>{
 		}
 	}
 	
-	public EBWT(TStr exampleStr,
+	public Ebwt(String exampleStr,
 				boolean packed,
 				int color,
 				int needEntireReverse,
@@ -223,7 +224,7 @@ public abstract class EBWT <TStr>{
 			}
 		}
 		// Build SA(T) and BWT(T) block by block
-		initFromVector<TStr>(
+		initFromVector(
 			is,
 			szs,
 			sztot,
@@ -243,9 +244,11 @@ public abstract class EBWT <TStr>{
 			verbose);
 		// Close output files
 		fout1.flush();
-		/**
+
 		 long tellpSz1 = (long)fout1.tellp();
-		 VMSG_NL("Wrote " + fout1.tellp() + " bytes to primary EBWT file: " + _in1Str);
+		 if(verbose)
+			 this.verbose("Wrote " + fout1.tellp() + " bytes to primary EBWT file: " + _in1Str);
+
 		 fout1.close();
 		 boolean err = false;
 		 if(tellpSz1 > fileSize(_in1Str)) {
@@ -261,7 +264,7 @@ public abstract class EBWT <TStr>{
 		 if(tellpSz2 > fileSize(_in2Str)) {
 		 err = true;
 		 System.err.println("Index is corrupt: File size for " + _in2Str + " should have been " + tellpSz2
-		 + " but is actually " + fileSize(_in2Str) + "." + "\n");;
+		 + " but is actually " + fileSize(_in2Str) + "." + "\n");
 		 }
 		 
 		 if(saOut != null) {
@@ -292,12 +295,11 @@ public abstract class EBWT <TStr>{
 		 System.err.println("Please check if there is a problem with the disk or if disk is full." + "\n");;
 		 throw 1;
 		 }
-		 **/
-		// Reopen as input streams
-		//VMSG_NL("Re-opening _in1 and _in2 as input streams");
+	
+		Reopen as input streams
+		VMSG_NL("Re-opening _in1 and _in2 as input streams");
 		if(_sanity) {
 			//VMSG_NL("Sanity-checking Bt2");
-			assert(!isInMemory());
 			readIntoMemory(
 					color,                       // colorspace?
 					fw ? -1 : needEntireReverse, // 1 . need the reverse to be reverse-of-concat
@@ -311,7 +313,6 @@ public abstract class EBWT <TStr>{
 					false);                      // verbose startup?
 			sanityCheckAll(refparams.reverse);
 			evictFromMemory();
-			assert(!isInMemory());
 		}
 		//VMSG_NL("Returning from Ebwt constructor");
 	}
@@ -339,14 +340,14 @@ public abstract class EBWT <TStr>{
 	public String join(
 			EList<FileBuf> l,
 			EList<RefRecord> szs,
-			long sztot,
+			int sztot,
 			RefReadInParams refparams,
 			int seed) {
 		RandomSource rand = new RandomSource(); // reproducible given same seed
 		rand.init(seed);
 		RefReadInParams rpcp = refparams;
-		TStr ret;
-		long guessLen = sztot;
+		EList<String> ret;
+		int guessLen = sztot;
 		ret.resize(guessLen);
 		long dstoff = 0;
 		for(int i = 0; i < l.size(); i++) {
@@ -1145,44 +1146,6 @@ public abstract class EBWT <TStr>{
 				System.err.println( "  Finished opening input files: ";
 				logTime(cerr);
 			}
-			
-		#ifdef BOWTIE_MM
-			if(_useMm /*&& !justHeader*/) {
-					char *names[] = {_in1Str.c_str(), _in2Str.c_str()};
-				int fds[] = { fileno(_in1), fileno(_in2) };
-				for(int i = 0; i < (loadSASamp ? 2 : 1); i++) {
-					if(_verbose || startVerbose) {
-						System.err.println( "  Memory-mapping input file " + (i+1) + ": ");
-						//logTime(cerr);
-					}
-					struct stat sbuf;
-					if (stat(names[i], &sbuf) == -1) {
-						//perror("stat");
-						System.err.println( "Error: Could not stat index file " + names[i] + " prior to memory-mapping");
-						//throw 1;
-					}
-					mmFile[i] = (char*)mmap((void *)0, (int)sbuf.st_size,
-							PROT_READ, MAP_SHARED, fds[(int)i], 0);
-					if(mmFile[i] == (void *)(-1)) {
-						perror("mmap");
-						System.err.println( "Error: Could not memory-map the index file " << names[i] << endl;
-						//throw 1;
-					}
-					if(mmSweep) {
-						int sum = 0;
-						for(off_t j = 0; j < sbuf.st_size; j += 1024) {
-							sum += (int) mmFile[i][j];
-						}
-						if(startVerbose) {
-							System.err.println( "  Swept the memory-mapped ebwt index file 1; checksum: " + sum + ": ");
-							//logTime(cerr);
-						}
-					}
-				}
-				mmFile1_ = mmFile[0];
-				mmFile2_ = loadSASamp ? mmFile[1] : null;
-			}
-		#endif
 		}
 		#ifdef BOWTIE_MM
 			else if(_useMm && !justHeader) {

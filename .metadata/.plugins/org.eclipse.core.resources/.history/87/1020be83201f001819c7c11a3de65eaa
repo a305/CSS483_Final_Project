@@ -1,7 +1,0 @@
-package com.uwb.bt2j.util;
-
-public class Tokenize {
-	public static void tokenize(String s, String delims, T ss, int max) {
-		
-	}
-}

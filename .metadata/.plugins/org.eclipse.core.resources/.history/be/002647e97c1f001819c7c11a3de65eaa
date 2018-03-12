@@ -1,9 +1,0 @@
-package com.uwb.bt2j.indexer;
-
-import com.uwb.bt2j.util.strings.SStringExpandable;
-
-public class BTString extends SStringExpandable<Character>{
-	public BTString() {
-		super(1024,2);
-	}
-}

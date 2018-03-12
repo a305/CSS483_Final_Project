@@ -52,12 +52,12 @@
 <fullyQualifiedTypeName name="com.uwb.bt2j.indexer.types.Pool"/>
 <fullyQualifiedTypeName name="java.io.FileOutputStream"/>
 <fullyQualifiedTypeName name="com.uwb.bt2j.indexer.types.RefRecord"/>
-<fullyQualifiedTypeName name="com.uwb.bt2j.indexer.types.RefRecord.ReadDir"/>
 <fullyQualifiedTypeName name="com.uwb.bt2j.indexer.FileBuf"/>
 <fullyQualifiedTypeName name="com.uwb.bt2j.indexer.Alphabet"/>
 <fullyQualifiedTypeName name="com.uwb.bt2j.indexer.RandomSource"/>
 <fullyQualifiedTypeName name="com.uwb.bt2j.indexer.types.EList"/>
-<fullyQualifiedTypeName name="com.uwb.bt2j.indexer.types.ELList"/>
 <fullyQualifiedTypeName name="javafx.util.Pair"/>
 <fullyQualifiedTypeName name="com.uwb.bt2j.indexer.util.StringUtils"/>
+<fullyQualifiedTypeName name="com.uwb.bt2j.indexer.types.ELList"/>
+<fullyQualifiedTypeName name="com.uwb.bt2j.indexer.types.RefRecord.ReadDir"/>
 </qualifiedTypeNameHistroy>

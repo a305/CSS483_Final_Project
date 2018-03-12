@@ -9,7 +9,6 @@ import com.uwb.bt2j.indexer.types.EList;
 import com.uwb.bt2j.indexer.types.RandomSource;
 import com.uwb.bt2j.indexer.types.RefReadInParams;
 import com.uwb.bt2j.indexer.types.RefRecord;
-import com.uwb.bt2j.indexer.types.RefRecord.ReadDir;
 import com.uwb.bt2j.indexer.types.SideLocus;
 import com.uwb.bt2j.indexer.util.EbwtParams;
 import com.uwb.bt2j.indexer.util.IndexTypes;
@@ -244,11 +243,9 @@ public abstract class Ebwt <TStr>{
 			verbose);
 		// Close output files
 		fout1.flush();
-
+		/**
 		 long tellpSz1 = (long)fout1.tellp();
-		 if(verbose)
-			 this.verbose("Wrote " + fout1.tellp() + " bytes to primary EBWT file: " + _in1Str);
-
+		 VMSG_NL("Wrote " + fout1.tellp() + " bytes to primary EBWT file: " + _in1Str);
 		 fout1.close();
 		 boolean err = false;
 		 if(tellpSz1 > fileSize(_in1Str)) {
@@ -264,7 +261,7 @@ public abstract class Ebwt <TStr>{
 		 if(tellpSz2 > fileSize(_in2Str)) {
 		 err = true;
 		 System.err.println("Index is corrupt: File size for " + _in2Str + " should have been " + tellpSz2
-		 + " but is actually " + fileSize(_in2Str) + "." + "\n");
+		 + " but is actually " + fileSize(_in2Str) + "." + "\n");;
 		 }
 		 
 		 if(saOut != null) {
@@ -295,9 +292,9 @@ public abstract class Ebwt <TStr>{
 		 System.err.println("Please check if there is a problem with the disk or if disk is full." + "\n");;
 		 throw 1;
 		 }
-	
-		Reopen as input streams
-		VMSG_NL("Re-opening _in1 and _in2 as input streams");
+		 **/
+		// Reopen as input streams
+		//VMSG_NL("Re-opening _in1 and _in2 as input streams");
 		if(_sanity) {
 			//VMSG_NL("Sanity-checking Bt2");
 			readIntoMemory(

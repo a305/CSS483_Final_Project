@@ -1,7 +1,0 @@
-package com.uwb.bt2j.aligner.cache;
-
-public class AlignmentCacheIFace {
-	public AlignmentCacheIFace(AlignmentCache current, AlignmentCache local, AlignmentCache shared) {
-		
-	}
-}

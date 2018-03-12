@@ -1,5 +1,0 @@
-package com.uwb.bt2j.util.mapq;
-
-public class BowtieMapq extends Mapq{
-
-}

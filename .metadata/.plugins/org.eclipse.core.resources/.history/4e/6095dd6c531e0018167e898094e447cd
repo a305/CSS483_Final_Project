@@ -1,8 +1,0 @@
-package com.uwb.bt2j.util;
-class MemoryTally {
-  public MemoryTally() {
-    
-  }
-  
- 
-}

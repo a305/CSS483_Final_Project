@@ -1,7 +1,0 @@
-package com.uwb.bt2j.indexer;
-
-import com.uwb.bt2j.util.strings.SStringFixed;
-
-public class SDnaStringFixed extends SStringFixed{
-
-}

@@ -1,6 +1,0 @@
-package com.uwb.bt2j.util.types;
-
-public class Quad <A,B,C,D> {
-	public Quad() {	}
-	public Quad()
-}
