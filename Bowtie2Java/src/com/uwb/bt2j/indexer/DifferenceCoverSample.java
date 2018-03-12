@@ -3,9 +3,12 @@ package com.uwb.bt2j.indexer;
 import org.omg.CORBA_2_3.portable.OutputStream;
 
 import com.uwb.bt2j.indexer.types.EList;
+import com.uwb.bt2j.indexer.util.IndexTypes;
+
+//import java.io.*;
 
 public class DifferenceCoverSample <TStr, T>{
-	private TStr _text;
+	private String _text;
 	private int _v;
 	private boolean _verbose;
 	private boolean _sanity;
@@ -18,6 +21,8 @@ public class DifferenceCoverSample <TStr, T>{
 	private int _log2v;
 	private long _vmask;
 	private OutputStream _logger;
+	
+	private final int EBWT_CAT = 1;
 	
 	public static int dc0to64[][] = {
 			{0xffffffff},                     // 0
@@ -89,7 +94,7 @@ public class DifferenceCoverSample <TStr, T>{
 			{1, 2, 5, 14, 16, 34, 42, 59, 0}  // 64
 	};
 	
-	public DifferenceCoverSample(TStr __text,
+	public DifferenceCoverSample(String __text,
             int __v,
             boolean __verbose,
             boolean __sanity,
@@ -98,26 +103,26 @@ public class DifferenceCoverSample <TStr, T>{
 		_dInv.fill(0xffffffff);
 		int lim = (int)_ds.size();
 		for(int i = 0; i < lim; i++) {
-			_dInv.get(_ds.get(i)) = i;
+			_dInv.set(i, _ds.get(i));
 		}
 	}
 	
-	public boolean dcRepOk(TStr v, EList<TStr> ds) {
+	public boolean dcRepOk(String v, EList<String> ds) {
 		// diffs[] records all the differences observed
-		boolean[] covered(v, EBWT_CAT);
-		for(T i = 1; i < v; i++) {
+		boolean[] covered = new boolean[v.length()];
+		for(int i = 1; i < v.length(); i++) {
 			covered[i] = false;
 		}
-		for(TStr di = TStr(); di < ds.size(); di++) {
-			for(T dj = di+1; dj < ds.size(); dj++) {
-				T d1 = (ds[dj] - ds[di]);
-				T d2 = (ds[di] + v - ds[dj]);
-				covered[d1] = true;
-				covered[d2] = true;
+		for(int di = 0; di < ds.size(); di++) {
+			for(int dj = di+1; dj < ds.size(); dj++) {
+				String d1 = ds.get(dj).substring(0, ds.get(di).length()); // (ds.get(dj) - ds.get(di));
+				String d2 = ds.get(di).substring(v.length(), ds.get(di).length()); // (ds.get(di) + v - ds.get(dj));
+				covered[d1.length()] = true;
+				covered[d2.length()] = true;
 			}
 		}
 		boolean ok = true;
-		for(T i = 1; i < v; i++) {
+		for(int i = 1; i < v.length(); i++) {
 			if(covered[i] == false) {
 				ok = false;
 				break;
@@ -128,26 +133,26 @@ public class DifferenceCoverSample <TStr, T>{
 	
 	public void doBuiltSanityCheck() {
 		int v = this.v();
-		VMSG_NL("  Doing sanity check");
+		//VMSG_NL("  Doing sanity check");
 		long added = 0;
-		EList<long> sorted;
+		EList<Long> sorted = new EList<Long>();
 		sorted.resizeExact(_isaPrime.size());
 		sorted.fill(IndexTypes.OFF_MASK);
 		for(int di = 0; di < this.d(); di++) {
-			int d = _ds[di];
+			int d = _ds.get(di);
 			int i = 0;
-			for(int doi = _doffs[di]; doi < _doffs[di+1]; doi++, i++) {
+			for(long doi = _doffs.get(di); doi < _doffs.get(di+1); doi++, i++) {
 				// Maps the offset of the suffix to its rank
-				sorted[_isaPrime[doi]] = (long)(v*i + d);
+				sorted.set((long)(v*i + d), _isaPrime.get((int)doi).intValue());
 				added++;
 			}
 		}
 	}
 	
 	public void buildSPrime(EList<Long> sPrime, int padding) {
-		const TStr& t = this.text();
-		const EList<int> ds = this.ds();
-		long tlen = (long)t.length();
+		 String t = this.text();
+		 EList<Integer> ds = this.ds();
+		long tlen = (long)(t.length());
 		int v = this.v();
 		int d = this.d();
 		// Record where each d section should begin in sPrime
@@ -157,11 +162,11 @@ public class DifferenceCoverSample <TStr, T>{
 		_doffs.resizeExact((int)d+1);
 		for(int di = 0; di < d; di++) {
 			// mu mapping
-			long sz = tlenDivV + ((ds[di] <= tlenModV) ? 1 : 0);
-			_doffs[di] = sPrimeSz;
+			long sz = tlenDivV + ((ds.get(di) <= tlenModV) ? 1 : 0);
+			_doffs.set(sPrimeSz, di);
 			sPrimeSz += sz;
 		}
-		_doffs[d] = sPrimeSz;
+		_doffs.set(sPrimeSz, d);
 
 		// Size sPrime appropriately
 		sPrime.resizeExact((int)sPrimeSz + padding);
@@ -172,99 +177,99 @@ public class DifferenceCoverSample <TStr, T>{
 		long i = 0;
 		for(long ti = 0; ti <= tlen; ti += v) {
 			for(int di = 0; di < d; di++) {
-				long tti = ti + ds[di];
+				long tti = ti + ds.get(di);
 				if(tti > tlen) break;
-				long spi = _doffs[di] + i;
-				sPrime[spi] = tti; added++;
+				long spi = _doffs.get(di) + i;
+				sPrime.set(tti, (int)spi); added++;
 			}
 			i++;
 		}
 	}
 	
-	public boolean suffixSameUpTo(TStr host, long suf1, long suf2, long v) {
-		for(long i = 0; i < v; i++) {
-			boolean endSuf1 = suf1+i >= host.length();
-			boolean endSuf2 = suf2+i >= host.length();
+	public boolean suffixSameUpTo(String host[], long suf1, long suf2, long v) {
+		for(int i = 0; i < v; i++) {
+			boolean endSuf1 = suf1+i >= host.length;
+			boolean endSuf2 = suf2+i >= host.length;
 			if((endSuf1 && !endSuf2) || (!endSuf1 && endSuf2)) return false;
 			if(endSuf1 && endSuf2) return true;
-			if(host[suf1+i] != host[suf2+i]) return false;
+			if(host[(int)suf1+i] != host[(int)suf2+i]) return false;
 		}
 		return true;
 	}
 	
 	public boolean isCovered(long i) {
 		int modi = this.modv(i);
-		return _dInv[modi] != 0xffffffff;
+		return _dInv.get(modi) != 0xffffffff;
 	}
-	
+
 	public void build(int nthreads) {
 		// Local names for relevant types
-		VMSG_NL("Building DifferenceCoverSample");
+		//VMSG_NL("Building DifferenceCoverSample");
 		// Local names for relevant data
-		const TStr& t = this.text();
+		 String t = this.text();
 		int v = this.v();
 		// Build s'
-		EList<long> sPrime;
+		EList<Long> sPrime;
 		// Need to allocate 2 extra elements at the end of the sPrime and _isaPrime
 		// arrays.  One element that's less than all others, and another that acts
 		// as needed padding for the Larsson-Sadakane sorting code.
 		int padding = 1;
-		VMSG_NL("  Building sPrime");
+		//VMSG_NL("  Building sPrime");
 		buildSPrime(sPrime, padding);
 		int sPrimeSz = sPrime.size() - padding;
 		long nextRank = 0;
-		{
-			VMSG_NL("  Building sPrimeOrder");
-			EList<long> sPrimeOrder;
+			//VMSG_NL("  Building sPrimeOrder");
+			EList<Long> sPrimeOrder;
 			sPrimeOrder.resizeExact(sPrimeSz);
 			for(long i = 0; i < sPrimeSz; i++) {
-				sPrimeOrder[i] = i;
+				sPrimeOrder.set(i, (int)i);
 			}
 			// sPrime now holds suffix-offsets for DC samples.
 			{
-				VMSG_NL("  V-Sorting samples");
+				//VMSG_NL("  V-Sorting samples");
 				// Extract backing-store array from sPrime and sPrimeOrder;
 				// the mkeyQSortSuf2 routine works on the array for maximum
 				// efficiency
-				long *sPrimeArr = (long*)sPrime.ptr();
-				assert_eq(sPrimeArr[0], sPrime[0]);
-				assert_eq(sPrimeArr[sPrimeSz-1], sPrime[sPrimeSz-1]);
-				long *sPrimeOrderArr = (long*)sPrimeOrder.ptr();
-				assert_eq(sPrimeOrderArr[0], sPrimeOrder[0]);
-				assert_eq(sPrimeOrderArr[sPrimeSz-1], sPrimeOrder[sPrimeSz-1]);
+				EList<Long> sPrimeArr = sPrime;
+				//assert_eq(sPrimeArr[0], sPrime[0]);
+				//assert_eq(sPrimeArr[sPrimeSz-1], sPrime[sPrimeSz-1]);
+				EList<Long> sPrimeOrderArr = sPrimeOrder;
+				//assert_eq(sPrimeOrderArr[0], sPrimeOrder[0]);
+				//assert_eq(sPrimeOrderArr[sPrimeSz-1], sPrimeOrder[sPrimeSz-1]);
 				// Sort sample suffixes up to the vth character using a
 				// multikey quicksort.  Sort time is proportional to the
 				// number of samples times v.  It isn't quadratic.
 				// sPrimeOrder is passed in as a swapping partner for
 				// sPrimeArr, i.e., every time the multikey qsort swaps
 				// elements in sPrime, it swaps the same elements in
-				// sPrimeOrder too.  This allows us to easily reconstruct
+				// sPrimeOrder too.  This allows us to easily reruct
 				// what the sort did.
 				if(nthreads == 1) {
 					mkeyQSortSuf2(t, sPrimeArr, sPrimeSz, sPrimeOrderArr, 4,
 					              this.verbose(), this.sanityCheck(), v);
-				} else {
+				} 
+				/*else {
 					int query_depth = 0;
 					int tmp_nthreads = nthreads;
 					while(tmp_nthreads > 0) {
 						query_depth++;
 						tmp_nthreads >>= 1;
 					}
-					EList<int> boundaries; // bucket boundaries for parallelization
-					long *sOrig = NULL;
+					EList<Integer> boundaries; // bucket boundaries for parallelization
+					Long[] sOrig = null;
 					if(this.sanityCheck()) {
-						sOrig = new long[sPrimeSz];
+						sOrig = new Long[sPrimeSz];
 						memcpy(sOrig, sPrimeArr, IndexTypes.OFF_SIZE * sPrimeSz);
 					}
 					mkeyQSortSuf2(t, sPrimeArr, sPrimeSz, sPrimeOrderArr, 4,
-					              this.verbose(), false, query_depth, &boundaries);
+					              this.verbose(), false, query_depth, boundaries);
 					if(boundaries.size() > 0) {
-	#ifdef WITH_TBB
+	//#ifdef WITH_TBB
 						tbb::task_group tbb_grp;
-	#else
-						AutoArray<tthread::thread*> threads(nthreads);
-	#endif
-						EList<VSortingParam<TStr> > tparams;
+	//#else
+						AutoArray<tthread::thread> threads(nthreads);
+	//#endif
+						EList<VSortingParam<String> > tparams;
 						int cur = 0;
 						MUTEX_T mutex;
 						tparams.resize(nthreads);
@@ -276,176 +281,182 @@ public class DifferenceCoverSample <TStr, T>{
 							tparams[tid].sPrimeSz = sPrimeSz;
 							tparams[tid].sPrimeOrderArr = sPrimeOrderArr;
 							tparams[tid].depth = query_depth;
-							tparams[tid].boundaries = &boundaries;
-							tparams[tid].cur = &cur;
-							tparams[tid].mutex = &mutex;
-	#ifdef WITH_TBB
-							tbb_grp.run(VSorting_worker<TStr>(((void*)&tparams[tid])));
+							tparams[tid].boundaries = boundaries;
+							tparams[tid].cur = cur;
+							tparams[tid].mutex = mutex;
+	//#ifdef WITH_TBB
+							tbb_grp.run(VSorting_worker<String>(((void)tparams[tid])));
 						}
 						tbb_grp.wait();
-	#else
-							threads[tid] = new tthread::thread(VSorting_worker<TStr>, (void*)&tparams[tid]);
+	//#else
+							threads[tid] = new tthread::thread(VSorting_worker<String>, (void)tparams[tid]);
 						}
 						for (int tid = 0; tid < nthreads; tid++) {
 							threads[tid].join();
 						}
-	#endif
-					}
+	//#endif
+					}*/
 					if(this.sanityCheck()) {
 						sanityCheckOrderedSufs(t, t.length(), sPrimeArr, sPrimeSz, v);
 						for(int i = 0; i < sPrimeSz; i++) {
-							assert_eq(sPrimeArr[i], sOrig[sPrimeOrderArr[i]]);
+							//assert_eq(sPrimeArr[i], sOrig[sPrimeOrderArr[i]]);
 						}
 						delete[] sOrig;
 					}
 				}
 				// Make sure sPrime and sPrimeOrder are consistent with
 				// their respective backing-store arrays
-			}
 			// Now assign the ranking implied by the sorted sPrime/sPrimeOrder
 			// arrays back into sPrime.
-			VMSG_NL("  Allocating rank array");
+			//VMSG_NL("  Allocating rank array");
 			_isaPrime.resizeExact(sPrime.size());
 
 			{
-				Timer timer(cout, "  Ranking v-sort output time: ", this.verbose());
-				VMSG_NL("  Ranking v-sort output");
+				//Timer timer(cout, "  Ranking v-sort output time: ", this.verbose());
+				//VMSG_NL("  Ranking v-sort output");
 				for(int i = 0; i < sPrimeSz-1; i++) {
 					// Place the appropriate ranking
-					_isaPrime[sPrimeOrder[i]] = nextRank;
+					_isaPrime.set(nextRank, sPrimeOrder.get(i).intValue());
 					// If sPrime[i] and sPrime[i+1] are identical up to v, then we
 					// should give the next suffix the same rank
-					if(!suffixSameUpTo(t, sPrime[i], sPrime[i+1], v)) nextRank++;
+					// TODO: split t into string array of characters
+					char[] charArray = t.toCharArray();
+					String[] stringArray = new String[charArray.length];
+					for (int a = 0; a < charArray.length; a++)
+						stringArray[a] = "" + charArray[a];
+					if(!suffixSameUpTo(stringArray, (long)sPrime.get(i), (long)sPrime.get(i+1), (long)v)) nextRank++;
 				}
-				_isaPrime[sPrimeOrder[sPrimeSz-1]] = nextRank; // finish off
+				_isaPrime.set(nextRank, sPrimeOrder.get(sPrimeSz-1).intValue()); // finish off
 			}
 			// sPrimeOrder is destroyed
 			// All the information we need is now in _isaPrime
-		}
-		_isaPrime[_isaPrime.size()-1] = (long)sPrimeSz;
-		sPrime[sPrime.size()-1] = (long)sPrimeSz;
+		//}
+		_isaPrime.set((long)sPrimeSz, _isaPrime.size()-1);
+		sPrime.set((long)sPrimeSz, sPrime.size()-1);
 		// _isaPrime[_isaPrime.size()-1] and sPrime[sPrime.size()-1] are just
 		// spacer for the Larsson-Sadakane routine to use
 		{
-			VMSG_NL("  Invoking Larsson-Sadakane on ranks");
+			//VMSG_NL("  Invoking Larsson-Sadakane on ranks");
 			if(sPrime.size() >= LS_SIZE) {
-				cerr << "Error; sPrime array has so many elements that it can't be converted to a signed array without overflow." << endl;
-				throw 1;
+				System.err.println("Error; sPrime array has so many elements that it can't be converted to a signed array without overflow.");
+				throw new Exception();
 			}
-			LarssonSadakane<TIndexOff> ls;
+			LarssonSadakane ls;
 			ls.suffixsort(
-				(TIndexOff*)_isaPrime.ptr(),
-				(TIndexOff*)sPrime.ptr(),
-				(TIndexOff)sPrimeSz,
-				(TIndexOff)sPrime.size(),
+				_isaPrime,
+				sPrime,
+				(long)sPrimeSz,
+				(long)sPrime.size(),
 				0);
 		}
 		// chop off final character of _isaPrime
 		_isaPrime.resizeExact(sPrimeSz);
-		for(int i = 0; i < _isaPrime.size(); i++) {
-			_isaPrime[i]--;
+		for(int i1 = 0; i1 < _isaPrime.size(); i1++) {
+			_isaPrime.set(_isaPrime.get(i1) - 1, i1);
 		}
-	#ifndef NDEBUG
-		for(int i = 0; i < sPrimeSz-1; i++) {
-			assert_lt(_isaPrime[i], sPrimeSz);
-			assert(i == 0 || _isaPrime[i] != _isaPrime[i-1]);
+	//#ifndef NDEBUG
+		for(int i2 = 0; i2 < sPrimeSz-1; i2++) {
+			//assert_lt(_isaPrime[i2], sPrimeSz);
+			assert(i2 == 0 || _isaPrime.get(i2) != _isaPrime.get(i2-1));
 		}
-	#endif
-		VMSG_NL("  Sanity-checking and returning");
-		if(this.sanityCheck()) doBuiltSanityCheck();
+	//#endif
+		//VMSG_NL("  Sanity-checking and returning");
+		if(this.sanityCheck()) 
+			doBuiltSanityCheck();
 	}
 	
 	public long rank(long i) {
 		int imodv = this.modv(i);
 		long ioff = this.divv(i);
-		long isaIIdx = _doffs[_dInv[imodv]] + ioff;
-		long isaPrimeI = _isaPrime[isaIIdx];
+		long isaIIdx = _doffs.get(_dInv.get(imodv)) + ioff;
+		long isaPrimeI = _isaPrime.get((int)isaIIdx);
 		return isaPrimeI;
 	}
 	
 	public long breakTie(long i, long j) {
 		int imodv = this.modv(i);
 		int jmodv = this.modv(j);
-		int dimodv = _dInv[imodv];
-		int djmodv = _dInv[jmodv];
+		int dimodv = _dInv.get(imodv);
+		int djmodv = _dInv.get(jmodv);
 		long ioff = this.divv(i);
 		long joff = this.divv(j);
-		// assert_lt: expected (32024) < (0)
-		long isaIIdx = _doffs[dimodv] + ioff;
-		long isaJIdx = _doffs[djmodv] + joff;
-		long isaPrimeI = _isaPrime[isaIIdx];
-		long isaPrimeJ = _isaPrime[isaJIdx];
-		return (int64_t)isaPrimeI - (int64_t)isaPrimeJ;
+		// //assert_lt: expected (32024) < (0)
+		long isaIIdx = _doffs.get(dimodv) + ioff;
+		long isaJIdx = _doffs.get(djmodv) + joff;
+		long isaPrimeI = _isaPrime.get((int)isaIIdx);
+		long isaPrimeJ = _isaPrime.get((int)isaJIdx);
+		return (long)isaPrimeI - (long)isaPrimeJ;
 	}
 	
 	public int tieBreakOff(long i, long j) {
-		const TStr t = this.text();
-		const EList<int>& dmap = this.dmap();
+		 String t = this.text();
+		 EList<Integer> dmap = this.dmap();
 		// It's actually convenient to allow this, but we're permitted to
 		// return nonsense in that case
-		if(t[i] != t[j]) return 0xffffffff;
-		//assert_eq(t[i], t[j]); // if they're unequal, there's no tie to break
+		if(t.charAt((int)i) != t.charAt((int)j)) return 0xffffffff;
+		////assert_eq(t[i], t[j]); // if they're unequal, there's no tie to break
 		int v = this.v();
 		int imod = this.modv(i);
 		int jmod = this.modv(j);
 		int diffLeft = (jmod >= imod)? (jmod - imod) : (jmod + v - imod);
 		int diffRight = (imod >= jmod)? (imod - jmod) : (imod + v - jmod);
-		int destLeft = dmap[diffLeft];   // offset where i needs to be
-		int destRight = dmap[diffRight]; // offset where i needs to be
+		int destLeft = dmap.get(diffLeft);   // offset where i needs to be
+		int destRight = dmap.get(diffRight); // offset where i needs to be
 		int deltaLeft = (destLeft >= imod)? (destLeft - imod) : (destLeft + v - imod);
 		if(deltaLeft == v) deltaLeft = 0;
 		int deltaRight = (destRight >= jmod)? (destRight - jmod) : (destRight + v - jmod);
 		if(deltaRight == v) deltaRight = 0;
-		return min(deltaLeft, deltaRight);
+		return Math.min(deltaLeft, deltaRight);
 	}
 	
-	public boolean increasing(T[] ts, int limit) {
+	public boolean increasing(String ts, int limit) {
 		for(int i = 0; i < limit-1; i++) {
-			if(ts[i+1] <= ts[i]) return false;
+			if(ts.charAt(i+1) <= ts.charAt(i)) return false;
 		}
 		return true;
 	}
 	
-	public boolean hasDifference(T[] ds, T d, T v, T diff) {
+	public boolean hasDifference(int[] ds, int d, int v, int diff) {
 		// diffs[] records all the differences observed
-		for(T di = T(); di < d; di++) {
-			for(T dj = di+1; dj < d; dj++) {
-				T d1 = (ds[dj] - ds[di]);
-				T d2 = (ds[di] + v - ds[dj]);
+		for(Integer di = null; (int)di < (int)d; di++) {
+			for(int dj = di+1; dj < d; dj++) {
+				int d1 = (ds[dj] - ds[di]);
+				int d2 = (ds[di] + v - ds[dj]);
 				if(d1 == diff || d2 == diff) return true;
 			}
 		}
 		return false;
 	}
 	
-	public void calcExhaustiveDC(T i, boolean verbose, boolean sanityCheck) {
-		T v = i;
-		boolean[] diffs(v, EBWT_CAT);
+	public void calcExhaustiveDC(int i, boolean verbose, boolean sanityCheck) {
+		double v = i;
+		boolean[] diffs = new boolean[(int)v];
 		// v is the target period
-		T ld = (T)ceil(sqrt(v));
+		double ld = (double)Math.ceil(Math.sqrt(v));
 		// ud is the upper bound on |D|
-		T ud = v / 2;
+		double ud = v / 2;
 		// for all possible |D|s
 		boolean ok = true;
-		T ds = null;
-		T d;
+		Integer ds[] = null;
+		double d;
 		for(d = ld; d <= ud+1; d++) {
 			// for all possible |D| samples
-			AutoArray<T> ds(d, EBWT_CAT);
-			for(T j = 0; j < d; j++) {
+			//AutoArray<T> ds(d, EBWT_CAT);
+			ds = new Integer[(int)d];
+			for(int j = 0; j < d; j++) {
 				ds[j] = j;
 			}
 			while(true) {
 				// reset diffs[]
-				for(T t = 1; t < v; t++) {
+				for(int t = 1; t < v; t++) {
 					diffs[t] = false;
 				}
-				T diffCnt = 0;
+				int diffCnt = 0;
 				// diffs[] records all the differences observed
-				for(T di = 0; di < d; di++) {
-					for(T dj = di+1; dj < d; dj++) {
-						T d1 = (ds[dj] - ds[di]);
-						T d2 = (ds[di] + v - ds[dj]);
+				for(int di = 0; di < d; di++) {
+					for(int dj = di+1; dj < d; dj++) {
+						int d1 = (ds[dj] - ds[di]);
+						int d2 = (ds[di] + (int)v - ds[dj]);
 						if(!diffs[d1]) diffCnt++; diffs[d1] = true;
 						if(!diffs[d2]) diffCnt++; diffs[d2] = true;
 					}
@@ -467,17 +478,17 @@ public class DifferenceCoverSample <TStr, T>{
 					//		break;
 					//	}
 					//}
-					//assert_neq(missing, 0xffffffff);
+					////assert_neq(missing, 0xffffffff);
 					boolean advanced = false;
 					boolean keepGoing = false;
 					do {
 						keepGoing = false;
-						for(T bd = d-1; bd > 1; bd--) {
-							T dif = (d-1)-bd;
-							if(ds[bd] < v-1-dif) {
-								ds[bd]++;
+						for(double bd = d-1; bd > 1; bd--) {
+							double dif = (d-1)-bd;
+							if(ds[(int)bd] < v-1-dif) {
+								ds[(int)bd]++;
 								// Reset subsequent ones
-								for(T bdi = bd+1; bdi < d; bdi++) {
+								for(int bdi = (int)(bd + 1); bdi < d; bdi++) {
 									ds[bdi] = ds[bdi-1]+1;
 								}
 								// (Following is commented out because
@@ -490,7 +501,7 @@ public class DifferenceCoverSample <TStr, T>{
 								advanced = true;
 								break;
 							} else {
-								ds[bd] = 0;
+								ds[(int)bd] = 0;
 								// keep going
 							}
 						}
@@ -505,20 +516,22 @@ public class DifferenceCoverSample <TStr, T>{
 		} // next |D|
 		System.out.println("Did exhaustive v=" + v + " |D|=" + d );
 		System.out.print("  ");
-		for(T i = 0; i < d; i++) {
+		for(int a = 0; a < d; a++) {
 			System.out.print( ds[i]);
-			if(i < d-1) System.out.print(",");
+			if(a < d-1) System.out.print(",");
 		}
 		System.out.println();
 	}
 	
+	//sampleEntry[] clDCs = new sampleEntry[16];
+	
 	public void calcColbournAndLingDCs(boolean verbose, boolean sanityCheck) {
-		for(T r = 0; r < 16; r++) {
-			T maxv = 24*r*r + 36*r + 13; // Corollary 2.3
-			T numsamp = 6*r + 4;
+		/* for(int r = 0; r < 16; r++) {
+			int maxv = 24*r*r + 36*r + 13; // Corollary 2.3
+			int numsamp = 6*r + 4;
 			clDCs[r].maxV = maxv;
 			clDCs[r].numSamples = numsamp;
-			T i;
+			int i;
 			// clDCs[r].samples[0] = 0;
 			// Fill in the 1^r part of the B series
 			for(i = 1; i < r+1; i++) {
@@ -545,25 +558,25 @@ public class DifferenceCoverSample <TStr, T>{
 			if(sanityCheck) {
 				// diffs[] records all the differences observed
 				boolean[] diffs(maxv, EBWT_CAT);
-				for(T i = 0; i < numsamp; i++) {
-					for(T j = i+1; j < numsamp; j++) {
-						T d1 = (clDCs[r].samples[j] - clDCs[r].samples[i]);
-						T d2 = (clDCs[r].samples[i] + maxv - clDCs[r].samples[j]);
+				for(int a = 0; a < numsamp; a++) {
+					for(int j = a+1; j < numsamp; j++) {
+						int d1 = (clDCs[r].samples[j] - clDCs[r].samples[a]);
+						int d2 = (clDCs[r].samples[a] + maxv - clDCs[r].samples[j]);
 						diffs[d1] = true;
 						diffs[d2] = true;
 					}
 				}
 				// Should have observed all possible differences (except 0)
-				for(T i = 1; i < maxv; i++) {
-					if(diffs[i] == false) System.out.println(r + ", " + i);
+				for(int a = 1; a < maxv; a++) {
+					if(diffs[a] == false) System.out.println(r + ", " + i);
 				}
 			}
 		}
-		clDCs_calced = true;
+		clDCs_calced = true; */
 	}
 	
-	public EList<T> getDiffCover(T v, boolean verbose, boolean sanityCheck) {
-		EList<T> ret;
+	public EList<Integer> getDiffCover(int v, boolean verbose, boolean sanityCheck) {
+		EList<Integer> ret = new EList<Integer>();
 		ret.clear();
 		// Can we look it up in our hardcoded array?
 		if(v <= 64 && dc0to64[v][0] == 0xffffffff) {
@@ -579,18 +592,18 @@ public class DifferenceCoverSample <TStr, T>{
 		}
 
 		// Can we look it up in our calcColbournAndLingDCs array?
-		if(!clDCs_calced) {
+		/* if(!clDCs_calced) {
 			calcColbournAndLingDCs(verbose, sanityCheck);
 		}
 		for(int i = 0; i < 16; i++) {
 			if(v <= clDCs[i].maxV) {
 				for(int j = 0; j < clDCs[i].numSamples; j++) {
-					T s = clDCs[i].samples[j];
+					int s = clDCs[i].samples[j];
 					if(s >= v) {
 						s %= v;
 						for(int k = 0; k < ret.size(); k++) {
-							if(s == ret[k]) break;
-							if(s < ret[k]) {
+							if(s == ret.get(k)) break;
+							if(s < ret.get(k)) {
 								ret.insert(s, k);
 								break;
 							}
@@ -601,29 +614,30 @@ public class DifferenceCoverSample <TStr, T>{
 				}
 				return ret;
 			}
-		}
+		} */
 		System.err.println("Error: Could not find a difference cover sample for v=" + v);
+		return ret;
 	}
 	
-	public EList<T> getDeltaMap(T v, EList<T> dc) {
+	public EList<Integer> getDeltaMap(int v, EList<Integer> dc) {
 		// Declare anchor-map-related items
-		EList<T> amap;
+		EList<Integer> amap = new EList<Integer>();
 		int amapEnts = 1;
 		amap.resizeExact((int)v);
-		amap.fill(0xffffffff);
-		amap[0] = 0;
+		amap.fill(0xffffffff, 0, v);
+		amap.set(0, 0);
 		// Print out difference cover (and optionally calculate
 		// anchor map)
 		for(int i = 0; i < dc.size(); i++) {
 			for(int j = i+1; j < dc.size(); j++) {
-				T diffLeft  = dc[j] - dc[i];
-				T diffRight = dc[i] + v - dc[j];
-				if(amap[diffLeft] == 0xffffffff) {
-					amap[diffLeft] = dc[i];
+				int diffLeft  = dc.get(j) - dc.get(i);
+				int diffRight = dc.get(i) + v - dc.get(j);
+				if(amap.get(diffLeft) == 0xffffffff) {
+					amap.set(dc.get(i), diffLeft);
 					amapEnts++;
 				}
-				if(amap[diffRight] == 0xffffffff) {
-					amap[diffRight] = dc[j];
+				if(amap.get(diffRight) == 0xffffffff) {
+					amap.set(dc.get(j), diffRight);
 					amapEnts++;
 				}
 			}
@@ -631,58 +645,58 @@ public class DifferenceCoverSample <TStr, T>{
 		return amap;
 	}
 	
-	public int popCount(T i) {
+	public int popCount(int i) {
 		int cnt = 0;
-		for(int j = 0; j < sizeof(T)*8; j++) {
-			if(i & 1) cnt++;
+		for(int j = 0; j < 32*8; j++) {
+			if((i & 1) == 1) cnt++;
 			i >>= 1;
 		}
 		return cnt;
 	}
 	
-	public int myLog2(T i) {
-		for(int j = 0; j < sizeof(T)*8; j++) {
-			if(i & 1) return (int)j;
+	public int myLog2(int i) {
+		for(int j = 0; j < 32*8; j++) {
+			if((i & 1) == 1) return (int)j;
 			i >>= 1;
 		}
 		return 0xffffffff;
 	}
 	
-	public int simulateAllocs(TStr text, int v) {
-		EList<int> ds(getDiffCover(v, false /*verbose*/, false /*sanity*/));
+	public int simulateAllocs(String text, int v) {
+		EList<Integer> ds = new EList<Integer>(getDiffCover(v, false /*verbose*/, false /*sanity*/));
 		int len = text.length();
 		int sPrimeSz = (len / v) * ds.size();
 		// sPrime, sPrimeOrder, _isaPrime all exist in memory at
 		// once and that's the peak
-		long[] aa(sPrimeSz * 3 + (1024 * 1024 /*out of caution*/), EBWT_CAT);
+		long[] aa = new long[sPrimeSz * 3 + (1024 * 1024 /*out of caution*/)];
 		return sPrimeSz * 4; // sPrime array
 	}
 	
-	public int v() const                   { return _v; }
-	public int log2v() const               { return _log2v; }
-	public int vmask() const               { return _vmask; }
-	public int modv(long i) const    { return (int)(i & ~_vmask); }
-	public long divv(long i) const  { return i >> _log2v; }
-	public int d() const                   { return _d; }
-	public boolean verbose() const                 { return _verbose; }
-	public boolean sanityCheck() const             { return _sanity; }
-	public const TStr& text() const             { return _text; }
-	public const EList<int>& ds() const    { return _ds; }
-	public const EList<int>& dmap() const  { return _dmap; }
-	public ostream& log() const                 { return _logger; }
+	public int v()                    { return _v; }
+	public int log2v()                { return _log2v; }
+	public long vmask()                { return _vmask; }
+	public int modv(long i)     { return (int)(i & ~_vmask); }
+	public long divv(long i)   { return i >> _log2v; }
+	public int d()                    { return _d; }
+	public boolean verbose()                  { return _verbose; }
+	public boolean sanityCheck()              { return _sanity; }
+	public  String text()              { return _text; }
+	public  EList<Integer> ds()     { return _ds; }
+	public  EList<Integer> dmap()   { return _dmap; }
+	//public ostream log()                  { return _logger; }
 	
 	public void print(OutputStream out) {
 		for(int i = 0; i < _text.length(); i++) {
 			if(isCovered(i)) {
-				out.write(rank(i));
+				out.write_longlong(rank(i));
 			} else {
-				out.write("-");
+				out.write_char('-');
 			}
 			if(i < _text.length()-1) {
-				out.write(",");
+				out.write_char(',');
 			}
 		}
-		out.write("\n");
+		out.write_string("\n");
 	}
 	
 	private boolean built() {
@@ -691,8 +705,9 @@ public class DifferenceCoverSample <TStr, T>{
 	
 	private void verbose(String s) {
 		if(this.verbose()) {
-			this.log().write(s);
-			this.log().flush();
+			//this.log().(s);
+			System.err.println(s);
+			//this.log().flush();
 		}
 	}
 }
